@@ -1,5 +1,6 @@
-.\speex\trunk\win32\VS2005\libspeex\Release
-.\speex\trunk\win32\VS2005\libspeex\Debug
+.\speex\win32\VS2005\libspeex\Release
+.\speex\win32\VS2005\libspeex\Debug
+.\speex\win32\VS2005\libspeex\Windows Mobile 5.0 Pocket PC SDK (ARMV4I)\Release_WM5_PPC_ARM
 *.ncb
 *.exe
 *.suo
