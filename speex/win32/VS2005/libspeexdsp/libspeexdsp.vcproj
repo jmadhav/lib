@@ -231,7 +231,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Windows Mobile 5.0 Pocket PC SDK (ARMV4I)"
-			OutputDirectory="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)\$(ConfigurationName)"
+			OutputDirectory="..\..\..\lib"
 			IntermediateDirectory="Windows Mobile 5.0 Pocket PC SDK (ARMV4I)\$(ConfigurationName)"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
