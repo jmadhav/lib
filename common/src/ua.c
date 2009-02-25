@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <blowfish.h>
 #include <ltpmobile.h>
 #include <ezxml.h>
 #include <ua.h>
@@ -217,7 +218,7 @@ void cdrSave(){
 	
 	for (q = listCDRs; q; q = q->next){
 		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
-		q->date, q->duration, q->direction, q->userid);
+		(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid);
 		fwrite(line, strlen(line), 1, pf);
 	}
 	fclose(pf);
@@ -1132,16 +1133,28 @@ void profileSave(){
 	char	pathname[MAX_PATH];
 	struct AddressBook *p;
 	FILE	*pf;
+	char szData[32];
+	BLOWFISH_CTX ctx;
+	int i;
 
 	sprintf(pathname, "%s\\hfprofile.xml", myFolder);
-
 	pf = fopen(pathname, "w");
 	if (!pf)
 		return;
 
+	//Encrypt the password before saving to hfprofile.xml
+	memset(szData, '\0', sizeof(szData));
+	strcpy(szData,pstack->ltpPassword);
+
+	Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
+
+	for (i = 0; i < sizeof(szData); i+=8)
+		   Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
+	szData[31] = '\0'; //important to NULL terminate;
+
 	fputs("<?xml version=\"1.0\"?>\n", pf);
 	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <password>%s</password>\n <server>%s</server>\n",
-		pstack->ltpUserid, lastUpdate, pstack->ltpPassword, pstack->ltpServerName);
+		pstack->ltpUserid, lastUpdate, szData, pstack->ltpServerName);
 
 	if (strlen(fwdnumber))
 		fprintf(pf, "<fwd>%s</fwd>\n", fwdnumber);
@@ -1181,6 +1194,9 @@ void profileLoad()
 	ezxml_t userid, password, server, lastupdate, dirty, status, vms, dated, fwd, email;
 	char empty[] = "";
 	struct AddressBook *p;
+	char szData[32];
+    BLOWFISH_CTX ctx;
+	int i;
 
 	strcpy(pstack->ltpServerName, "64.49.236.88");
 	sprintf(pathname, "%s\\hfprofile.xml", myFolder);
@@ -1202,14 +1218,23 @@ void profileLoad()
 	fread(strxml, xmllength, 1, pf);
 	fclose(pf);
 		
-	
 	xml = ezxml_parse_str(strxml, xmllength);
 
 	if (userid = ezxml_child(xml, "u"))
 		strcpy(pstack->ltpUserid, userid->txt);
 
 	if (password = ezxml_child(xml, "password"))
-		strcpy(pstack->ltpPassword, password->txt);
+	{
+		//Decrypt the password after reading from hfprofile.xml
+		memset(szData, 0, sizeof(szData));
+		strcpy(szData, password->txt);
+		i = sizeof(szData);
+		Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
+		for (i = 0; i < sizeof(szData); i+=8)
+			   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
+
+		strcpy(pstack->ltpPassword, szData); 
+	}
 
 	if (server = ezxml_child(xml, "server"))
 		strcpy(pstack->ltpServerName, server->txt);
