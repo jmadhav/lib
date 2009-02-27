@@ -147,7 +147,12 @@ void profileResync();
 void profileSave();
 void profileSetRedirection(int redirectTo);
 THREAD_PROC profileReloadEverything(void *something);
-            
+
+//
+//	Hash Key & length used by Encryption / Decryption functions
+//
+#define HASHKEY				"{E5FD9B84-93DC-451d-AE10-FEEDD18F445D}"
+#define HASHKEY_LENGTH		38
 //to be implemented for every platform
 #ifdef WINCE
 extern int unlink(char *filename);
