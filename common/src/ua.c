@@ -29,6 +29,11 @@ int creditBalance = 0;
 */
 static const char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+/*
+** Translation Table to decode (created by author)
+*/
+static const char cd64[]="|$$$}rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$$$XYZ[\\]^_`abcdefghijklmnopq";
+
 //base64 encoder
 void encodeblock( unsigned char in[3], unsigned char out[4], int len )
 {
@@ -36,6 +41,16 @@ void encodeblock( unsigned char in[3], unsigned char out[4], int len )
     out[1] = cb64[ ((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4) ];
     out[2] = (unsigned char) (len > 1 ? cb64[ ((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6) ] : '=');
     out[3] = (unsigned char) (len > 2 ? cb64[ in[2] & 0x3f ] : '=');
+}
+
+/*
+** (base64 decoder) decode 4 '6-bit' characters into 3 8-bit binary bytes
+*/
+void decodeblock( unsigned char in[4], unsigned char out[3] )
+{   
+    out[ 0 ] = (unsigned char ) (in[0] << 2 | in[1] >> 4);
+    out[ 1 ] = (unsigned char ) (in[1] << 4 | in[2] >> 2);
+    out[ 2 ] = (unsigned char ) (((in[2] << 6) & 0xc0) | in[3]);
 }
 
 //strip white space on both ends of a string
@@ -1133,15 +1148,16 @@ void profileSave(){
 	char	pathname[MAX_PATH];
 	struct AddressBook *p;
 	FILE	*pf;
-	char szData[32];
+	unsigned char szData[32], szEncPass[64], szBuffIn[10], szBuffOut[10];
 	BLOWFISH_CTX ctx;
-	int i;
+	int i, j, len;
 
 	sprintf(pathname, "%s\\hfprofile.xml", myFolder);
 	pf = fopen(pathname, "w");
 	if (!pf)
 		return;
 
+	//Tasvir Rohila - 25/02/2009 - bug#17212.
 	//Encrypt the password before saving to hfprofile.xml
 	memset(szData, '\0', sizeof(szData));
 	strcpy(szData,pstack->ltpPassword);
@@ -1152,9 +1168,25 @@ void profileSave(){
 		   Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
 	szData[31] = '\0'; //important to NULL terminate;
 
+	//Output of Blowfish_Encrypt() is binary, which needs to be stored in plain-text in hfprofile.xml for ezxml to understand and parse.
+	//Hence base64 encode the cyphertext.
+	memset(szEncPass, 0, sizeof(szEncPass));
+	memset(szBuffIn, 0, sizeof(szBuffIn));
+	memset(szBuffOut, 0, sizeof(szBuffOut));
+	len = strlen(szData);
+	for (i=0; i<len; i+=3)
+	{
+		szBuffIn[0]=szData[i];
+		szBuffIn[1]=szData[i+1];
+		szBuffIn[2]=szData[i+2];
+		encodeblock(szBuffIn, szBuffOut, 3);
+		strcat(szEncPass, szBuffOut);
+	}
+
 	fputs("<?xml version=\"1.0\"?>\n", pf);
-	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <password>%s</password>\n <server>%s</server>\n",
-		pstack->ltpUserid, lastUpdate, szData, pstack->ltpServerName);
+	//Now that password is stored encrypted, <password> tag is replaced by <encpassword>
+	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <encpassword>%s</encpassword>\n <server>%s</server>\n",
+		pstack->ltpUserid, lastUpdate, szEncPass, pstack->ltpServerName);
 
 	if (strlen(fwdnumber))
 		fprintf(pf, "<fwd>%s</fwd>\n", fwdnumber);
@@ -1194,9 +1226,9 @@ void profileLoad()
 	ezxml_t userid, password, server, lastupdate, dirty, status, vms, dated, fwd, email;
 	char empty[] = "";
 	struct AddressBook *p;
-	char szData[32];
+	unsigned char v, szData[32], szBuffIn[10], szBuffOut[10];
     BLOWFISH_CTX ctx;
-	int i;
+	int i, j, len;
 
 	strcpy(pstack->ltpServerName, "64.49.236.88");
 	sprintf(pathname, "%s\\hfprofile.xml", myFolder);
@@ -1223,16 +1255,38 @@ void profileLoad()
 	if (userid = ezxml_child(xml, "u"))
 		strcpy(pstack->ltpUserid, userid->txt);
 
-	if (password = ezxml_child(xml, "password"))
+	//Tasvir Rohila - 25/02/2009 - bug#17212.
+	//Decrypt the password read from hfprofile.xml
+	//Now that password is stored encrypted, <password> tag is replaced by <encpassword>
+	if (password = ezxml_child(xml, "encpassword"))
 	{
-		//Decrypt the password after reading from hfprofile.xml
 		memset(szData, 0, sizeof(szData));
-		strcpy(szData, password->txt);
-		i = sizeof(szData);
-		Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
-		for (i = 0; i < sizeof(szData); i+=8)
-			   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
+		memset(szBuffIn, 0, sizeof(szBuffIn));
+		memset(szBuffOut, 0, sizeof(szBuffOut));
 
+		//base64 decode the password to be passed to Blowfish_Decrypt()
+		len = strlen(password->txt);
+		if(len)
+		{
+			for (i=0; i<len; i+=4)
+			{
+				for (j=0;j<4;j++)
+				{
+					v = password->txt[i+j];
+					v = (unsigned char) ((v < 43 || v > 122) ? 0 : cd64[ v - 43 ]);
+					if( v ) {
+							v = (unsigned char) ((v == '$') ? 0 : v - 61);
+					}
+					szBuffIn[ j ] = (unsigned char) (v - 1);
+				}
+				decodeblock(szBuffIn, szBuffOut);
+				strncat(szData, szBuffOut, 3);
+			}
+
+			Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
+			for (i = 0; i < sizeof(szData); i+=8)
+				   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
+		}
 		strcpy(pstack->ltpPassword, szData); 
 	}
 
