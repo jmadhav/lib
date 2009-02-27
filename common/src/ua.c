@@ -1286,8 +1286,8 @@ void profileLoad()
 			Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
 			for (i = 0; i < sizeof(szData); i+=8)
 				   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
+			strcpy(pstack->ltpPassword, szData); 
 		}
-		strcpy(pstack->ltpPassword, szData); 
 	}
 
 	if (server = ezxml_child(xml, "server"))
