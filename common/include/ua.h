@@ -16,6 +16,10 @@ void urlencode(char *s, char *t) ;
 void xmlEncode(char *s, char *t);
 void strTrim(char *szString);
 
+/* encoders and decoders for base64 */
+void encodeblock( unsigned char in[3], unsigned char out[4], int len );
+void decodeblock( unsigned char in[4], unsigned char out[3] );
+
 /**
 	call history - list of CDRs
 */
