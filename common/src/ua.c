@@ -879,9 +879,9 @@ void vmsDelete(struct VMail *p)
 	//free the node, delete the file
 	if (p){
 		if (p->direction == VMAIL_IN)
-			sprintf(path, "%s\\%s.wave", vmFolder, p->vmsid);
+			sprintf(path, "%s\\%s.gsm", vmFolder, p->vmsid);
 		else
-			sprintf(path, "%s\\%s.wave", outFolder, p->vmsid);
+			sprintf(path, "%s\\%s.gsm", outFolder, p->vmsid);
 		unlink(path);
 	}
 	vmsSave();
@@ -1038,7 +1038,6 @@ static void vmsDownload()
 	int		length, isChunked=0, count=0;
 
 
-	//reset the presence of all the contacts
 	for (p = listVMails; p; p = p->next) {
 	
 		if (p->direction == VMAIL_OUT)
