@@ -1004,7 +1004,9 @@ static void vmsUpload(struct VMail *v)
 				if (!strcmp(status->txt, "ok")){
 					sprintf(path, "%s\\%s.gsm", outFolder, v->vmsid);
 					unlink(path);
-					v->status = VMAIL_STATUS_UPLOADED;
+					//farhan, 2008 feb 28, i am changing the status to VMAIL_STATUS_DONE instead of VMAIL_STATUS_UPLOADED
+					// to force it to be removed from the voicemail list
+					v->status = VMAIL_STATUS_DONE;
 				}else 
 					alert(-1, ALERT_VMAILERROR, "Voicemail server problem");
 			}
