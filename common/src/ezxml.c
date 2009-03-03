@@ -33,7 +33,7 @@
 //#include <sys/mman.h>
 #endif // EZXML_NOMMAP
 //#include <sys/stat.h>
-#include "ezxml.h"
+#include <ezxml.h>
 
 #define EZXML_WS   "\t\r\n "  // whitespace
 #define EZXML_ERRL 128        // maximum error string length
