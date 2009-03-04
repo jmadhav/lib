@@ -16,6 +16,10 @@ void urlencode(char *s, char *t) ;
 void xmlEncode(char *s, char *t);
 void strTrim(char *szString);
 
+/* encoders and decoders for base64 */
+void encodeblock( unsigned char in[3], unsigned char out[4], int len );
+void decodeblock( unsigned char in[4], unsigned char out[3] );
+
 /**
 	call history - list of CDRs
 */
@@ -147,7 +151,12 @@ void profileResync();
 void profileSave();
 void profileSetRedirection(int redirectTo);
 THREAD_PROC profileReloadEverything(void *something);
-            
+
+//
+//	Hash Key & length used by Encryption / Decryption functions
+//
+#define HASHKEY				"{E5FD9B84-93DC-451d-AE10-FEEDD18F445D}"
+#define HASHKEY_LENGTH		38
 //to be implemented for every platform
 #ifdef WINCE
 extern int unlink(char *filename);
