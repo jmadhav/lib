@@ -1,7 +1,8 @@
 #include <ltpmobile.h>
 #include <stdlib.h>
 #include <string.h>
-
+#define USERAGENT  "desktop-windows-d2-1.0"
+//#define USERAGENT "ltpmobile"
 #ifdef _WIN32_WCE
 #define stricmp _stricmp
 #elif defined WIN32
@@ -593,7 +594,7 @@ struct ltpStack  *ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->nextCallSession = 786;
 	ps->soundBlockSize = framesPerPacket * 160;
 	ps->myPriority = NORMAL_PRIORITY;
-	strncpy(ps->userAgent, "ltpmobile", MAX_USERID);
+	strncpy(ps->userAgent,USERAGENT, MAX_USERID);
 	ps->ltpPresence = NOTIFY_ONLINE;
 	ps->updateTimingAdvance = 0;
 
