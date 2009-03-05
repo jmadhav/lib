@@ -869,19 +869,27 @@ void vmsDelete(struct VMail *p)
 	if (!p)
 		return;
 
-	//only mark it for deletion
-	for (q = listVMails; q->next; q = q->next)
-		if (q == p){
-			q->status = VMAIL_STATUS_DELETE;
-			break;
+	//Tasvir Rohila - 05/03/2009 - bug#18256 - Find this node in listVmails and delete it, rather than marking it as VMAIL_STATUS_DELETE.
+	if (p == listVMails) {
+		listVMails = p->next;
+	}
+	else {
+		//delink the Vmail
+		for (q = listVMails; q->next; q = q->next){
+			if (q->next == p){
+				q->next = p->next;
+				break;
+			}
 		}
-	
+	}
+
 	//free the node, delete the file
 	if (p){
 		if (p->direction == VMAIL_IN)
-			sprintf(path, "%s\\%s.wave", vmFolder, p->vmsid);
+			sprintf(path, "%s\\%s.gsm", vmFolder, p->vmsid);
 		else
-			sprintf(path, "%s\\%s.wave", outFolder, p->vmsid);
+			sprintf(path, "%s\\%s.gsm", outFolder, p->vmsid);
+		free(p);
 		unlink(path);
 	}
 	vmsSave();
