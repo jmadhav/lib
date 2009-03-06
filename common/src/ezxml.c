@@ -166,11 +166,8 @@ char *ezxml_decode(char *s, char **ent, char t)
             if (*s == '\n') memmove(s, (s + 1), strlen(s));
         }
     }
-    //Tasvir Rohila - 25/02/2008 - bug#17616.
-	//The encrypted cyphertext may have extended character set, hence their integer value may be negative. Passing a
-	//negative value to isspace() results in an exception. So replaced isspace() with iswspace().
     for (s = r; ; ) {
-        while (*s && *s != '&' && (*s != '%' || t != '%') && !iswspace(*s)) s++;
+        while (*s && *s != '&' && (*s != '%' || t != '%') && !isspace(*s)) s++;
 
         if (! *s) break;
         else if (t != 'c' && ! strncmp(s, "&#", 2)) { // character reference
