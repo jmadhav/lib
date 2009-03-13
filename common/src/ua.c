@@ -1491,7 +1491,7 @@ void profileMerge(){
 		if (!pc){
 			//this is a new kid on the block, check him against what we have among new contacts
 			for (pc = getContactsList(); pc; pc = pc->next)
-				if (!pc->id && !strcmp(pc->title, title->txt)){
+				if (!pc->id && title && !strcmp(pc->title, title->txt)){
 					pc->id = atol(id->txt);
 					break;
 				}
@@ -1818,7 +1818,11 @@ void profileResync()
 	START_THREAD(profileDownload);
 //		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
 }
-
+void profileReload()
+{
+	START_THREAD(profileReloadEverything);
+//		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
+}
 void profileSetRedirection(int redirectTo)
 {
 	CreateThread(NULL, 0, profileDownload, (LPVOID)redirectTo, 0, NULL);
