@@ -889,7 +889,9 @@ void vmsDelete(struct VMail *p)
 			sprintf(path, "%s\\%s.gsm", vmFolder, p->vmsid);
 		else
 			sprintf(path, "%s\\%s.gsm", outFolder, p->vmsid);
+
 		free(p);
+
 		unlink(path);
 	}
 	vmsSave();
@@ -1012,7 +1014,9 @@ static void vmsUpload(struct VMail *v)
 				if (!strcmp(status->txt, "ok")){
 					sprintf(path, "%s\\%s.gsm", outFolder, v->vmsid);
 					unlink(path);
-					v->status = VMAIL_STATUS_UPLOADED;
+					//farhan, 2008 feb 28, i am changing the status to VMAIL_STATUS_DONE instead of VMAIL_STATUS_UPLOADED
+					// to force it to be removed from the voicemail list
+					v->status = VMAIL_STATUS_DONE;
 				}else 
 					alert(-1, ALERT_VMAILERROR, "Voicemail server problem");
 			}
@@ -1046,7 +1050,6 @@ static void vmsDownload()
 	int		length, isChunked=0, count=0;
 
 
-	//reset the presence of all the contacts
 	for (p = listVMails; p; p = p->next) {
 	
 		if (p->direction == VMAIL_OUT)
