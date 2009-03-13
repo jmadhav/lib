@@ -164,6 +164,7 @@ extern int unlink(char *filename);
 extern void relistVMails();
 extern void relistContacts();
 extern void relistCDRs();
+extern void cdrEmpty();
 extern void refreshDisplay();
 extern void createFolders();
 extern unsigned long ticks();
