@@ -1823,7 +1823,8 @@ void profileResync()
 }
 void profileReload()
 {
-	START_THREAD(profileReloadEverything);
+	profileClear();
+	START_THREAD(profileDownload);
 //		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
 }
 void profileSetRedirection(int redirectTo)
