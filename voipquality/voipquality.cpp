@@ -12,7 +12,7 @@
 #define PORT 7
 
 
-static GThreadDataLocal gData;
+//static GThreadDataLocal gData;
 
 // ameya waingankar
 // 24/2/2009
@@ -254,6 +254,10 @@ THREAD_PROC SendRecieve(void *extras)
     SOCKET sck = CreateSocket();
 	if(sck <= 0)
 	{
+		if(gThreadP->voipIndCallbackP)
+		{
+			gThreadP->voipIndCallbackP(1,gThreadP->uDataLong,&gThreadP->gThread,1);
+		}
 		return -1;
 	}
     
@@ -282,29 +286,55 @@ THREAD_PROC SendRecieve(void *extras)
 	   
 
 	gThreadP->threadStartInt = 0;
+	if(gThreadP->voipIndCallbackP)
+	{
+		gThreadP->voipIndCallbackP(InProcess,gThreadP->uDataLong,&gThreadP->gThread,0);//only data is return
+		gThreadP->voipIndCallbackP(Success,gThreadP->uDataLong,&gThreadP->gThread,0);//call deinit
+	}
 	return 0;
 }
+GThreadDataLocal * VoipQualityInit(VoipIndicatorCallBack voipIndCallbackP,long uDataLong)
+{
+	GThreadDataLocal *gThP = 0;
+	gThP =(GThreadDataLocal *) malloc(sizeof(GThreadDataLocal));
+	memset(gThP,0,sizeof(GThreadDataLocal));
+	gThP->voipIndCallbackP = voipIndCallbackP;
+	gThP->uDataLong = uDataLong;
+	return gThP;
 
+}
+void VoipQualityDeInit(GThreadDataLocal **glP)
+{
+	if(glP)
+	{
+		if(*glP)
+		{
+			free(*glP);
+			*glP = 0;
+		}
+	}
+
+}
 // ameya waingankar
 // 24/2/2009
 // to start the process by creating a thread
-void Start()
+void Start(GThreadDataLocal *gThP)
 {
 	
-	if(gData.threadStartInt==0)
+	if(gThP->threadStartInt==0)
 	{
-		gData.threadStartInt = 1;
-		CreateThread(NULL,0,SendRecieve,&gData,0,NULL);
+		gThP->threadStartInt = 1;
+		CreateThread(NULL,0,SendRecieve,gThP,0,NULL);
 	}
 }
 
 // ameya waingankar
 // 24/2/2009
 // to get values of matched packets and running average
-void GetValue(GThreadData *gThreadP)
+void GetValue(GThreadDataLocal *glP,GThreadData *gThreadP)
 {
 	if(gThreadP)
 	{
-		*gThreadP = gData.gThread;
+		*gThreadP = glP->gThread;
 	}
 }

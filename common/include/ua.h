@@ -167,6 +167,7 @@ extern void relistCDRs();
 extern void cdrEmpty();
 extern void refreshDisplay();
 extern void createFolders();
+extern void cdrEmpty();
 extern unsigned long ticks();
 void profileReload();//add new function for reload
 

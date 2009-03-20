@@ -1743,6 +1743,9 @@ THREAD_PROC profileDownload(void *extras)
 	fclose(pfOut);
 
 	//read the headers
+	//Tasvir Rohila - bug#18352 & #18353 - Initialize isChunked to zero for profile to download & 
+	//Add/Delete contact to work.
+	isChunked = 0;
 	while (1){
 		length = readNetLine(sock, data, sizeof(data));
 		if (length <= 0)
@@ -1820,7 +1823,8 @@ void profileResync()
 }
 void profileReload()
 {
-	START_THREAD(profileReloadEverything);
+	profileClear();
+	START_THREAD(profileDownload);
 //		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
 }
 void profileSetRedirection(int redirectTo)
