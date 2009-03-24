@@ -144,6 +144,10 @@ profile related definitions
 /**
 	profile functions
 */
+//change by mukesh for bug id 18641
+void vmsEmpty();
+void profileLoad();
+//end change for bug id 18641
 void uaInit();
 extern int redirect, creditBalance;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
