@@ -1111,6 +1111,7 @@ void ltpLogin(struct ltpStack *ps, int command)
 			ps->myPriority = NORMAL_PRIORITY;
 			/* let's rest and try after sometime */
 			ps->loginNextDate = (unsigned int)ps->now + LTP_LOGIN_INTERVAL;
+			alert(-1,ALERT_OFFLINE,0);
 			return;
 		}
 		/*
