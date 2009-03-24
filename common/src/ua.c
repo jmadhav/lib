@@ -571,6 +571,7 @@ struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, c
 	memset(q, 0, sizeof(struct AddressBook));
 	
 	q->id = id;
+	
 	strcpy(q->title, title);
 	strcpy(q->mobile, mobile);
 	strcpy(q->home, home);
@@ -1246,8 +1247,12 @@ void profileLoad()
 
 	pf = fopen(pathname, "r");
 	if (!pf)
+	{
+		//change by mukesh for bug id 18641
+		lastUpdate = 0;	
+		//change end  for bug id 18641
 		return;
-
+	}	
 	fseek(pf, 0, SEEK_END);
 	xmllength = ftell(pf);
 	if (xmllength <= 0){
