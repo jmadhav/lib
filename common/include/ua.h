@@ -1,3 +1,4 @@
+
 #ifndef UAREST_DEFINED
 #define UAREST_DEFINED
 #ifdef __cplusplus
@@ -144,6 +145,10 @@ profile related definitions
 /**
 	profile functions
 */
+//change by mukesh for bug id 18641
+void vmsEmpty();
+void profileLoad();
+//end change for bug id 18641
 void uaInit();
 extern int redirect, creditBalance;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
@@ -164,12 +169,15 @@ extern int unlink(char *filename);
 extern void relistVMails();
 extern void relistContacts();
 extern void relistCDRs();
+extern void cdrEmpty();
 extern void refreshDisplay();
 extern void createFolders();
+extern void cdrEmpty();
 extern unsigned long ticks();
-
+void profileReload();//add new function for reload
 
 #ifdef __cplusplus
 }
 #endif
 #endif
+
