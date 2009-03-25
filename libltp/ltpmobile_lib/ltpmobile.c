@@ -1,11 +1,20 @@
+//To remove deprecated function's  compiler warnings
+#define _CRT_SECURE_NO_DEPRECATE      
+#define _CRT_NONSTDC_NO_DEPRECATE
+
+#include "stdafx.h"
 #include "ltpmobile.h"
 #include <stdlib.h>
 #include <string.h>
 
+
+
 #ifdef _WIN32_WCE
 #define stricmp _stricmp
+
 #elif defined WIN32
 #define stricmp _stricmp
+
 #else
 #define stricmp strcasecmp
 #endif 
@@ -697,7 +706,7 @@ static void callStartRequest(struct ltpStack *ps, struct Call *pc, struct ltp *p
 
 	/* calculate the length of the ltp buffer (it ends with a human readable, null terminated string) */
 	p = (struct ltp *) pc->ltpRequest;
-	pc->ltpRequestLength = sizeof(struct ltp) + strlen(p->data);
+	pc->ltpRequestLength = sizeof(struct ltp) + (unsigned int)strlen(p->data);
 	if (pc->ltpRequestLength > 1000)
 		return;
 	
@@ -971,7 +980,7 @@ static void redirect(struct ltpStack *ps, struct ltp *response)
 		response->contactIp = 0;
 		response->contactPort = 0;
 
-		ltpWrite(ps, response, sizeof(struct ltp) + strlen(response->data), ip, port);
+		ltpWrite(ps, response, sizeof(struct ltp) + (unsigned int)strlen(response->data), ip, port);
 	}
 }
 
@@ -1145,7 +1154,7 @@ void ltpLogin(struct ltpStack *ps, int command)
 	ppack->lparam = ps->ltpPresence;
 	strncpy(ppack->data, ps->ltpLabel, 128);
 	
-	ltpWrite(ps, ppack, sizeof(struct ltp) + strlen(ppack->data), ps->ltpServer, (short16)(ps->bigEndian ? RTP_PORT : flip16(RTP_PORT)));
+	ltpWrite(ps, ppack, sizeof(struct ltp) + (unsigned int)strlen(ppack->data), ps->ltpServer, (short16)(ps->bigEndian ? RTP_PORT : flip16(RTP_PORT)));
 #if DEBUG
 		printf("lgn %02d %03d %s %s contact:%u to %s %d\n", ppack->command, ppack->response, ppack->from, ppack->to, 
 		ppack->contactIp, netGetIPString(ps->ltpServer), RTP_PORT);
@@ -1360,8 +1369,8 @@ static void onChallenge(struct ltpStack *ps, struct ltp *response, int fromip, s
 		ltpFlip(response);
 	
 	MD5Init(&md5);
-	MD5Update(&md5, (unsigned char *)response, sizeof(struct ltp) + strlen(response->data), ps->bigEndian);
-	MD5Update(&md5, (unsigned char *)ps->ltpPassword, strlen(ps->ltpPassword), ps->bigEndian);
+	MD5Update(&md5, (unsigned char *)response, sizeof(struct ltp) + (unsigned int)strlen(response->data), ps->bigEndian);
+	MD5Update(&md5, (unsigned char *)ps->ltpPassword, (unsigned int)strlen(ps->ltpPassword), ps->bigEndian);
 	MD5Update(&md5, (unsigned char *)ps->ltpNonce, 16, ps->bigEndian);
 	MD5Final(digest,&md5);
 
@@ -1376,7 +1385,7 @@ static void onChallenge(struct ltpStack *ps, struct ltp *response, int fromip, s
 	response->contactIp = tempIp;
 	response->contactPort = tempPort;
 
-	ltpWrite(ps, response, sizeof(struct ltp) + strlen(response->data), fromip, fromport);
+	ltpWrite(ps, response, sizeof(struct ltp) + (unsigned int)strlen(response->data), fromip, fromport);
 
 #if DEBUG
 		printf("out challenge response %02d %03d %s %s from %s %d: %s\n", response->command, response->response, response->from, 
@@ -1406,7 +1415,7 @@ void loginResponse(struct ltpStack *ps, struct ltp *msg)
 	{
 		ps->ltpServer = msg->contactIp;
 		msg->response = 0;
-		ltpWrite(ps, msg, sizeof(struct ltp) + strlen(msg->data), ps->ltpServer, (short16)(ps->bigEndian? RTP_PORT : flip16(RTP_PORT)));
+		ltpWrite(ps, msg, sizeof(struct ltp) + (unsigned int)strlen(msg->data), ps->ltpServer, (short16)(ps->bigEndian? RTP_PORT : flip16(RTP_PORT)));
 		return;
 	}
 
@@ -1466,7 +1475,7 @@ static void logoutResponse(struct ltpStack *ps, struct ltp *msg)
 	{
 		ps->ltpServer = msg->contactIp;
 		msg->response = 0;
-		ltpWrite(ps, msg, sizeof(struct ltp) + strlen(msg->data), ps->ltpServer, (short16)(ps->bigEndian? RTP_PORT : flip16(RTP_PORT)));
+		ltpWrite(ps, msg, sizeof(struct ltp) + (unsigned int)strlen(msg->data), ps->ltpServer, (short16)(ps->bigEndian? RTP_PORT : flip16(RTP_PORT)));
 		return;
 	}
 
@@ -1772,7 +1781,7 @@ static void sendResponse(struct ltpStack *ps, struct ltp *pack, short16 response
 		printf("response cmd:%02d/%03d %s %s sent to %s %d\n",  p->command, p->response, p->from, 
 			p->to, netGetIPString(ip), ntohs(port));
 #endif
-	ltpWrite(ps, p, sizeof(struct ltp) + strlen(p->data), ip, port);
+	ltpWrite(ps, p, sizeof(struct ltp) + (unsigned int)strlen(p->data), ip, port);
 }
 
 /*onRing:
@@ -2228,7 +2237,7 @@ int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 	ppack->contactIp = pmsg->fwdip;
 	ppack->contactPort = pmsg->fwdport;
 
-	pmsg->length = sizeof(struct ltp) + strlen(ppack->data);
+	pmsg->length = sizeof(struct ltp) + (unsigned int)strlen(ppack->data);
 	pmsg->retryCount = ps->maxChatRetries;
 	pmsg->lastMsgSent = ppack->msgid;
 	pmsg->dateLastMsg = ps->now;

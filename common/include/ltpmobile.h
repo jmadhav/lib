@@ -14,7 +14,7 @@ extern "C" {
 #endif 
 
 /* gsm is mandatory in all ltp implementations */
-#include <gsm.h>
+#include "gsm.h"
 
 /* SUPPORT_SPEEX is a preprocessor directive that should be passed from compiler options */
 
@@ -153,7 +153,7 @@ struct ltp
 	/* each request within a session has a different message id */
 	unsigned int32		msgid;
 	
-	/* a RESPONSE_AUTHENTICATE will carry a challange and a subsequent request will carry an MD5 checksum (read Sec 6 of the draft) */
+	/* a RESPONSE_AUTHENTICATE w	ill carry a challange and a subsequent request will carry an MD5 checksum (read Sec 6 of the draft) */
 	char	authenticate[16]; 
 	
 	/* When a received request has these fields set to non-zero, you should

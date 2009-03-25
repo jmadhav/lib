@@ -22,18 +22,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
+//#include <stdlib.h>
+//#include <stdio.h>
+//#include <stdarg.h>
+//#include <string.h>
+//#include <ctype.h>
 //#include <unistd.h>
 //#include <sys/types.h>
 #ifndef EZXML_NOMMAP
 //#include <sys/mman.h>
 #endif // EZXML_NOMMAP
 //#include <sys/stat.h>
-#include <ezxml.h>
+#include "ezxml.h"
 
 #define EZXML_WS   "\t\r\n "  // whitespace
 #define EZXML_ERRL 128        // maximum error string length
