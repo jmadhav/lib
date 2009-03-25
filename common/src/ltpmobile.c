@@ -2711,3 +2711,34 @@ void ltpOnPacket(struct ltpStack *ps, char *msg, int length, int address, short 
 	else
 		rtpIn(ps, address, port, msg, length);
 }
+void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
+{
+	struct Call *pc;
+	struct ltp *ppack;
+	char *buff;
+	buff = malloc(1000);
+	if (lineid < 0 || ps->maxSlots <= lineid)
+	{
+		free(buff);	
+			return;
+	}
+	pc = ps->call + lineid;
+
+	if (pc->ltpState == CALL_IDLE || pc->ltpState == CALL_HANGING || strlen(msg) > 256)
+		return;
+
+	ppack = (struct ltp *) pc->ltpRequest;
+
+	ppack = (struct ltp *)buff;
+	zeroMemory(ppack, sizeof(struct ltp));
+	ppack->version = 1;
+	ppack->command = CMD_MSG;
+	ppack->session = pc->ltpSession;
+    ppack->msgid = pc->ltpSeq++;
+	strncpy(ppack->to, pc->remoteUserid, MAX_USERID);
+	strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+	strncpy(ppack->data, msg, 256);
+
+	callStartRequest(ps, pc, ppack);
+	free(buff);	
+}

@@ -686,7 +686,7 @@ void ltpSoundInput(struct ltpStack *ps, short *pcm, int nsamples, int isSpeaking
 int ltpUpdateContact(struct ltpStack *ps, char *userid, char *title, char *group, unsigned short16 presence, 
 		unsigned int32 ip, unsigned short16 port, unsigned int32 fwdip, unsigned short16 fwdport,
 		char *device, char *label);
-
+void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg);
 /*
 void ltpRemoveAllContacts(struct ltpStack *ps);
 struct Contact *getContact(struct ltpStack *ps, char *userid);
