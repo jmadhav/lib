@@ -1150,8 +1150,12 @@ end:
 		closesocket(sock);
 	} //loop over for the next voice mail
 }
-
-
+//change for bug id 18641 
+void ResetTime()
+{
+	lastUpdate = 0;//this function is call from logout
+	
+}
 /** 
 profile routines
 */
@@ -1249,9 +1253,7 @@ void profileLoad()
 	pf = fopen(pathname, "r");
 	if (!pf)
 	{
-		//change by mukesh for bug id 18641
-		lastUpdate = 0;	
-		//change end  for bug id 18641
+		
 		return;
 	}	
 	fseek(pf, 0, SEEK_END);
