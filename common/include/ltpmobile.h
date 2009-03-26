@@ -14,9 +14,7 @@ extern "C" {
 #endif 
 
 /* gsm is mandatory in all ltp implementations */
-
 #include <gsm.h>
-
 
 /* SUPPORT_SPEEX is a preprocessor directive that should be passed from compiler options */
 
@@ -155,9 +153,7 @@ struct ltp
 	/* each request within a session has a different message id */
 	unsigned int32		msgid;
 	
-
 	/* a RESPONSE_AUTHENTICATE will carry a challange and a subsequent request will carry an MD5 checksum (read Sec 6 of the draft) */
-
 	char	authenticate[16]; 
 	
 	/* When a received request has these fields set to non-zero, you should
@@ -690,9 +686,7 @@ void ltpSoundInput(struct ltpStack *ps, short *pcm, int nsamples, int isSpeaking
 int ltpUpdateContact(struct ltpStack *ps, char *userid, char *title, char *group, unsigned short16 presence, 
 		unsigned int32 ip, unsigned short16 port, unsigned int32 fwdip, unsigned short16 fwdport,
 		char *device, char *label);
-
 void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg);
-
 /*
 void ltpRemoveAllContacts(struct ltpStack *ps);
 struct Contact *getContact(struct ltpStack *ps, char *userid);
@@ -718,6 +712,4 @@ void MD5Final(unsigned char *digest, struct MD5Context *ctx);
 }
 #endif
  
-
 #endif
-

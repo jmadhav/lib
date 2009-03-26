@@ -1,4 +1,3 @@
-
 #include <ltpmobile.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1184,6 +1183,8 @@ static void callTick(struct ltpStack *ps, struct Call *pc)
 
 	if (pc->ltpState == CALL_RING_RECEIVED && pc->timeStart + ps->ringTimeout < ps->now)
 	{
+		//added by mukesh to remove hungup button
+		pc->ltpState = CALL_IDLE;
 		alert(pc->lineId, ALERT_DISCONNECTED, "Missed");
 		ltpRefuse(ps, pc->lineId, "missed");
 		return;
@@ -2026,6 +2027,8 @@ static void onHangup(struct ltpStack *ps, struct ltp *ppack, int fromip, short f
 	ppack->contactIp = pc->fwdIP;
 	ppack->contactPort = pc->fwdPort;
 	pc->timeStop = ps->now;
+	//added by mukesh to remove hungup button
+	pc->ltpState = CALL_IDLE;
 	//20070722 changed the data to what the remote is saying
 	alert(pc->lineId, ALERT_DISCONNECTED, ppack->data);
 	pc->ltpState = CALL_IDLE;
@@ -2417,7 +2420,10 @@ void ltpHangup(struct ltpStack *ps, int lineid)
 
 	callStartRequest(ps, pc, NULL);
 	pc->retryCount = 3;
+	//added by mukesh to remove hungup button
+	pc->ltpState = CALL_IDLE;
 	//20070722 changed the hangup message
+	
 	alert(pc->lineId, ALERT_DISCONNECTED, "");
 }
 
