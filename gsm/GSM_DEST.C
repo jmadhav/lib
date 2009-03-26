@@ -10,7 +10,7 @@
 #include "private.h"
 #include "proto.h"
 
-void gsm_destroy P1((S), gsm S)
+void gsm_destroy P1((S), gsm S)										
 {
 		if (S) free((char *)S);
 		//if (S)
