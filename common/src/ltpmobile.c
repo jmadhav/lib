@@ -1,7 +1,8 @@
-#include "ltpmobile.h"
+#include <ltpmobile.h>
 #include <stdlib.h>
 #include <string.h>
-
+#define USERAGENT  "desktop-windows-d2-1.0"
+//#define USERAGENT "ltpmobile"
 #ifdef _WIN32_WCE
 #define stricmp _stricmp
 #elif defined WIN32
@@ -593,7 +594,7 @@ struct ltpStack  *ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->nextCallSession = 786;
 	ps->soundBlockSize = framesPerPacket * 160;
 	ps->myPriority = NORMAL_PRIORITY;
-	strncpy(ps->userAgent, "ltpmobile", MAX_USERID);
+	strncpy(ps->userAgent,USERAGENT, MAX_USERID);
 	ps->ltpPresence = NOTIFY_ONLINE;
 	ps->updateTimingAdvance = 0;
 
@@ -1110,6 +1111,7 @@ void ltpLogin(struct ltpStack *ps, int command)
 			ps->myPriority = NORMAL_PRIORITY;
 			/* let's rest and try after sometime */
 			ps->loginNextDate = (unsigned int)ps->now + LTP_LOGIN_INTERVAL;
+			alert(-1,ALERT_OFFLINE,0);
 			return;
 		}
 		/*
@@ -2708,4 +2710,35 @@ void ltpOnPacket(struct ltpStack *ps, char *msg, int length, int address, short 
 		ltpIn(ps, address, port, msg, length);
 	else
 		rtpIn(ps, address, port, msg, length);
+}
+void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
+{
+	struct Call *pc;
+	struct ltp *ppack;
+	char *buff;
+	buff = malloc(1000);
+	if (lineid < 0 || ps->maxSlots <= lineid)
+	{
+		free(buff);	
+			return;
+	}
+	pc = ps->call + lineid;
+
+	if (pc->ltpState == CALL_IDLE || pc->ltpState == CALL_HANGING || strlen(msg) > 256)
+		return;
+
+	ppack = (struct ltp *) pc->ltpRequest;
+
+	ppack = (struct ltp *)buff;
+	zeroMemory(ppack, sizeof(struct ltp));
+	ppack->version = 1;
+	ppack->command = CMD_MSG;
+	ppack->session = pc->ltpSession;
+    ppack->msgid = pc->ltpSeq++;
+	strncpy(ppack->to, pc->remoteUserid, MAX_USERID);
+	strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+	strncpy(ppack->data, msg, 256);
+
+	callStartRequest(ps, pc, ppack);
+	free(buff);	
 }

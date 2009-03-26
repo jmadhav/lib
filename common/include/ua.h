@@ -144,6 +144,7 @@ profile related definitions
 /**
 	profile functions
 */
+
 void uaInit();
 extern int redirect, creditBalance;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
@@ -164,11 +165,14 @@ extern int unlink(char *filename);
 extern void relistVMails();
 extern void relistContacts();
 extern void relistCDRs();
+extern void cdrEmpty();
 extern void refreshDisplay();
 extern void createFolders();
+extern void cdrEmpty();
 extern unsigned long ticks();
-
-
+void profileReload();//add new function for reload
+//change for bug id 18641 
+void ResetTime();
 #ifdef __cplusplus
 }
 #endif
