@@ -1830,14 +1830,6 @@ void profileResync()
 //		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
 }
 
-//Kaustubh Deshpande Bug fix 18232.
-void profileReload()
-{
-	profileClear();
-	START_THREAD(profileDownload);
-}
-//KD
-
 void profileSetRedirection(int redirectTo)
 {
 	CreateThread(NULL, 0, profileDownload, (LPVOID)redirectTo, 0, NULL);
