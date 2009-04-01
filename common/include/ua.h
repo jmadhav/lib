@@ -149,6 +149,7 @@ void uaInit();
 extern int redirect, creditBalance;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
 void profileResync();
+void profileClear();
 void profileSave();
 void profileSetRedirection(int redirectTo);
 THREAD_PROC profileReloadEverything(void *something);
