@@ -1111,7 +1111,6 @@ void ltpLogin(struct ltpStack *ps, int command)
 			ps->myPriority = NORMAL_PRIORITY;
 			/* let's rest and try after sometime */
 			ps->loginNextDate = (unsigned int)ps->now + LTP_LOGIN_INTERVAL;
-			alert(-1,ALERT_OFFLINE,0);
 			return;
 		}
 		/*
@@ -2709,7 +2708,7 @@ ltpOnPacket()
 called by the application when any packet arrives at the ltp udp port
 */
 void ltpOnPacket(struct ltpStack *ps, char *msg, int length, int address, short port)
-{
+{	
 	if (length == 4)
 		return;
 
