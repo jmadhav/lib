@@ -149,6 +149,7 @@ void uaInit();
 extern int redirect, creditBalance;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
 void profileResync();
+void profileClear();
 void profileSave();
 void profileSetRedirection(int redirectTo);
 THREAD_PROC profileReloadEverything(void *something);
@@ -170,7 +171,6 @@ extern void refreshDisplay();
 extern void createFolders();
 extern void cdrEmpty();
 extern unsigned long ticks();
-void profileReload();//add new function for reload
 //change for bug id 18641 
 void ResetTime();
 #ifdef __cplusplus

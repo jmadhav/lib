@@ -1829,12 +1829,7 @@ void profileResync()
 	START_THREAD(profileDownload);
 //		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
 }
-void profileReload()
-{
-	profileClear();
-	START_THREAD(profileDownload);
-//		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
-}
+
 void profileSetRedirection(int redirectTo)
 {
 	CreateThread(NULL, 0, profileDownload, (LPVOID)redirectTo, 0, NULL);
