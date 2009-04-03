@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="ltpmobile_lib"
-	ProjectGUID="{02334581-848F-4399-AA14-7D7625FE3214}"
-	RootNamespace="ltpmobile_lib"
+	Name="libUA"
+	ProjectGUID="{47AF18C9-0281-4B33-99F8-662E0B3E51E1}"
+	RootNamespace="libUA"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\common\include;..\..\gsm"
+				AdditionalIncludeDirectories="..\..\lib\common\include;..\..\lib\common\src;..\..\lib\gsm;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="lib/$(ProjectName).lib"
+				OutputFile="d_lib/$(ProjectName).lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -104,9 +104,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="..\..\lib\common\include;..\..\lib\common\src;..\..\lib\gsm;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="2"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
@@ -122,7 +123,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$ltplib\$(ProjectName).lib"
+				OutputFile="r_lib\$(ProjectName).lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -150,10 +151,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\common\src\ltpmobile.c"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -161,7 +158,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
+						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
 				<FileConfiguration
@@ -173,6 +170,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="..\..\lib\common\src\ua.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -180,15 +181,27 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\gsm\GSM.H"
+				RelativePath="..\..\lib\common\include\blowfish.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\common\include\ltpmobile.h"
+				RelativePath="..\..\lib\common\include\ezxml.h"
+				>
+			</File>
+			<File
+				RelativePath="..\gsm\GSM.H"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\common\include\ltpmobile.h"
 				>
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\common\include\ua.h"
 				>
 			</File>
 		</Filter>
