@@ -2419,10 +2419,6 @@ void ltpHangup(struct ltpStack *ps, int lineid)
 
 	callStartRequest(ps, pc, NULL);
 	pc->retryCount = 3;
-	//added by mukesh to remove hungup button
-	pc->ltpState = CALL_IDLE;
-	//20070722 changed the hangup message
-	
 	alert(pc->lineId, ALERT_DISCONNECTED, "");
 }
 
