@@ -1426,9 +1426,10 @@ void profileMerge(){
 		return;
 	}
 
-	strxml = (char *)malloc(xmllength);
+	strxml = (char *)malloc(xmllength+1);
 	fseek(pf, 0, SEEK_SET);
 	fread(strxml, xmllength, 1, pf);
+	strxml[xmllength] = 0;
 		
 	xml = ezxml_parse_str(strxml, xmllength);
 
