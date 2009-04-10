@@ -146,7 +146,7 @@ profile related definitions
 */
 
 void uaInit();
-extern int redirect, creditBalance;
+extern int redirect, creditBalance, bandwidth;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
 void profileResync();
 void profileClear();
@@ -173,7 +173,10 @@ extern void cdrEmpty();
 extern unsigned long ticks();
 //change for bug id 18641 
 void ResetTime();
+//for voip quality
+void setBandwidth(unsigned long timeTaken,int byteCount);
 #ifdef __cplusplus
 }
+
 #endif
 #endif

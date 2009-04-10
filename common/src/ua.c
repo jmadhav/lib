@@ -23,6 +23,7 @@ char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
 char mailServer[100], myTitle[200], fwdnumber[32], myDID[32];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
+int bandwidth;
 
 /*
 ** Translation Table as described in RFC1113
@@ -1603,7 +1604,9 @@ THREAD_PROC profileDownload(void *extras)
 	FILE	*pfOut, *pfIn;
 	struct AddressBook *pc;
 	struct VMail *vm;
-
+	int	byteCount = 0;
+	unsigned long timeStart, timeFinished, timeTaken;
+    
 	if (busy > 0)
 		return 0;
 	else 
@@ -1737,8 +1740,11 @@ THREAD_PROC profileDownload(void *extras)
 		return 0;
 	}
 
+     timeStart = ticks();
+
 	//send the http headers
 	send(sock, header, strlen(header),0);
+	byteCount += strlen(header);
 	
 	//send the xml data
 	sprintf(pathUpload, "%s\\upload.xml", myFolder);
@@ -1747,8 +1753,10 @@ THREAD_PROC profileDownload(void *extras)
 		busy = 0;
 		return 0;
 	}
-	while((ret = fread(data, 1, sizeof(data), pfOut)) > 0)
+	while((ret = fread(data, 1, sizeof(data), pfOut)) > 0){
 		send(sock, data, ret, 0);
+		byteCount += ret;
+	}
 	fclose(pfOut);
 
 	//read the headers
@@ -1757,6 +1765,7 @@ THREAD_PROC profileDownload(void *extras)
 	isChunked = 0;
 	while (1){
 		length = readNetLine(sock, data, sizeof(data));
+		byteCount += length;
 		if (length <= 0)
 			break;
 		if (!strncmp(data, "Transfer-Encoding:", 18) && strstr(data, "chunked"))
@@ -1781,6 +1790,7 @@ THREAD_PROC profileDownload(void *extras)
 			length = readNetLine(sock, data, sizeof(data));
 			if (length <= 0)
 				break;
+			byteCount += length;
 			count = strtol(data, NULL, 16);
 			if (count <= 0)
 				break;
@@ -1790,6 +1800,7 @@ THREAD_PROC profileDownload(void *extras)
 				length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
 				if (length <= 0) //crap!! the socket closed
 					goto end;
+				byteCount += length;
 				fwrite(data, length, 1, pfIn);
 				count -= length;
 			}
@@ -1798,6 +1809,7 @@ THREAD_PROC profileDownload(void *extras)
 			length = readNetLine(sock, data, 2);
 			if (length != 2)
 				break;
+			byteCount += length;
 			//loop back to read the next chunk
 		}
 		else{ // read it in fixed blocks of data
@@ -1807,11 +1819,16 @@ THREAD_PROC profileDownload(void *extras)
 					fwrite(data, length, 1, pfIn);
 				else 
 					goto end;
+				byteCount += length;
 			}
 		}
 	}
 end:
 	fclose(pfIn); // close the download.xml handle
+    
+	timeFinished = ticks();
+	timeTaken = (timeFinished - timeStart);
+	setBandwidth(timeTaken,byteCount);
 
 	closesocket(sock);
 	profileMerge();
@@ -1849,4 +1866,30 @@ void uaInit()
 {
 	createFolders();
 	profileLoad();
+}
+
+
+void setBandwidth(unsigned long timeTaken,int byteCount)
+{
+	int bytesPerSecond = 0;
+
+	if (timeTaken <= 1)
+	{
+		bandwidth = 5;
+	}
+	else {
+	    bytesPerSecond = byteCount / timeTaken;
+		if (bytesPerSecond > 2000)
+			bandwidth = 5;
+		if((bytesPerSecond < 2000) && (bytesPerSecond > 1700))
+			bandwidth = 4;
+        if((bytesPerSecond < 1700) && (bytesPerSecond > 1400))
+			bandwidth = 3;
+		if((bytesPerSecond < 1400) && (bytesPerSecond > 1100))
+			bandwidth = 2;
+		if((bytesPerSecond < 1400) && (bytesPerSecond > 1100))
+			bandwidth = 1;
+		if(bytesPerSecond < 800)
+			bandwidth = 0;
+	}
 }
