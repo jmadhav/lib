@@ -1408,9 +1408,9 @@ void profileClear()
 
 void profileMerge(){
 	FILE	*pf;
-	char	pathname[MAX_PATH], *strxml;
+	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref;
 	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated;
-	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip;
+	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert;
 	struct AddressBook *pc;
 	int		nContacts = 0, xmllength, newVmails;
 
@@ -1433,6 +1433,16 @@ void profileMerge(){
 	strxml[xmllength] = 0;
 		
 	xml = ezxml_parse_str(strxml, xmllength);
+
+	//Tasvir Rohila - 10-04-2009 - bug#19095
+	//For upgrades or any other notification server sends <alert href="">Some msg</alert> in down.xml
+
+	if (xmlalert = ezxml_child(xml, "alert"))
+	{
+		phref = NULL;
+		phref = ezxml_attr(xmlalert, "href");
+		sprintf(stralert, "%s%c%s", phref ? phref : "", SEPARATOR, xmlalert->txt);
+	}
 
 	title = ezxml_child(xml, "t");
 	if (title)
@@ -1586,6 +1596,8 @@ void profileMerge(){
 		relistContacts();
 	}
 
+	if (xmlalert)
+		alert(-1, ALERT_SERVERMSG, stralert);
 }
 
 
@@ -1621,13 +1633,16 @@ THREAD_PROC profileDownload(void *extras)
 		busy = 0;
 		return 0;
 	}
+	//Tasvir Rohila - 10-04-2009 - bug#19095
+	//To check for upgrades or any other notification from the server, send <useragent> to userxml.cgi
 	fprintf(pfOut,  
 	"<?xml version=\"1.0\"?>\n"
 	"<profile>\n"
+	" <useragent>%s</useragent>\n"
 	" <u>%s</u>\n"
 	" <key>%s</key> \n"
 	" <since>%u</since> \n", 
-	pstack->ltpUserid, key, lastUpdate);
+	pstack->userAgent, pstack->ltpUserid, key, lastUpdate);
 
 	if (extras){
 		int	param = (int)extras;
