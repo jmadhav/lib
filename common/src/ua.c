@@ -24,7 +24,7 @@ char mailServer[100], myTitle[200], fwdnumber[32], myDID[32];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
-char userid[32];
+char uaUserid[32];
 
 /*
 ** Translation Table as described in RFC1113
@@ -1860,9 +1860,9 @@ end:
 
 void profileResync()
 {
-	if((userid && strcmp(userid,pstack->ltpUserid)!=0))
+	if((uaUserid  && strcmp(uaUserid ,pstack->ltpUserid)!=0))
 	{
-		strcpy(userid,pstack->ltpUserid);
+		strcpy(uaUserid ,pstack->ltpUserid);
 		profileClear();
 	}
 	START_THREAD(profileDownload);
@@ -1887,6 +1887,7 @@ void uaInit()
 {
 	createFolders();
 	profileLoad();
+	uaUserid[0]=0;
 }
 
 
