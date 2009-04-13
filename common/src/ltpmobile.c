@@ -1336,7 +1336,7 @@ static void onChallenge(struct ltpStack *ps, struct ltp *response, int fromip, s
 	   zero authenticate field as it was in the orignal request
 	   the challenge issued by the server is usually called 'Nonce' (short for nonsense)
 	   as it contains random bit pattern that is unpredictable */
-	if (response->command == CMD_LOGIN)
+	if (response->command == CMD_LOGIN || response->command == CMD_LOGOUT)
 	{
 		zeroMemory(ps->ltpNonce, 16);
 		strncpy(ps->ltpNonce, response->authenticate, 16);
