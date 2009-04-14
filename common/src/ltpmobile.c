@@ -33,7 +33,7 @@ trashed and the message is sent directly to the server. the server will then ret
 the redirect address or handle the message by itself.
 
 */
-
+	
 
 /* debug requires us to use printf to print the traces of the debug messages
 which is why we will require to include stdio.h, otherwise, there is no need
@@ -2027,6 +2027,12 @@ static void onHangup(struct ltpStack *ps, struct ltp *ppack, int fromip, short f
 	ppack->contactPort = pc->fwdPort;
 	pc->timeStop = ps->now;
 	//added by mukesh to remove hungup button
+	
+	if (pc->ltpState != CALL_IDLE)
+	{
+		if (pc->ltpState != CALL_CONNECTED)
+			pc->kindOfCall |= CALLTYPE_MISSED;
+	}
 	pc->ltpState = CALL_IDLE;
 	//20070722 changed the data to what the remote is saying
 	alert(pc->lineId, ALERT_DISCONNECTED, ppack->data);
