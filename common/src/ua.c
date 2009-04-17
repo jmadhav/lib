@@ -37,7 +37,7 @@ static const char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01
 static const char cd64[]="|$$$}rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$$$XYZ[\\]^_`abcdefghijklmnopq";
 
 //base64 encoder
-void encodeblock( unsigned char in[3], unsigned char out[4], int len )
+static void encodeblock( unsigned char in[3], unsigned char out[4], int len )
 {
     out[0] = cb64[ in[0] >> 2 ];
     out[1] = cb64[ ((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4) ];
@@ -48,7 +48,7 @@ void encodeblock( unsigned char in[3], unsigned char out[4], int len )
 /*
 ** (base64 decoder) decode 4 '6-bit' characters into 3 8-bit binary bytes
 */
-void decodeblock( unsigned char in[4], unsigned char out[3] )
+static void decodeblock( unsigned char in[4], unsigned char out[3] )
 {   
     out[ 0 ] = (unsigned char ) (in[0] << 2 | in[1] >> 4);
     out[ 1 ] = (unsigned char ) (in[1] << 4 | in[2] >> 2);
@@ -205,11 +205,127 @@ static int readNetLine(int sock, char *buff, int maxlength)
 }
 
 
+static int restCall(char *requestfile, char *responsefile, char *host, char *url)
+{
+	FILE	*pf;
+	SOCKET	sock;
+	char	data[10000], header[1000];
+	struct	sockaddr_in	addr;
+	int	byteCount = 0, isChunked = 1, contentLength = 0, ret, length;
+
+	pf = fopen(requestfile, "rb");
+	if (!pf)
+		return 0;
+	fseek(pf, 0, SEEK_END);
+	contentLength = ftell(pf);
+	fclose(pf);
+
+	//prepare the http header
+	sprintf(header, 
+		"POST %s HTTP/1.1\r\n"
+		"Host: %s\r\n"
+		"Content-Length: %d\r\n\r\n",
+		url, host, contentLength);
+
+	addr.sin_addr.s_addr = lookupDNS(host);
+	if (addr.sin_addr.s_addr == INADDR_NONE)
+		return 0;
+	
+	addr.sin_port = htons(80);	
+	addr.sin_family = AF_INET;
+
+	//try connecting the socket
+	sock = (int)socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
+		return 0;
+
+	//send the http headers
+	send(sock, header, strlen(header),0);
+	byteCount += strlen(header);
+	
+	//send the xml data
+	pf = fopen(requestfile, "rb");
+	if (!pf)
+		return 0;
+	
+	while((ret = fread(data, 1, sizeof(data), pf)) > 0){
+		send(sock, data, ret, 0);
+		byteCount += ret;
+	}
+	fclose(pf);
+
+	//read the headers
+	//Tasvir Rohila - bug#18352 & #18353 - Initialize isChunked to zero for profile to download & 
+	//Add/Delete contact to work.
+	isChunked = 0;
+	while (1){
+		int length = readNetLine(sock, data, sizeof(data));
+		byteCount += length;
+		if (length <= 0)
+			break;
+		if (!strncmp(data, "Transfer-Encoding:", 18) && strstr(data, "chunked"))
+			isChunked = 1;
+		if (!strcmp(data, "\r\n"))
+			break;
+	}
+
+	//prepare to download xml
+	pf = fopen(responsefile, "w");
+	if (!pf)
+		return 0;
+
+	//read the body 
+	while (1) {
+		if (isChunked){
+			int count;
+
+			length = readNetLine(sock, data, sizeof(data));
+			if (length <= 0)
+				break;
+			byteCount += length;
+			count = strtol(data, NULL, 16);
+			if (count <= 0)
+				break;
+
+			//read the chunk in multiple calls to read
+			while(count){
+				length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
+				if (length <= 0) //crap!! the socket closed
+					goto end;
+				byteCount += length;
+				fwrite(data, length, 1, pf);
+				count -= length;
+			}
+
+			//read the \r\n after the chunk (if any)
+			length = readNetLine(sock, data, 2);
+			if (length != 2)
+				break;
+			byteCount += length;
+			//loop back to read the next chunk
+		}
+		else{ // read it in fixed blocks of data
+			while (1){
+				length = recv(sock, data, sizeof(data), 0);
+				if (length > 0)
+					fwrite(data, length, 1, pf);
+				else 
+					goto end;
+				byteCount += length;
+			}
+		}
+	}
+end:
+	fclose(pf); // close the download.xml handle
+	return byteCount;
+}
+
+
 /*
 	CDR functions
 */
 
-void cdrEmpty()
+static void cdrEmpty()
 {
 	struct CDR *p, *q;
 
@@ -222,7 +338,7 @@ void cdrEmpty()
 	listCDRs = NULL;
 }
 
-void cdrSave(){
+static void cdrSave(){
 	char pathname[MAX_PATH];
 	struct	 CDR *q;
 	char	line[1000];
@@ -242,7 +358,7 @@ void cdrSave(){
 }
 
 
-void cdrCompact() {
+static void cdrCompact() {
 	struct CDR *p, *q;
 	//check if the cdr count has exceeded 200
 	int i = 0;
@@ -387,8 +503,7 @@ void cdrLoad() {
 }
 
 void cdrRemoveAll()
-{
-	
+{	
 	cdrSave();
 	cdrEmpty();
 }
@@ -532,7 +647,7 @@ int indexOf(char *title, char *query)
 }
 
 
-void updateContactPresence(int id, int presence)
+static void updateContactPresence(int id, int presence)
 {
 	struct AddressBook	*p;
 
@@ -712,217 +827,215 @@ void vmsEmpty()
 	listVMails = NULL;
 }
 
-//the vmails are saved in a very wierd format of one xml object per line. dont put a line-break within <vm> ... </vm>
-void vmsSave(){
-	char pathname[MAX_PATH];
-	char	line[1000];
-	struct	 VMail *q;
-	FILE	*pf;
-
-	sprintf(pathname, "%s\\vmails.txt", myFolder);
-	pf = fopen(pathname, "w");
-	if (!pf)
-		return;
-	
-	for (q = listVMails; q; q = q->next){
-		if (q->status == VMAIL_STATUS_DONE)
-			continue;
-		sprintf(line, "<vm><date>%u</date><userid>%s</userid><id>%s</id><direction>%s</direction>",
-			(unsigned int)q->date, q->userid, q->vmsid, q->direction == VMAIL_OUT ? "out" : "in");
-		fwrite(line, strlen(line), 1, pf);
-
-		switch(q->status){
-			case VMAIL_STATUS_NEW:
-				strcpy(line, "<status>new</status>");
-				break;
-			case VMAIL_STATUS_DELETE:
-				strcpy(line, "<status>delete</status>");
-				break;
-
-				//inbox
-			case VMAIL_STATUS_DONE:
-				strcpy(line, "<status>done</status>");
-				break;
-			case VMAIL_STATUS_READY:
-				strcpy(line, "<status>ready</status>");
-				break;
-			case VMAIL_STATUS_OPENED:
-				strcpy(line, "<status>opened</status>");
-				break;
-				//outbox
-			case VMAIL_STATUS_UPLOADED:
-				strcpy(line, "<status>done</status>");
-				break;
-			case VMAIL_STATUS_DELIVERED:
-				strcpy(line, "<status>delivered</status>");
-				break;				
-		}
-		strcat(line, "</vm>\n");
-		fwrite(line, strlen(line), 1, pf);
-	}
-	fclose(pf);
-}
-
-void vmsLoad() 
+struct VMail *vmsById(char *id)
 {
-	FILE	*pf;
-	char	pathname[MAX_PATH];
-	struct VMail *p, *tail;
-	int		index;
-	char	line[1000];
-	ezxml_t	vmail, date, userid, vmsid, direction, status;
-
-	sprintf(pathname, "%s\\vmails.txt", myFolder);
-	pf = fopen(pathname, "r");
-	if (!pf)
-		return;
-
-	index = 0;
-	tail = NULL;
-	while (fgets(line, 999, pf)){
-		vmail = ezxml_parse_str(line, strlen(line));
-		if (!vmail)
-			continue;
-
-		date = ezxml_child(vmail, "date");
-		vmsid = ezxml_child(vmail, "id");
-		userid = ezxml_child(vmail, "userid");
-		direction = ezxml_child(vmail, "direction");
-		status = ezxml_child(vmail, "status");
-
-		if (!status)
-			continue;
-		if (!strcmp(status->txt, "done"))
-			continue;
-
-		p = (struct VMail *) malloc(sizeof(struct VMail));
-		if (!p){
-			fclose(pf);
-			ezxml_free(vmail);
-			return;
-		}
-		memset(p, 0, sizeof(struct VMail));
-		if (date)
-			p->date = (unsigned long)atol(date->txt);
-		if (userid)
-			strcpy(p->userid, userid->txt);
-		if (vmsid)
-			strcpy(p->vmsid, vmsid->txt);
+	struct VMail *p;
 	
-		if (direction){
-			if (!strcmp(direction->txt, "out"))
-				p->direction = VMAIL_OUT;
-			else
-				p->direction = VMAIL_IN;
-		}
-		
-		if (!strcmp(status->txt, "new"))
-			p->status = VMAIL_STATUS_NEW;
-		else if (!strcmp(status->txt, "delete"))
-			p->status = VMAIL_STATUS_DELETE;
-		else if (!strcmp(status->txt, "ready"))
-			p->status = VMAIL_STATUS_READY;
-		else if (!strcmp(status->txt, "opened"))
-			p->status = VMAIL_STATUS_OPENED;
-		else if (!strcmp(status->txt, "delivered"))
-			p->status = VMAIL_STATUS_DELIVERED;
-
-		//add to the tail of the list
-		if (tail)
-			tail->next = p;
-		else
-			listVMails = p;
-		tail = p;
-	}
-	fclose(pf);
+	for (p = listVMails; p; p = p->next)
+		if (!strcmp(p->vmsid, id))
+			return p;
+	return NULL;
 }
 
-void vmsCompact() {
+static void vmsSort()
+{
+	struct VMail *newList, *i, *p, *prev, *nextOld;
+
+	newList = NULL;
+
+	for (i = listVMails; i; i = nextOld){
+
+		nextOld = i->next;
+
+		//insert it in the begining if the list is empty
+		if (!newList){
+			i->next =NULL; //keep the pointers of the current list clean - multithreading requirement
+			newList = i;
+		}
+		else {
+			//forward to the object with id greater than the new object
+			for (prev = NULL, p = newList; p; p = p->next){
+				if (atol(p->vmsid) < atol(i->vmsid))
+					break;
+				prev = p;
+			}
+
+			//i has to be inserted before p
+			if (prev)
+				prev->next = i;
+			else
+				newList = i;
+			i->next = p; //keep the pointers of the current list clean - multithreading requirement
+		}
+
+	} //take the next item of the old list
+
+	//swap the lists
+	listVMails = newList;
+}
+
+static struct VMail *vmsRead(ezxml_t vmail)
+{
+	struct VMail *p;
+	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete;
+
+	date = ezxml_child(vmail, "dt");
+	vmsid = ezxml_child(vmail, "id");
+	userid = ezxml_child(vmail, "u");
+	direction = ezxml_child(vmail, "dir");
+	status = ezxml_child(vmail, "status");
+	hashid = ezxml_child(vmail, "hashid");
+	deleted = ezxml_child(vmail, "deleted");
+	toDelete = ezxml_child(vmail, "todelete");
+
+	//check for all the required tags within <vm>
+	if (!status || !date || !vmsid || !userid || !direction 
+		|| !status || !hashid)
+		return NULL;
+
+	//if no vmail exists, then create a new one at the head of listVMails
+	p = vmsById(vmsid->txt);
+
+	if (!p){
+		p = (struct VMail *) malloc(sizeof(struct VMail));
+		if (!p)
+			return NULL;
+		memset(p, 0, sizeof(struct VMail));
+		strcpy(p->hashid, hashid->txt);
+		strcpy(p->vmsid, vmsid->txt);
+		//make this 'starred', this is fresh mail
+	
+		if(listVMails)
+			p->next = listVMails;
+		listVMails = p;
+	}
+
+	//update the vmail
+	p->date = (unsigned long)atol(date->txt);
+	strcpy(p->userid, userid->txt);
+	strcpy(p->vmsid, vmsid->txt);
+
+	if (deleted){
+		if (!strcmp(deleted->txt, "1"))
+			p->deleted = 1;
+		else
+			p->deleted = 0;
+	}
+
+	if (toDelete)
+		p->toDelete = 1;
+
+	if (!strcmp(direction->txt, "out"))
+		p->direction = VMAIL_OUT;
+	else
+		p->direction = VMAIL_IN;
+	
+	if (!strcmp(status->txt, "new"))
+		p->status = VMAIL_NEW;
+	else if (!strcmp(status->txt, "active"))
+		p->status = VMAIL_ACTIVE;
+	else if (!strcmp(status->txt, "delivered"))
+		p->status = VMAIL_DELIVERED;
+	else
+		p->status = VMAIL_FAILED;
+
+	return p;
+}
+
+static int vmsWrite(FILE *pf, struct VMail *p)
+{
+	//don't write those that are deleted already
+	if (p->deleted)
+		return 0;
+
+	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir>",
+		(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in");
+	
+	if (p->deleted)
+		fprintf(pf, "<deleted>1</deleted>");
+	switch(p->status){
+	case VMAIL_NEW:
+		fprintf(pf, "<status>new</status>");
+		break;
+	case VMAIL_DELIVERED:
+		fprintf(pf, "<status>delivered</status>");
+		break;
+	case VMAIL_ACTIVE:
+		fprintf(pf, "<status>active</status>");
+		break;
+	default:
+		fprintf(pf, "<status>failed</status>");
+	}
+
+	if (p->toDelete)
+		fprintf(pf, "<todelete>1</todelete>");
+	fprintf(pf, "</vm>\n");
+
+	return 1;
+}
+
+static void vmsCompact(){
+	char path[MAX_PATH];
 	struct VMail *p, *q;
-	//check if the cdr count has exceeded 200
 	int i = 0;
-	for (q = listVMails; q; q = q->next)
+
+	for (p = listVMails; p && i < VMAIL_MAXCOUNT; p = p->next)
 		i++;
 	
-	//high water point is 300
-	if (i < 300)
+	if (!p)
 		return;
 
-	//remove all the cdrs past the 200th
-	for (i = 0, p = listVMails; p; p = p->next)
-		if (i == 200)
-			break;
-
-	//place a null to truncate this list
+	//remove all the cdrs past this point
 	q = p->next;
 	p->next = NULL;
 
-	//remove the rest of the tail
 	while (q){
+		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
+		unlink(path);
 		p = q->next;
 		free(q);
 		q = p;
 	}
-	vmsSave();
 }
 
 void vmsDelete(struct VMail *p)
 {
-	struct VMail *q;
 	char	path[MAX_PATH];
 	if (!p)
 		return;
 
-	//Tasvir Rohila - 05/03/2009 - bug#18256 - Find this node in listVmails and delete it, rather than marking it as VMAIL_STATUS_DELETE.
-	if (p == listVMails) {
-		listVMails = p->next;
-	}
-	else {
-		//delink the Vmail
-		for (q = listVMails; q->next; q = q->next){
-			if (q->next == p){
-				q->next = p->next;
-				break;
-			}
-		}
-	}
+	//keep the vmail in the log file
+	p->toDelete = 1;
+	sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
+	unlink(path);
 
-	//free the node, delete the file
-	if (p){
-		if (p->direction == VMAIL_IN)
-			sprintf(path, "%s\\%s.gsm", vmFolder, p->vmsid);
-		else
-			sprintf(path, "%s\\%s.gsm", outFolder, p->vmsid);
-
-		free(p);
-
-		unlink(path);
-	}
-	vmsSave();
 	profileResync();
 }
 
-struct VMail *vmsUpdate(char *userid, char *vmsid, time_t time, int status, int direction)
+struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
 {
-	struct	VMail	*p;
+	struct	VMail	*p=NULL;
 	int		isNew=1;
 
-	//search if this is an update to an existing vms, if so, just update the status and return
-	for (p = listVMails; p; p = p->next){
-		if (!strcmp(p->vmsid, vmsid)){
-			p->status = status;
-			vmsSave();
-			return p;
-		}
+	if (vmsid)
+		p = vmsById(vmsid);
+
+	//if it already exists, then update the status and return
+	if (p){
+		p->status = status;
+		return p;
 	}
 
+	//hmm this looks like a new one
 	p = (struct VMail *) malloc(sizeof(struct VMail));
 	if (!p)
 		return NULL;
 	memset(p, 0, sizeof(struct VMail));
 
 	strcpy(p->userid, userid);
-	strcpy(p->vmsid, vmsid);
+	if (vmsid)
+		strcpy(p->vmsid, vmsid);
+	strcpy(p->hashid, hashid);
 	p->date = (time_t)time;
 	p->direction = direction;
 	p->status = status;
@@ -933,102 +1046,93 @@ struct VMail *vmsUpdate(char *userid, char *vmsid, time_t time, int status, int 
 	else {
 		p->next = listVMails;
 		listVMails = p;
-
 	}
 
-	vmsSave();
+	profileSave();
 	return p;
 }
 
 static void vmsUpload(struct VMail *v)
 {
-	char buffer[3000], key[100], *strxml;
-	unsigned char g[10], b64[10];
-	SOCKET sock;
-	struct sockaddr_in	addr;
-	char	path[MAX_PATH];
+	char	key[100], *strxml;
+	unsigned char g[10], b64[10], buffer[10000];
+	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
-	int		length, i;
+	int		length, byteCount;
 
-	sprintf(path, "%s\\%s.gsm", outFolder, v->vmsid);
+	if (v->direction != VMAIL_OUT || v->status != VMAIL_NEW)
+		return;
+
+	sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
 	pfIn = fopen(path, "rb");
 	if (!pfIn){
-		v->status = VMAIL_STATUS_DONE;
+		v->toDelete = 1;
 		return;
 	}
 
-	sprintf(path, "%s\\upvmail.txt", myFolder);
-	pfOut = fopen(path, "wb");
+	sprintf(requestfile, "%s\\vmaireq.txt", myFolder);
+	sprintf(responsefile, "%s\\vmailresp.txt", myFolder);
+
+	pfOut = fopen(requestfile, "wb");
 	if (!pfOut){
 		fclose(pfIn);
 		return;
 	}
 
 	httpCookie(key);
-	fprintf(pfOut, "<callout>\n <u>%s</u><key>%s</key>\n <dest>%s</dest>\n <gsm>", pstack->ltpUserid, key, v->userid);
+	fprintf(pfOut, "<?xml version=\"1.0\"?><vms>\n <u>%s</u><key>%s</key>\n <dest>%s</dest><hashid>%s</hashid>\n <gsm>", 
+		pstack->ltpUserid, key, v->userid, v->hashid);
 	while (fread(g, 3, 1, pfIn)>0){
 		encodeblock(g, b64, 3);
 		fwrite(b64, 4, 1, pfOut);
 	}
 	fclose(pfIn);
-	fprintf(pfOut, "</gsm>\n</callout>\n");
-	length = ftell(pfOut);
+	fprintf(pfOut, "</gsm>\n</vms>\n");
 	fclose(pfOut);
 
-	sprintf(buffer, 
-		"POST //cgi-bin//xcallout.cgi HTTP/1.1\r\n"
-		"Host: %s\r\n"
-		"Content-Length: %d\r\n\r\n", 
-		mailServer, length);
-
-	addr.sin_addr.s_addr = lookupDNS(mailServer);
-	if (addr.sin_addr.s_addr == INADDR_NONE)
+	byteCount = restCall(requestfile, responsefile, mailServer, "/cgi-bin/vmsoutbound.cgi");
+	if (!byteCount)
 		return;
-	addr.sin_port = htons(80);	
-	addr.sin_family = AF_INET;
 
-	sock = (int)socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))){
-		closesocket(sock);
-		return;
-	}
-	//send the http headers
-	send(sock, buffer, strlen(buffer),0);
-	pfOut = fopen(path, "rb");
-	if (!pfOut){
+	pfIn = fopen(responsefile, "rb");
+	if (!pfIn){
+		alert(-1, ALERT_VMAILERROR, "Failed to upload.");
 		return;
 	}
 
-	while((i = fread(buffer, 1, sizeof(buffer), pfOut)) > 0)
-		send(sock, buffer, i, 0);
-	fclose(pfOut);
+	length = fread(buffer, 1, sizeof(buffer), pfIn);
+	fclose(pfIn);
+	if (length < 40){
+		alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
+		return;
+	}
+	buffer[length] = 0;
 
-	i = recv(sock, buffer, sizeof(buffer), 0);
-	buffer[i] =  0;
-	closesocket(sock);
-	
 	strxml = strstr(buffer, "<?xml");
 
 	//todo check that the response is not 'o' and store the returned value as the vmsid
 	if (strxml){
-		ezxml_t xml, status;
+		ezxml_t xml, status, vmsid;
 
 		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
 			if (status = ezxml_child(xml, "status")){
-				if (!strcmp(status->txt, "ok")){
-					sprintf(path, "%s\\%s.gsm", outFolder, v->vmsid);
-					unlink(path);
-					//farhan, 2008 feb 28, i am changing the status to VMAIL_STATUS_DONE instead of VMAIL_STATUS_UPLOADED
-					// to force it to be removed from the voicemail list
-					v->status = VMAIL_STATUS_DONE;
-				}else 
-					alert(-1, ALERT_VMAILERROR, "Voicemail server problem");
+
+				vmsid = ezxml_child(xml, "id");
+				if (vmsid)
+					strcpy(v->vmsid, vmsid->txt);
+				else
+					alert(-1, ALERT_VMAILERROR, "Voicemail response incorrect");
+
+				if (!strcmp(status->txt, "active"))
+					v->status = VMAIL_ACTIVE;
+				else
+					alert(-1, ALERT_VMAILERROR, "Voicemail upload failed");
 			}
 			ezxml_free(xml);
 		}
 	}
-	sprintf(path, "%s\\upvmail.txt", myFolder);
-	unlink(path);
+	unlink(requestfile);
+	unlink(responsefile);
 }
 
 static void vmsUploadAll()
@@ -1036,10 +1140,9 @@ static void vmsUploadAll()
 	struct VMail *p;
 
 	for (p = listVMails; p; p = p->next){
-		if (p->direction == VMAIL_OUT && p->status == VMAIL_STATUS_NEW)
+		if (p->direction == VMAIL_OUT && p->status == VMAIL_NEW)
 			vmsUpload(p);
 	}
-	vmsSave();
 }
 
 static void vmsDownload()
@@ -1056,12 +1159,11 @@ static void vmsDownload()
 
 	for (p = listVMails; p; p = p->next) {
 	
-		if (p->direction == VMAIL_OUT)
-			continue;
-		if (p->status != VMAIL_STATUS_NEW)
+		if (p->status == VMAIL_NEW)
 			continue;
 
-		sprintf(pathname, "%s\\%s.gsm", vmFolder, p->vmsid);
+		//if the file is already downloaded, move on
+		sprintf(pathname, "%s\\%s.gsm", vmFolder, p->hashid);
 		pfIn = fopen(pathname, "r");
 		if (pfIn){
 			fclose(pfIn);
@@ -1071,9 +1173,9 @@ static void vmsDownload()
 
 		//prepare the http header
 		sprintf(header, 
-			"GET /cgi-bin/playgsm.cgi?userid=%s&key=%s&id=%s HTTP/1.1\r\n"
+			"GET /cgi-bin/download.cgi?userid=%s&key=%s&hashid=%s&type=gsm HTTP/1.1\r\n"
 			"Host: %s\r\n\r\n",
-			pstack->ltpUserid, key, p->vmsid, mailServer);
+			pstack->ltpUserid, key, p->hashid, mailServer);
 
 		addr.sin_addr.s_addr = lookupDNS(mailServer);
 		if (addr.sin_addr.s_addr == INADDR_NONE)
@@ -1152,12 +1254,7 @@ end:
 		closesocket(sock);
 	} //loop over for the next voice mail
 }
-//change for bug id 18641 
-void ResetTime()
-{
-	lastUpdate = 0;//this function is call from logout
-	
-}
+
 /** 
 profile routines
 */
@@ -1166,18 +1263,19 @@ profile routines
 void profileSave(){
 	char	pathname[MAX_PATH];
 	struct AddressBook *p;
+	struct VMail *v;
 	FILE	*pf;
 	unsigned char szData[32], szEncPass[64], szBuffIn[10], szBuffOut[10];
 	BLOWFISH_CTX ctx;
-	int i, j, len;
+	int i, len;
 
-	sprintf(pathname, "%s\\hfprofile.xml", myFolder);
+	sprintf(pathname, "%s\\profile.xml", myFolder);
 	pf = fopen(pathname, "w");
 	if (!pf)
 		return;
 
 	//Tasvir Rohila - 25/02/2009 - bug#17212.
-	//Encrypt the password before saving to hfprofile.xml
+	//Encrypt the password before saving to profile.xml
 	memset(szData, '\0', sizeof(szData));
 	strcpy(szData,pstack->ltpPassword);
 
@@ -1187,7 +1285,7 @@ void profileSave(){
 		   Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
 	szData[31] = '\0'; //important to NULL terminate;
 
-	//Output of Blowfish_Encrypt() is binary, which needs to be stored in plain-text in hfprofile.xml for ezxml to understand and parse.
+	//Output of Blowfish_Encrypt() is binary, which needs to be stored in plain-text in profile.xml for ezxml to understand and parse.
 	//Hence base64 encode the cyphertext.
 	memset(szEncPass, 0, sizeof(szEncPass));
 	memset(szBuffIn, 0, sizeof(szBuffIn));
@@ -1211,7 +1309,8 @@ void profileSave(){
 		fprintf(pf, "<fwd>%s</fwd>\n", fwdnumber);
 	if (strlen(mailServer))
 		fprintf(pf, "<mailserver>%s</mailserver>\n", mailServer);
-	//now output the contacts
+	
+	//the contacts
 	for (p = getContactsList(); p; p = p->next){
 		fprintf(pf, " <vc><id>%u</id><t>%s</t>", p->id, p->title);
 		if (p->mobile[0])
@@ -1230,6 +1329,11 @@ void profileSave(){
 			fprintf(pf, "<fav>1</fav>");
 		fprintf(pf, "</vc>\n");
 	}
+
+	//the vmails
+	for (v = listVMails; v; v = v->next)
+		vmsWrite(pf, v);
+
 	fprintf(pf, "</profile>\n");
 	fclose(pf);
 }
@@ -1242,7 +1346,7 @@ void profileLoad()
 	int	 xmllength;
 	char *strxml;
 	ezxml_t xml, contact, id, title, mobile, home, business, favourite, mailserverip;
-	ezxml_t userid, password, server, lastupdate, dirty, status, vms, dated, fwd, email;
+	ezxml_t userid, password, server, lastupdate, dirty, status, vms, fwd, email;
 	char empty[] = "";
 	struct AddressBook *p;
 	unsigned char v, szData[32], szBuffIn[10], szBuffOut[10];
@@ -1250,14 +1354,12 @@ void profileLoad()
 	int i, j, len;
 
 	strcpy(pstack->ltpServerName, "64.49.236.88");
-	sprintf(pathname, "%s\\hfprofile.xml", myFolder);
+	sprintf(pathname, "%s\\profile.xml", myFolder);
 
 	pf = fopen(pathname, "r");
 	if (!pf)
-	{
-		
 		return;
-	}	
+
 	fseek(pf, 0, SEEK_END);
 	xmllength = ftell(pf);
 	if (xmllength <= 0){
@@ -1277,7 +1379,7 @@ void profileLoad()
 		strcpy(pstack->ltpUserid, userid->txt);
 
 	//Tasvir Rohila - 25/02/2009 - bug#17212.
-	//Decrypt the password read from hfprofile.xml
+	//Decrypt the password read from profile.xml
 	//Now that password is stored encrypted, <password> tag is replaced by <encpassword>
 	if (password = ezxml_child(xml, "encpassword"))
 	{
@@ -1366,24 +1468,11 @@ void profileLoad()
 			if (!strcmp(dirty->txt, "1"))
 				p->dirty = 1;
 	}
-
 	sortContacts();
 
 	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next)
-	{
-		id = ezxml_child(vms, "id");
-		if (!id)
-			continue;
-		contact = ezxml_child(vms, "u");
-		dated = ezxml_child(vms, "dt");
-		vmsUpdate(
-			contact? contact->txt : "Unknown", 
-			id->txt, 
-			dated ? (unsigned long)atol(dated->txt) : 0,
-			VMAIL_STATUS_NEW,
-			VMAIL_IN
-			);
-	}
+		vmsRead(vms);
+	vmsSort();
 
 	ezxml_free(xml);
 	free(strxml);
@@ -1393,7 +1482,7 @@ void profileClear()
 {
 	char	pathname[MAX_PATH];
 
-	sprintf(pathname, "%s\\hfprofile.xml", myFolder);
+	sprintf(pathname, "%s\\profile.xml", myFolder);
 	unlink(pathname);
 	lastUpdate = 0;
 	myTitle[0] = 0;
@@ -1401,7 +1490,6 @@ void profileClear()
 	fwdnumber[0] = 0;
 	resetContacts();
 	vmsEmpty();
-	vmsSave();
 	relistContacts();
 	relistVMails();
 }
@@ -1413,7 +1501,7 @@ void profileMerge(){
 	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated;
 	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert;
 	struct AddressBook *pc;
-	int		nContacts = 0, xmllength, newVmails;
+	int		nContacts = 0, xmllength, newMails;
 
 	char empty[] = "";
 
@@ -1564,32 +1652,24 @@ void profileMerge(){
 		nContacts++;
 	}
 
-	newVmails = 0;
-	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next)
-	{
-		id = ezxml_child(vms, "id");
-		if (!id)
-			continue;
-		contact = ezxml_child(vms, "u");
-		dated = ezxml_child(vms, "dt");
-		vmsUpdate(
-			contact? contact->txt : "Unknown", 
-			id->txt, 
-			dated ? (unsigned long)atol(dated->txt) : 0,
-			VMAIL_STATUS_NEW,
-			VMAIL_IN);
-		newVmails++;
+	newMails = 0;
+	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next){
+		struct VMail *pv = vmsRead(vms);
+		if (pv)
+			pv->isNew = 1;
+		newMails++;
 	}
 
 	ezxml_free(xml);
 	free(strxml);
 	fclose(pf);
 
-	//relist vmails if any new ones have arrived
-	if (newVmails){
+	//TBD detect new voicemails and alert the user
+	if (newMails){
 		alert(-1, ALERT_NEWVMAIL, NULL);
+		vmsSort();
 		relistVMails();	
-	}
+	} 
 
 	//relist contacts if any contacts have changed or are added
 	if (nContacts){
@@ -1609,12 +1689,10 @@ void profileMerge(){
 //DWORD WINAPI downloadProfile(LPVOID extras)
 THREAD_PROC profileDownload(void *extras)
 {
-	char	data[10000], key[64], header[1000];
-	int		length, ret, isChunked, contentLength, ndirty;
+	char	key[64];
+	int		ndirty;
 	char	pathUpload[MAX_PATH], pathDown[MAX_PATH];
-	SOCKET sock;
-	struct sockaddr_in	addr;
-	FILE	*pfOut, *pfIn;
+	FILE	*pfOut;
 	struct AddressBook *pc;
 	struct VMail *vm;
 	int	byteCount = 0;
@@ -1660,19 +1738,6 @@ THREAD_PROC profileDownload(void *extras)
 		}
 	}
 
-	//open this when you add conversations and msgeditor.cpp
-/*
-	//yay!! no blocks.
-	for (pcon = conversations; pcon; pcon = pcon->next)
-		for (psms = pcon->list; psms; psms =psms->next)
-			if (psms->unsent && psms->direction == MSG_OUT){
-				for (n = 0; n < pcon->npeers; n++){ //userid, content
-					struct Peer *peer = pcon->peer + n;
-					fprintf(pfOut, "<sms><dest>%s</dest><body>%s</body></sms>\n", peer->userid, psms->utfBody);
-				}
-				psms->unsent = 0;
-			}
-*/
 	//check for new contacts
 	ndirty = 0;
 	for (pc = getContactsList(); pc; pc = pc->next)
@@ -1713,7 +1778,7 @@ THREAD_PROC profileDownload(void *extras)
 			ndirty++;
 
 	for (vm = listVMails; vm; vm = vm->next)
-		if (vm->status == VMAIL_STATUS_DELETE)
+		if (vm->toDelete)
 			ndirty++;
 
 	if (ndirty){
@@ -1725,135 +1790,31 @@ THREAD_PROC profileDownload(void *extras)
 					(unsigned long)pc->id);
 
 		for (vm = listVMails; vm; vm = vm->next)
-			if (vm->status == VMAIL_STATUS_DELETE)
+			if (vm->toDelete)
 				fprintf(pfOut, " <vm><id>%s</id></vm>\n", vm->vmsid);
 		fprintf(pfOut, "</del>\n");
 	}
 
 	fprintf(pfOut, "</profile>\n");
-	contentLength = ftell(pfOut);
 	fclose(pfOut);
 
-	//prepare the http header
-	sprintf(header, 
-		"POST /cgi-bin/userxml.cgi HTTP/1.1\r\n"
-		"Host: %s\r\n"
-		"Content-Length: %d\r\n\r\n",
-		pstack->ltpServerName, contentLength);
-
-	addr.sin_addr.s_addr = lookupDNS(pstack->ltpServerName);
-	if (addr.sin_addr.s_addr == INADDR_NONE){
-		busy = 0;
-		return 0;
-	}
-	addr.sin_port = htons(80);	
-	addr.sin_family = AF_INET;
-
-	//try connecting the socket
-	sock = (int)socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))){
-		busy = 0;
-		return 0;
-	}
-
-     timeStart = ticks();
-
-	//send the http headers
-	send(sock, header, strlen(header),0);
-	byteCount += strlen(header);
-	
-	//send the xml data
-	sprintf(pathUpload, "%s\\upload.xml", myFolder);
-	pfOut = fopen(pathUpload, "rb");
-	if (!pfOut){
-		busy = 0;
-		return 0;
-	}
-	while((ret = fread(data, 1, sizeof(data), pfOut)) > 0){
-		send(sock, data, ret, 0);
-		byteCount += ret;
-	}
-	fclose(pfOut);
-
-	//read the headers
-	//Tasvir Rohila - bug#18352 & #18353 - Initialize isChunked to zero for profile to download & 
-	//Add/Delete contact to work.
-	isChunked = 0;
-	while (1){
-		length = readNetLine(sock, data, sizeof(data));
-		byteCount += length;
-		if (length <= 0)
-			break;
-		if (!strncmp(data, "Transfer-Encoding:", 18) && strstr(data, "chunked"))
-			isChunked = 1;
-		if (!strcmp(data, "\r\n"))
-			break;
-	}
-
-	//prepare to download xml
+    timeStart = ticks();
 	sprintf(pathDown, "%s\\down.xml", myFolder);
-	pfIn = fopen(pathDown, "w");
-	if (!pfIn){
-		busy = 0;
-		return 0;
-	}
 
-	//read the body 
-	while (1) {
-		if (isChunked){
-			int count;
-
-			length = readNetLine(sock, data, sizeof(data));
-			if (length <= 0)
-				break;
-			byteCount += length;
-			count = strtol(data, NULL, 16);
-			if (count <= 0)
-				break;
-
-			//read the chunk in multiple calls to read
-			while(count){
-				length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
-				if (length <= 0) //crap!! the socket closed
-					goto end;
-				byteCount += length;
-				fwrite(data, length, 1, pfIn);
-				count -= length;
-			}
-
-			//read the \r\n after the chunk (if any)
-			length = readNetLine(sock, data, 2);
-			if (length != 2)
-				break;
-			byteCount += length;
-			//loop back to read the next chunk
-		}
-		else{ // read it in fixed blocks of data
-			while (1){
-				length = recv(sock, data, sizeof(data), 0);
-				if (length > 0)
-					fwrite(data, length, 1, pfIn);
-				else 
-					goto end;
-				byteCount += length;
-			}
-		}
-	}
-end:
-	fclose(pfIn); // close the download.xml handle
+	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
     
 	timeFinished = ticks();
 	timeTaken = (timeFinished - timeStart);
 	setBandwidth(timeTaken,byteCount);
 
-	closesocket(sock);
 	profileMerge();
 	profileSave();
 	relistContacts();
 	refreshDisplay();
-	vmsDownload();
 	vmsUploadAll();
 	relistVMails();
+	vmsDownload();
+
 	busy = 0;
 	return 0;
 }
