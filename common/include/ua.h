@@ -174,8 +174,6 @@ extern void refreshDisplay();
 extern void createFolders();
 extern void cdrEmpty();
 extern unsigned long ticks();
-//change for bug id 18641 
-void ResetTime();
 //for voip quality
 void setBandwidth(unsigned long timeTaken,int byteCount);
 #ifdef __cplusplus

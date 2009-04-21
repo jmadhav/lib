@@ -1152,12 +1152,7 @@ end:
 		closesocket(sock);
 	} //loop over for the next voice mail
 }
-//change for bug id 18641 
-void ResetTime()
-{
-	lastUpdate = 0;//this function is call from logout
-	
-}
+
 /** 
 profile routines
 */
