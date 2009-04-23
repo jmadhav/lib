@@ -94,40 +94,35 @@ Voicemails
 
 All the voicemails are in a linked list too
 */
-#define VMAIL_NOTDOWNLOADED 1
-#define VMAIL_DOWNLOADED 2
-#define VMAIL_OPENED 3
 
 #define VMAIL_OUT 1
 #define VMAIL_IN 0
 #define VMAIL_MAX 33000
 
-#define VMAIL_STATUS_NEW 0
-#define VMAIL_STATUS_DELETE 3
-#define VMAIL_STATUS_DONE 4
+#define VMAIL_NEW 0
+#define VMAIL_ACTIVE 1
+#define VMAIL_DELIVERED 2
+#define VMAIL_FAILED 3
 
-//inbound vmail states
-#define VMAIL_STATUS_READY 5
-#define VMAIL_STATUS_OPENED 6
-
-//outbound vmail states
-#define VMAIL_STATUS_UPLOADED 7
-#define VMAIL_STATUS_DELIVERED 8
+#define VMAIL_MAXCOUNT 100 //no more than VMAIL_MAXCOUNT mails to be stored on the user agent
 
 struct VMail {
 	char	userid[32];
 	time_t	date;
 	char	vmsid[100];
-	int		status;
-	int		direction;
-	int		length; //in bytes
+	char	hashid[33];
+	short	status;
+	short	direction;
+	short	deleted; //those deleted at the server
+	short	toDelete; //those marked by the user to be deleted from the client as well as the server
+	short	isNew; //not to be saved
 	struct VMail *next;
 };
 extern struct VMail *listVMails;
 
 
 void vmsLoad();
-struct VMail *vmsUpdate(char *userid, char *vmsid, time_t time, int status, int direction);
+struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
 void vmsDelete(struct VMail *p);
 void vmsSave();
 
