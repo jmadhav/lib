@@ -164,10 +164,9 @@ extern int unlink(char *filename);
 extern void relistVMails();
 extern void relistContacts();
 extern void relistCDRs();
-extern void cdrEmpty();
 extern void refreshDisplay();
 extern void createFolders();
-extern void cdrEmpty();
+extern void cdrRemoveAll();
 extern unsigned long ticks();
 //for voip quality
 void setBandwidth(unsigned long timeTaken,int byteCount);
