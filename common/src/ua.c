@@ -1063,7 +1063,7 @@ static void vmsUpload(struct VMail *v)
 	if (v->direction != VMAIL_OUT || v->status != VMAIL_NEW)
 		return;
 
-	sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
+	sprintf(path, "%s\\%s.gsm", outFolder, v->hashid);
 	pfIn = fopen(path, "rb");
 	if (!pfIn){
 		v->toDelete = 1;
