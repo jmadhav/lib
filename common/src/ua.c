@@ -1063,7 +1063,7 @@ static void vmsUpload(struct VMail *v)
 	if (v->direction != VMAIL_OUT || v->status != VMAIL_NEW)
 		return;
 
-	sprintf(path, "%s\\%s.gsm", outFolder, v->hashid);
+	sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
 	pfIn = fopen(path, "rb");
 	if (!pfIn){
 		v->toDelete = 1;
@@ -1655,9 +1655,11 @@ void profileMerge(){
 	newMails = 0;
 	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next){
 		struct VMail *pv = vmsRead(vms);
-		if (pv)
+		if (pv && pv->direction==VMAIL_IN && !pv->deleted)
+		{
 			pv->isNew = 1;
-		newMails++;
+			newMails++;
+		}
 	}
 
 	ezxml_free(xml);
