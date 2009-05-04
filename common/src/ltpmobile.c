@@ -11,7 +11,7 @@
 #define stricmp strcasecmp
 #endif 
 
-#undef DEBUG
+//#undef DEBUG
 
 #ifdef DEBUG 
 #include <winsock.h>
@@ -537,27 +537,6 @@ static void callInit(struct Call *p, short16 defaultCodec)
 	queueInit(&(p->pcmIn));
 }
 
-
-
-/* these function are useful in a number of places.
-Essentially, it converts MD5 checksum kind of an arbitrary binary 
-array into an ascii string of only printable characters that can be easily 
-passed as a url and then convert asciii strings back into the original 
-binary array */
-/*
-static void digest2String(unsigned char *digest, char *string)
-{
-	int	i;
-
-	for (i = 0; i < 16; i++)
-	{
-		*string++ = (char)((digest[i] & 0x0f) + 'A');
-		*string++ = (char)(((digest[i] & 0xf0)/16) + 'a');
-	}
-	*string = 0;
-}
-*/
-
 /* 
 ltpInit:
 this is the big one. It calls malloc (from standard c library). If your system doesn't support
@@ -667,7 +646,7 @@ struct ltpStack  *ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 Sends an ltp packet out, it might require some bits to be flipped over
 if you are running on a big endian system */
 
-int ltpWrite(struct ltpStack *ps, struct ltp *ppack, unsigned int length, int ip, short16  port)
+int ltpWrite(struct ltpStack *ps, struct ltp *ppack, unsigned int length, unsigned int32 ip, unsigned short16  port)
 {
 	int ret;
 #ifdef DEBUG
@@ -954,10 +933,32 @@ struct Message *getMessage(struct ltpStack *ps, char *userid)
    ltp server redirects us to the destination's ip/port and the current and future
    messages are to be exchanged with the remote destination directly
  */
-static void redirect(struct ltpStack *ps, struct ltp *response)
+static void redirect(struct ltpStack *ps, struct ltp *response, unsigned int fromip, unsigned short fromport)
 {	
 	int32	ip;
 	short16 port;
+	struct Call *pc=NULL;
+	int	i;
+
+	//26 april, 2009, farhan
+	//if we are redirecting the ring, then the call object must be updated to point to the new end-point
+	//otherwise, we will end up spawing redirects in several directions.
+	if (response->command == CMD_RING){
+
+		for (i = 0; i < ps->maxSlots; i++){
+			pc = ps->call + i;
+			if (!strcmp(pc->remoteUserid, response->to) && 
+				pc->ltpSession == response->session && 
+				pc->remoteIp == fromip && 
+				pc->remotePort == fromport)
+			{
+					pc->remoteIp = response->contactIp;
+					pc->remotePort = response->contactPort;
+			}
+		}
+		return;
+	}
+
 
 	//ensure that redirect message is one that is acceptable
 	if (response->command == CMD_RING ||
@@ -1325,7 +1326,7 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 
    dont know what is md5 and challenge? read the RFC on http digest authentication 
 */
-static void onChallenge(struct ltpStack *ps, struct ltp *response, int fromip, short fromport)
+static void onChallenge(struct ltpStack *ps, struct ltp *response, unsigned int fromip, unsigned short fromport)
 {
 	struct  MD5Context      md5;
 	unsigned char digest[16];
@@ -1566,7 +1567,7 @@ is required).
 It might happen that we get a RESPONSE_OK_RELAYED as well RESPONSE_OK response in which case, 
 directMedia flag helps us avoid unecessary relaying.
 */
-static void  ringResponse(struct ltpStack *ps, struct ltp *pack, int ip, short port)
+static void  ringResponse(struct ltpStack *ps, struct ltp *pack, unsigned int ip, unsigned short port)
 {
 	int i;
 	struct Call *pc=NULL;
@@ -1659,7 +1660,7 @@ The challenge, redirect etc are all handled similarly and hence
 they all branch to the same functions.
 there are specific handlers for individual requests
 */
-static void onResponse(struct ltpStack *ps, struct ltp *pack, int ip, short port)
+static void onResponse(struct ltpStack *ps, struct ltp *pack, unsigned int ip, unsigned short port)
 {
 	struct Call	*pc;
 
@@ -1688,7 +1689,7 @@ static void onResponse(struct ltpStack *ps, struct ltp *pack, int ip, short port
 
 	if(pack->response == RESPONSE_REDIRECT)
 	{
-		redirect(ps, pack);
+		redirect(ps, pack, ip, port);
 		return;
 	}
 
@@ -1761,7 +1762,7 @@ This sends a response to a packet with a response code and an optional message i
 responses are sent always and only upon receiving a request. the response are never retransmitted
 if the remote side sending the request fails to send receive the response, 
 the remote retransmit the original request and the response will be resent */
-static void sendResponse(struct ltpStack *ps, struct ltp *pack, short16 responseCode, char *message, int ip, short16 port)
+static void sendResponse(struct ltpStack *ps, struct ltp *pack, short16 responseCode, char *message, unsigned int ip, unsigned short16 port)
 {
 	char scratch[1000];
 	struct ltp *p;
@@ -1790,7 +1791,7 @@ hole for at least three times before deciding use the relay.
 4. This function compares it's own default Codec with the codec recommended by the call
 and tries arriving at a compromise.
  */
-static struct Call *onRing(struct ltpStack *ps, struct ltp *ppack, int fromip, short fromport)
+static struct Call *onRing(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
 {
 	struct Contact *pcon = NULL;
 	struct Call *pc=NULL;
@@ -1936,7 +1937,7 @@ We have sent a ring request and we might or might not have received a ringRespon
 but if the remote has answered, so we need to move to that CALL_CONNECTED state and
 open up the media streams.
 */
-static void onAnswer(struct ltpStack *ps, struct ltp *ppack, int fromip, short fromport)
+static void onAnswer(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
 {
 	struct Call	*pc;
 
@@ -1984,7 +1985,7 @@ static void onAnswer(struct ltpStack *ps, struct ltp *ppack, int fromip, short f
 If we get a refuse request for a non-existing call, just be polite and accept it.
 The other side might have missed an earlier response sent by you and you would have
 released the call structure in anycase */
-static void onRefuse(struct ltpStack *ps, struct ltp *ppack, int fromip, short fromport)
+static void onRefuse(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
 {
 	struct Call	*pc;
 
@@ -2011,7 +2012,7 @@ If we get a hnagup request for a non-existing call, just be polite and accept it
 The other side might have missed an earlier response sent by you and you would have
 released the call structure in anycase */
 
-static void onHangup(struct ltpStack *ps, struct ltp *ppack, int fromip, short fromport)
+static void onHangup(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
 {
 	struct Call	*pc;
 
@@ -2036,7 +2037,7 @@ static void onHangup(struct ltpStack *ps, struct ltp *ppack, int fromip, short f
 	sendResponse(ps, ppack, RESPONSE_OK, "OK", fromip, fromport);
 }
 
-static void onMessage(struct ltpStack *ps, struct ltp *ppack, int fromip, short fromport)
+static void onMessage(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
 {
 	struct Message *pmsg;
 	int iContact=-1;
@@ -2127,7 +2128,7 @@ void ltpTrace(struct ltp *msg)
 /* ltpIn:
 Establishes entry point for all incoming LTP packets (the RTP are handled separately)
 */
-static void ltpIn(struct ltpStack *ps, int fromip, short unsigned fromport, char *buffin, int len)
+static void ltpIn(struct ltpStack *ps, unsigned int fromip, short unsigned fromport, char *buffin, int len)
 {
 	struct ltp *ppack;
 	struct Call *pc;
@@ -2439,7 +2440,7 @@ ltpSoundInput()
 */
 
 //static unsigned int prevstamp = 0;
-void rtpIn(struct ltpStack *ps, int ip, short port, char *buff, int length)
+void rtpIn(struct ltpStack *ps, unsigned int ip, unsigned short port, char *buff, int length)
 {
 	int	i, nsamples=0, fwdip = 0, nframes, x;
 	unsigned char	*data;
@@ -2568,11 +2569,7 @@ static int rtpOut(struct ltpStack *ps, struct Call *pc, int nsamples, short *pcm
 	{
 		speex_bits_reset(&(pc->speexBitEnc));
 		for (i = 0; i < nsamples; i+= 160)
-		{
-			for (x = 0; x < 160; x++)
-				frame[x] = (short)pcm[x+i];
-			speex_encode_int(pc->speex_enc, frame, &(pc->speexBitEnc));
-		}
+			speex_encode_int(pc->speex_enc, pcm + i, &(pc->speexBitEnc));
 		
 		j += speex_bits_write(&(pc->speexBitEnc), scratch+j, 1000);
 
@@ -2703,7 +2700,7 @@ void ltpSoundInput(struct ltpStack *ps, short *pcm, int nsamples, int isSpeaking
 ltpOnPacket()
 called by the application when any packet arrives at the ltp udp port
 */
-void ltpOnPacket(struct ltpStack *ps, char *msg, int length, int address, short port)
+void ltpOnPacket(struct ltpStack *ps, char *msg, int length, unsigned int address, unsigned short port)
 {	
 	if (length == 4)
 		return;

@@ -539,7 +539,7 @@ struct ltpStack
 	/* ltpLogin */ 
 	char    ltpNoncePrevious[20];
 	char    cookie[100];
-	long	ltpServer;
+	unsigned int32	ltpServer;
 	unsigned short16	ltpServerPort;
 	int     nextCallSession;
 	int     nat;
@@ -681,7 +681,7 @@ void ltpTrace(struct ltp *msg);
 
 /* call onLTPPacket whenever a packet is received on the udp socket dedicated
 to the LTP stack */
-void ltpOnPacket(struct ltpStack *ps, char *msg, int length, int address, short port);
+void ltpOnPacket(struct ltpStack *ps, char *msg, int length, unsigned int32 address, unsigned short16 port);
 void ltpSoundInput(struct ltpStack *ps, short *pcm, int nsamples, int isSpeaking);
 int ltpUpdateContact(struct ltpStack *ps, char *userid, char *title, char *group, unsigned short16 presence, 
 		unsigned int32 ip, unsigned short16 port, unsigned int32 fwdip, unsigned short16 fwdport,
