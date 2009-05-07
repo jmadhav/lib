@@ -504,8 +504,8 @@ void cdrLoad() {
 
 void cdrRemoveAll()
 {	
-	cdrSave();
 	cdrEmpty();
+	cdrSave();
 }
 
 /**
