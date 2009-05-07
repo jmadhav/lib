@@ -24,6 +24,8 @@ char mailServer[100], myTitle[200], fwdnumber[32], myDID[32];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
+//add by mukesh 20359
+ThreadStatusEnum threadStatus;
 char uaUserid[32];
 
 /*
@@ -1150,18 +1152,23 @@ static void vmsDownload()
 	char	data[1000], key[64], header[2000];
 	int		nMails = 0;
 	char	pathname[MAX_PATH];
+	struct VMail	*q;
 	struct VMail	*p;
 	SOCKET	sock;
 	struct sockaddr_in	addr;
 	FILE	*pfIn;
 	int		length, isChunked=0, count=0;
+	//change by mukesh for bug id 20359
+	p =(struct VMail*) malloc(sizeof(struct VMail));
 
-
-	for (p = listVMails; p; p = p->next) {
+	for (q = listVMails; listVMails && q; q = q->next) {
 	
+		//add by mukesh for bugid 20359
+		// as we are not using any memory protection function it better to make new memory for node	
+		memmove(p,q,sizeof(struct VMail));
 		if (p->status == VMAIL_NEW)
 			continue;
-
+		
 		//if the file is already downloaded, move on
 		sprintf(pathname, "%s\\%s.gsm", vmFolder, p->hashid);
 		pfIn = fopen(pathname, "r");
@@ -1246,13 +1253,21 @@ static void vmsDownload()
 					count += length;
 				}
 			}
+			
 		}
 end:
 		fclose(pfIn); // close the download.xml handle
 		if (!count)
 			unlink(pathname);
 		closesocket(sock);
+		if(threadStatus == ThreadTerminate)
+		{
+			break;
+		}
+		
 	} //loop over for the next voice mail
+	//add by mukesh for bug id 20359
+	free(p);
 }
 
 /** 
@@ -1704,13 +1719,15 @@ THREAD_PROC profileDownload(void *extras)
 		return 0;
 	else 
 		busy = 1;
-
+	//add by mukesh for bug id 20359
+	threadStatus = ThreadStart ;
 	httpCookie(key);
 
 	//prepare the xml upload
 	sprintf(pathUpload, "%s\\upload.xml", myFolder);
 	pfOut = fopen(pathUpload, "wb");
 	if (!pfOut){
+		threadStatus = ThreadNotStart ;
 		busy = 0;
 		return 0;
 	}
@@ -1819,6 +1836,8 @@ THREAD_PROC profileDownload(void *extras)
 	vmsDownload();
 
 	busy = 0;
+	//add by mukesh for bug id 20359
+	threadStatus = ThreadNotStart ;
 	return 0;
 }
 
@@ -1827,6 +1846,8 @@ void profileResync()
 	if((uaUserid  && strcmp(uaUserid ,pstack->ltpUserid)!=0))
 	{
 		strcpy(uaUserid ,pstack->ltpUserid);
+		//add by mukesh for bug id 20359
+		threadStatus = ThreadTerminate;
 		profileClear();
 	}
 	START_THREAD(profileDownload);

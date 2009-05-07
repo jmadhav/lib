@@ -3,7 +3,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif 
+/*
+	Author Mukesh Sharma
+	Date   07/05/2009
+	Bug Id : ->20359
+	This enum used for thread status.This show status of thread
+*/
+typedef enum 
+{	ThreadNotStart,
+	ThreadStart,
+	ThreadTerminate,
 
+}ThreadStatusEnum;
 
 /* some architecture specifics */
 #define THREAD_PROC DWORD WINAPI
