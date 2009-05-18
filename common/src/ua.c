@@ -827,10 +827,10 @@ void vmsEmpty()
 		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
 		unlink(path);
 		q = p->next;
-		free(p);
+		//free(p);
 		p = q;
 	}
-	listVMails = NULL;
+	//listVMails = NULL;
 }
 
 struct VMail *vmsById(char *id)
