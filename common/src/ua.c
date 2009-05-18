@@ -823,12 +823,16 @@ void vmsEmpty()
 	p = listVMails;
 	while (p)
 	{
+		//this is done because calling this function to delete all vmails clears the list, but on relogin all vmails come again
 		p->toDelete = 1;
 		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
 		unlink(path);
-		q = p->next;
-		//free(p);
-		p = q;
+		p = p->next;
+
+		//previous code
+		/*q = p->next;
+		free(p);
+		p = q;*/
 	}
 	//listVMails = NULL;
 }
