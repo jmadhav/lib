@@ -819,9 +819,13 @@ to preserve the same order as saved.
 void vmsEmpty()
 {
 	struct VMail *p, *q;
-
+    char	path[MAX_PATH];
 	p = listVMails;
-	while (p){
+	while (p)
+	{
+		p->toDelete = 1;
+		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
+		unlink(path);
 		q = p->next;
 		free(p);
 		p = q;
