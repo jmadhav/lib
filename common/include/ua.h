@@ -136,7 +136,7 @@ void vmsLoad();
 struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
 void vmsDelete(struct VMail *p);
 void vmsSave();
-
+void vmsEmpty();
 /*
 profile related definitions
 */
