@@ -819,7 +819,7 @@ to preserve the same order as saved.
 void vmsEmpty()
 {
 	struct VMail *p, *q;
-    char	path[MAX_PATH];
+   
 	p = listVMails;
 	while (p)
 	{
