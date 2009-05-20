@@ -1019,7 +1019,7 @@ void vmsDelete(struct VMail *p)
 	sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
 	unlink(path);
 
-	profileResync();
+	//profileResync();
 }
 
 struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
