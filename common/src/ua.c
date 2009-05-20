@@ -1761,9 +1761,18 @@ THREAD_PROC profileDownload(void *extras)
 
 	//check for new contacts
 	ndirty = 0;
-	for (pc = getContactsList(); pc; pc = pc->next)
-		if (pc->dirty && !pc->id)
-			ndirty++;
+	pc=getContactsList();
+	while(pc)
+	{
+		if(pc->dirty && !pc->id)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+			pc=pc->next;
+	}
+	
 	if (ndirty){
 		fprintf(pfOut, "<add>\n");
 		for (pc = getContactsList(); pc; pc = pc->next)
@@ -1778,9 +1787,20 @@ THREAD_PROC profileDownload(void *extras)
 	//check for updated contacts
 	//existing contacts have an id and isDeleted is 0
 	ndirty = 0;
-	for (pc = getContactsList(); pc; pc = pc->next)
+	pc=getContactsList();
+	while(pc)
+	{
+		if(pc->dirty && pc->id && !pc->isDeleted)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+			pc=pc->next;
+	}
+	/*for (pc = getContactsList(); pc; pc = pc->next)
 		if (pc->dirty && pc->id && !pc->isDeleted)
-			ndirty++;
+			ndirty++;*/
 	if (ndirty){
 		fprintf(pfOut, "<mod>\n");
 		for (pc = getContactsList(); pc; pc = pc->next)
@@ -1794,13 +1814,37 @@ THREAD_PROC profileDownload(void *extras)
 	//check for deleted contacts
 	//these contacts have an id and isDeleted is 1
 	ndirty = 0;
-	for (pc = getContactsList(); pc; pc = pc->next)
-		if (pc->dirty && pc->id && pc->isDeleted)
-			ndirty++;
+	pc=getContactsList();
+	while(pc)
+	{
+		if(pc->dirty && pc->id && pc->isDeleted)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+			pc=pc->next;
+	}
 
-	for (vm = listVMails; vm; vm = vm->next)
+	/*for (pc = getContactsList(); pc; pc = pc->next)
+		if (pc->dirty && pc->id && pc->isDeleted)
+			ndirty++;*/
+
+	vm=listVMails;
+	while(vm)
+	{
+		if(pc->dirty && pc->id && pc->isDeleted)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+			pc=pc->next;
+	}
+
+	/*for (vm = listVMails; vm; vm = vm->next)
 		if (vm->toDelete)
-			ndirty++;
+			ndirty++;*/
 
 	if (ndirty){
 		fprintf(pfOut, "<del>\n");
