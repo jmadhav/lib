@@ -1833,13 +1833,13 @@ THREAD_PROC profileDownload(void *extras)
 	vm=listVMails;
 	while(vm)
 	{
-		if(pc->dirty && pc->id && pc->isDeleted)
+		if(vm->toDelete)
 		{
 			ndirty=TRUE;
 			pc=NULL;
 		}
 		else
-			pc=pc->next;
+			vm==vm->next;
 	}
 
 	/*for (vm = listVMails; vm; vm = vm->next)
