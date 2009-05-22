@@ -1831,7 +1831,7 @@ THREAD_PROC profileDownload(void *extras)
 			ndirty++;*/
 
 	vm=listVMails;
-	while(vm)
+	/*while(vm)
 	{
 		if(vm->toDelete)
 		{
@@ -1839,12 +1839,14 @@ THREAD_PROC profileDownload(void *extras)
 			pc=NULL;
 		}
 		else
+		{
 			vm==vm->next;
-	}
+		}
+	}*/
 
-	/*for (vm = listVMails; vm; vm = vm->next)
+	for (vm = listVMails; vm; vm = vm->next)
 		if (vm->toDelete)
-			ndirty++;*/
+			ndirty++;
 
 	if (ndirty){
 		fprintf(pfOut, "<del>\n");
