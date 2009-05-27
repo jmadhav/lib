@@ -835,7 +835,7 @@ struct VMail *vmsById(char *id)
 	struct VMail *p;
 	
 	for (p = listVMails; p; p = p->next)
-		if (!strcmp(p->vmsid, id))
+		if (!strcmp(p->hashid, id))
 			return p;
 	return NULL;
 }
@@ -897,7 +897,7 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		return NULL;
 
 	//if no vmail exists, then create a new one at the head of listVMails
-	p = vmsById(vmsid->txt);
+	p = vmsById(hashid->txt);
 
 	if (!p){
 		p = (struct VMail *) malloc(sizeof(struct VMail));
@@ -1020,8 +1020,8 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	struct	VMail	*p=NULL;
 	int		isNew=1;
 
-	if (vmsid)
-		p = vmsById(vmsid);
+	if (hashid)
+		p = vmsById(hashid);
 
 	//if it already exists, then update the status and return
 	if (p){
