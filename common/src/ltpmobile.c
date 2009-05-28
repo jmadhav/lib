@@ -2457,6 +2457,7 @@ void rtpIn(struct ltpStack *ps, int ip, short port, char *buff, int length)
 	pcmBuff = ps->rtpInBuff;
 
 	prtp = (struct rtp *)buff;
+	
 	if(prtp->flags & RTP_FLAG_EXT)
 	{
 		pex = (struct rtpExt *)prtp->data;
@@ -2512,6 +2513,10 @@ void rtpIn(struct ltpStack *ps, int ip, short port, char *buff, int length)
 				*p++ = frame[x];
 			nsamples += 160;
 		}
+	}
+	else
+	{
+		printf("payload different");
 	}
 #endif
 	//play this directly if you are on the active line and you are not in conference

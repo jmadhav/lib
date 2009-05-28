@@ -318,7 +318,7 @@ void VoipQualityDeInit(GThreadDataLocal **glP)
 // ameya waingankar
 // 24/2/2009
 // to start the process by creating a thread
-void Start(GThreadDataLocal *gThP)
+void VoipStart(GThreadDataLocal *gThP)
 {
 	
 	if(gThP->threadStartInt==0)
@@ -331,7 +331,7 @@ void Start(GThreadDataLocal *gThP)
 // ameya waingankar
 // 24/2/2009
 // to get values of matched packets and running average
-void GetValue(GThreadDataLocal *glP,GThreadData *gThreadP)
+void VoipGetValue(GThreadDataLocal *glP,GThreadData *gThreadP)
 {
 	if(gThreadP)
 	{

@@ -37,8 +37,8 @@
 		#endif
 		GThreadDataLocal * VoipQualityInit(VoipIndicatorCallBack voipIndCallbackP,long uDataLong);
 		void VoipQualityDeInit(GThreadDataLocal **glP);
-		void Start(GThreadDataLocal * glP);
-		void GetValue(GThreadDataLocal *glP,GThreadData *gThreadP);
+		void VoipStart(GThreadDataLocal * glP);
+		void VoipGetValue(GThreadDataLocal *glP,GThreadData *gThreadP);
 		
 
 	#ifdef __cplusplus
