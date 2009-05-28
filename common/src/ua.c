@@ -835,7 +835,7 @@ struct VMail *vmsById(char *id)
 	struct VMail *p;
 	
 	for (p = listVMails; p; p = p->next)
-		if (!strcmp(p->vmsid, id))
+		if (!strcmp(p->hashid, id))
 			return p;
 	return NULL;
 }
@@ -897,7 +897,7 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		return NULL;
 
 	//if no vmail exists, then create a new one at the head of listVMails
-	p = vmsById(vmsid->txt);
+	p = vmsById(hashid->txt);
 
 	if (!p){
 		p = (struct VMail *) malloc(sizeof(struct VMail));
@@ -1012,7 +1012,7 @@ void vmsDelete(struct VMail *p)
 	sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
 	unlink(path);
 
-	profileResync();
+	//profileResync();
 }
 
 struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
@@ -1020,8 +1020,8 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	struct	VMail	*p=NULL;
 	int		isNew=1;
 
-	if (vmsid)
-		p = vmsById(vmsid);
+	if (hashid)
+		p = vmsById(hashid);
 
 	//if it already exists, then update the status and return
 	if (p){
@@ -1761,9 +1761,18 @@ THREAD_PROC profileDownload(void *extras)
 
 	//check for new contacts
 	ndirty = 0;
-	for (pc = getContactsList(); pc; pc = pc->next)
-		if (pc->dirty && !pc->id)
-			ndirty++;
+	pc=getContactsList();
+	while(pc)
+	{
+		if(pc->dirty && !pc->id)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+			pc=pc->next;
+	}
+	
 	if (ndirty){
 		fprintf(pfOut, "<add>\n");
 		for (pc = getContactsList(); pc; pc = pc->next)
@@ -1778,9 +1787,20 @@ THREAD_PROC profileDownload(void *extras)
 	//check for updated contacts
 	//existing contacts have an id and isDeleted is 0
 	ndirty = 0;
-	for (pc = getContactsList(); pc; pc = pc->next)
+	pc=getContactsList();
+	while(pc)
+	{
+		if(pc->dirty && pc->id && !pc->isDeleted)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+			pc=pc->next;
+	}
+	/*for (pc = getContactsList(); pc; pc = pc->next)
 		if (pc->dirty && pc->id && !pc->isDeleted)
-			ndirty++;
+			ndirty++;*/
 	if (ndirty){
 		fprintf(pfOut, "<mod>\n");
 		for (pc = getContactsList(); pc; pc = pc->next)
@@ -1794,9 +1814,35 @@ THREAD_PROC profileDownload(void *extras)
 	//check for deleted contacts
 	//these contacts have an id and isDeleted is 1
 	ndirty = 0;
-	for (pc = getContactsList(); pc; pc = pc->next)
+	pc=getContactsList();
+	while(pc)
+	{
+		if(pc->dirty && pc->id && pc->isDeleted)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+			pc=pc->next;
+	}
+
+	/*for (pc = getContactsList(); pc; pc = pc->next)
 		if (pc->dirty && pc->id && pc->isDeleted)
-			ndirty++;
+			ndirty++;*/
+
+	vm=listVMails;
+	/*while(vm)
+	{
+		if(vm->toDelete)
+		{
+			ndirty=TRUE;
+			pc=NULL;
+		}
+		else
+		{
+			vm==vm->next;
+		}
+	}*/
 
 	for (vm = listVMails; vm; vm = vm->next)
 		if (vm->toDelete)
