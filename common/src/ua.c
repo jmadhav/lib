@@ -73,7 +73,7 @@ void strTrim(char *szString)
 		return;
 
 	//trim the trailing spaces
-	for (i = strlen(szString) - 1; !isprint(szString[i]) && i >=0; i--)
+	for (i = strlen(szString) - 1; !isgraph(szString[i]) && i >=0; i--)
 		szString[i] = 0;
 }
 
@@ -1847,7 +1847,7 @@ THREAD_PROC profileDownload(void *extras)
 	for (vm = listVMails; vm; vm = vm->next)
 		if (vm->toDelete)
 			ndirty++;
-
+	
 	if (ndirty){
 		fprintf(pfOut, "<del>\n");
 		for (pc = getContactsList(); pc; pc = pc->next)
