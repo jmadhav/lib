@@ -604,7 +604,7 @@ struct ltpStack  *ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 		p->speex_enc = speex_encoder_init(&speex_nb_mode);
 
 //		x = ps->defaultCodec; /*set the bit-rate*/
-		x = 9000;
+		x = 8000;
 		speex_encoder_ctl(p->speex_enc,SPEEX_SET_BITRATE,&x);
 //		x = 0;
 //		speex_encoder_ctl(p->speex_enc,SPEEX_SET_COMPLEXITY,&x);
@@ -1903,17 +1903,11 @@ static struct Call *onRing(struct ltpStack *ps, struct ltp *ppack, unsigned int 
 		}
 
 		/* negotiate the codec */
-		if (ppack->wparam ==  LTP_CODEC_GSM)
-			pc->codec = LTP_CODEC_GSM;
-		else if (ppack->wparam == LTP_CODEC_LGSM)
-			pc->codec = LTP_CODEC_LGSM;
-		else if (ppack->wparam == LTP_CODEC_ULAW)
-			pc->codec = LTP_CODEC_ULAW;
+		if (ppack->wparam ==  LTP_CODEC_SPEEX && ps->defaultCodec == LTP_CODEC_SPEEX)
+			pc->codec = LTP_CODEC_SPEEX;
 		else
-		{
-			if (ppack->wparam < pc->codec)
-				pc->codec = ppack->wparam;
-		}
+			pc->codec = LTP_CODEC_GSM;
+
 		ppack->wparam = pc->codec;	
 
 		if (ps->forceProxy)
@@ -2550,11 +2544,24 @@ static int rtpOut(struct ltpStack *ps, struct Call *pc, int nsamples, short *pcm
 		j+= RTP_EXT_SIZE;
 	}
 
-	if (pc->codec == LTP_CODEC_GSM)
+	//new implementation of speex
+#ifdef SUPPORT_SPEEX
+	if (pc->codec == LTP_CODEC_SPEEX){
+		q->payload = SPEEX;
+		pc->rtpTimestamp += nsamples;
+
+		for (i = 0; i < nsamples; i += 160, j+=20)
+		{
+			speex_bits_reset(&(pc->speexBitEnc));
+			speex_encode_int(pc->speex_enc, pcm + i, &(pc->speexBitEnc));		
+			speex_bits_write(&(pc->speexBitEnc), scratch+j, 1000);
+		}
+	}
+	else
+#endif
 	{
 		q->payload = GSM;
 		pc->rtpTimestamp += nsamples;
-
 
 		for (i = 0; i < nsamples; i += 160, j+=33)
 		{
@@ -2562,21 +2569,7 @@ static int rtpOut(struct ltpStack *ps, struct Call *pc, int nsamples, short *pcm
 				frame[x] = (short)pcm[i+x];
 			gsm_encode(pc->gsmOut, frame, (unsigned char *)scratch+j);
 		}	
-	//	ps->debugCount = j;
 	}
-#ifdef SUPPORT_SPEEX
-	else if (pc->codec > 100 && pc->codec < 16000)
-	{
-		speex_bits_reset(&(pc->speexBitEnc));
-		for (i = 0; i < nsamples; i+= 160)
-			speex_encode_int(pc->speex_enc, pcm + i, &(pc->speexBitEnc));
-		
-		j += speex_bits_write(&(pc->speexBitEnc), scratch+j, 1000);
-
-		q->payload = SPEEX;
-		pc->rtpTimestamp += nsamples;
-	}
-#endif
 
 	//turn on the marker bit for voiced segments
 	if (isSpeaking)

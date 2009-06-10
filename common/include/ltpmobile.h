@@ -489,6 +489,8 @@ struct Contact{
 #define LTP_CODEC_GSM 0
 #define LTP_CODEC_ULAW 1
 #define LTP_CODEC_ALAW 2
+/* 2009/06/03 added to work with individual speex packets */
+#define LTP_CODEC_SPEEX 3
 #define LTP_CODEC_LGSM 98
 
 #define LOGIN_STATUS_OFFLINE 0
