@@ -665,7 +665,7 @@ struct ltpStack  *ltpInit(int maxslots, int maxbitrate, int framesPerPacket);
 void ltpRefuse(struct ltpStack *ps, int lineid, char *msg);
 void ltpHangup(struct ltpStack *ps, int lineid);
 int ltpTalk(struct ltpStack *ps, char *remoteid);
-void ltpHangup(struct ltpStack *ps, int lineid);
+void ltpHangup(struct ltpStack *ps, int lineid); 
 void ltpRefuse(struct ltpStack *ps, int lineid, char *msg);
 void ltpAnswer(struct ltpStack *ps, int lineid);
 int ltpRing(struct ltpStack *ps, char *remoteid, int command);
@@ -676,10 +676,10 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow);
 void ltpLoginCancel(struct ltpStack *ps);
 
 
-/* #if DEBUG
+ #if DEBUG
 void ltpTrace(struct ltp *msg);
 #endif
-*/
+
 
 /* call onLTPPacket whenever a packet is received on the udp socket dedicated
 to the LTP stack */
