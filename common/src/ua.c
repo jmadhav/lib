@@ -1737,8 +1737,6 @@ THREAD_PROC profileDownload(void *extras)
 	fprintf(pfOut,  
 	"<?xml version=\"1.0\"?>\n"
 	"<profile>\n"
-	" <ua>%s</ua>\n"
-	" <client v='0.1.7' arch='win'/>\n"
 	" <u>%s</u>\n"
 	" <key>%s</key> \n"
 	" <since>%u</since> \n", 
