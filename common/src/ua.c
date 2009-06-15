@@ -1740,7 +1740,7 @@ THREAD_PROC profileDownload(void *extras)
 	" <u>%s</u>\n"
 	" <key>%s</key> \n"
 	" <since>%u</since> \n", 
-	pstack->userAgent, pstack->ltpUserid, key, lastUpdate);
+	pstack->ltpUserid, key, lastUpdate);
 
 	if (extras){
 		int	param = (int)extras;
