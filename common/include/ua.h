@@ -140,9 +140,10 @@ void vmsEmpty();
 /*
 profile related definitions
 */
-#define REDIRECT2ONLINE 1
-#define REDIRECT2VMS 2
-#define REDIRECT2PSTN 3
+#define REDIRECT2ONLINE 2
+#define REDIRECT2VMS 0
+#define REDIRECT2PSTN 1
+#define REDIRECTBOTH 3 //both online and pstn
 
 #define ALERT_NEWVMAIL 100
 #define ALERT_VMAILERROR 101
@@ -155,7 +156,7 @@ profile related definitions
 */
 
 void uaInit();
-extern int redirect, creditBalance, bandwidth;
+extern int redirect, creditBalance, bandwidth, settingType;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
 void profileResync();
 void profileClear();

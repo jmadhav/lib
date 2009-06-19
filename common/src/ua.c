@@ -24,6 +24,10 @@ char mailServer[100], myTitle[200], fwdnumber[32], myDID[32];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
+
+//variable to set the type for incoming call termination setting
+int settingType = -1;  //not assigned state yet
+
 //add by mukesh 20359
 ThreadStatusEnum threadStatus;
 char uaUserid[32];
@@ -1559,12 +1563,14 @@ void profileMerge(){
 
 	redirector = ezxml_child(xml, "rd");
 	if (redirector){
-		if (!strcmp(redirector->txt, "online"))
-			redirect = REDIRECT2ONLINE;
-		else if (!strcmp(redirector->txt, "vms"))
-			redirect = REDIRECT2VMS;
+		if (!strcmp(redirector->txt, "1"))
+			settingType = REDIRECT2PSTN;
+		else if (!strcmp(redirector->txt, "0"))
+			settingType = REDIRECT2VMS;
+		else if (!strcmp(redirector->txt, "2"))
+			settingType = REDIRECT2ONLINE;
 		else
-			redirect = REDIRECT2PSTN;
+			settingType = REDIRECTBOTH;
 	}
 	credit = ezxml_child(xml, "cr");
 	if (credit)
@@ -1742,20 +1748,27 @@ THREAD_PROC profileDownload(void *extras)
 	" <since>%u</since> \n", 
 	pstack->ltpUserid, key, lastUpdate);
 
-	if (extras){
-		int	param = (int)extras;
-		switch(param){
-			case REDIRECT2PSTN:
-				fprintf(pfOut, " <rd>%s</rd>\n", fwdnumber);
-				break;
-			case REDIRECT2VMS:
-				fprintf(pfOut, " <rd>vms</rd>\n");
-				break;
-			case REDIRECT2ONLINE:
-				fprintf(pfOut, " <rd>online</rd>\n");
-				break;
+	/*if (extras){
+		int	param = (int)extras;*/
+	if(settingType != -1)
+	{
+		fprintf(pfOut, " <rd>%d</rd>\n", settingType);
+		switch(settingType)
+		{
+		case REDIRECT2VMS:
+			break;
+		case REDIRECT2PSTN:
+			fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
+			break;
+		case REDIRECT2ONLINE:
+			break;
+		case REDIRECTBOTH:
+			fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
+			break;
 		}
 	}
+
+	/*}*/
 
 	//check for new contacts
 	ndirty = 0;
