@@ -128,6 +128,7 @@ struct VMail {
 	short	toDelete; //those marked by the user to be deleted from the client as well as the server
 	short	isNew; //not to be saved
 	struct VMail *next;
+	int dirty; 
 };
 extern struct VMail *listVMails;
 

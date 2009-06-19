@@ -942,7 +942,11 @@ static struct VMail *vmsRead(ezxml_t vmail)
 	else if (!strcmp(status->txt, "active"))
 		p->status = VMAIL_ACTIVE;
 	else if (!strcmp(status->txt, "delivered"))
+	{
 		p->status = VMAIL_DELIVERED;
+		if(p->direction==VMAIL_OUT)
+			p->dirty=FALSE;
+	}
 	else
 		p->status = VMAIL_FAILED;
 
@@ -1524,7 +1528,7 @@ void profileMerge(){
 	int		nContacts = 0, xmllength, newMails;
 
 	char empty[] = "";
-
+	
 	sprintf(pathname, "%s\\down.xml", myFolder);
 	pf = fopen(pathname, "r");
 	if (!pf)
@@ -1812,6 +1816,9 @@ THREAD_PROC profileDownload(void *extras)
 	/*for (pc = getContactsList(); pc; pc = pc->next)
 		if (pc->dirty && pc->id && !pc->isDeleted)
 			ndirty++;*/
+	for (vm = listVMails; vm; vm = vm->next)
+		if (vm->dirty)
+			ndirty++;
 	if (ndirty){
 		fprintf(pfOut, "<mod>\n");
 		for (pc = getContactsList(); pc; pc = pc->next)
@@ -1819,6 +1826,24 @@ THREAD_PROC profileDownload(void *extras)
 				fprintf(pfOut,
 				"<vc><id>%u</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e></vc>\n",
 				(unsigned long)pc->id, pc->title, pc->mobile, pc->business, pc->home, pc->email);
+
+		//Kaustubh 19 June 09. Change for Sending the vmail status to Server: vmail Read Unread issue
+		for (vm = listVMails; vm; vm = vm->next)
+			if (vm->dirty)
+			{
+				switch(vm->status)
+				{
+				case VMAIL_ACTIVE:	
+					fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"active");
+					break;
+				case VMAIL_DELIVERED:
+					fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"delivered");
+					break;
+				case VMAIL_FAILED:
+					fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"failed");
+					break;
+				}
+			}
 		fprintf(pfOut, "</mod>\n");
 	}
 
@@ -1872,7 +1897,7 @@ THREAD_PROC profileDownload(void *extras)
 				fprintf(pfOut, " <vm><id>%s</id></vm>\n", vm->vmsid);
 		fprintf(pfOut, "</del>\n");
 	}
-
+	
 	fprintf(pfOut, "</profile>\n");
 	fclose(pfOut);
 
