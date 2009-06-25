@@ -400,7 +400,7 @@ void cdrAdd(char *userid, time_t time, int duration, int direction)
 	char	line[300];
 	struct	CDR	*p;
 	FILE	*pf;
-
+	int i;
 	if (listCDRs){
 		// compare the last call with this 
 		if (!strcmp(listCDRs->userid, userid) && listCDRs->direction == direction
@@ -413,7 +413,15 @@ void cdrAdd(char *userid, time_t time, int duration, int direction)
 		return;
 
 	memset(p, 0, sizeof(struct CDR));
-	strcpy(p->userid, userid);
+	//Kaustubh Deshpande 21114 fixed-Junk characters are displayed in call list on calling a long number.
+	//the userid has limit of 32, and we were not checking the limit earlier. Now a check is added for that.
+	for (i=0;i<31;i++)
+	{
+		p->userid[i]=userid[i];
+	}
+	p->userid[32]=0;
+	///
+	
 	p->date = (time_t)time;
 	p->duration = duration;
 	p->direction = direction;
