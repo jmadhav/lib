@@ -1734,7 +1734,7 @@ THREAD_PROC profileDownload(void *extras)
 	int	byteCount = 0;
 	unsigned long timeStart, timeFinished, timeTaken;
     
-	if (busy > 0)
+	if (busy > 0|| !strlen(pstack->ltpUserid))
 		return 0;
 	else 
 		busy = 1;
