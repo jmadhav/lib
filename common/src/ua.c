@@ -27,6 +27,7 @@ int bandwidth;
 
 //variable to set the type for incoming call termination setting
 int settingType = -1;  //not assigned state yet
+int oldSetting = -1;
 
 //add by mukesh 20359
 ThreadStatusEnum threadStatus;
@@ -1583,6 +1584,7 @@ void profileMerge(){
 			settingType = REDIRECT2ONLINE;
 		else
 			settingType = REDIRECTBOTH;
+		oldSetting = settingType;
 	}
 	credit = ezxml_child(xml, "cr");
 	if (credit)
@@ -1762,7 +1764,7 @@ THREAD_PROC profileDownload(void *extras)
 
 	/*if (extras){
 		int	param = (int)extras;*/
-	if(settingType != -1)
+	if((settingType != -1) && (settingType != oldSetting))
 	{
 		fprintf(pfOut, " <rd>%d</rd>\n", settingType);
 		switch(settingType)

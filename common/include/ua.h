@@ -157,7 +157,7 @@ profile related definitions
 */
 
 void uaInit();
-extern int redirect, creditBalance, bandwidth, settingType;
+extern int redirect, creditBalance, bandwidth, settingType, oldSetting;
 extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[];
 void profileResync();
 void profileClear();
