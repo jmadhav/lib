@@ -1954,6 +1954,8 @@ static void onAnswer(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip
 		callStopRequest(pc);
 		pc->ltpState = CALL_CONNECTED;
 		pc->timeStart = ps->now;
+		//Tasvir Rohila, 17/7/2009, bug#21083, latest call to be established should become active.
+		ps->activeLine = pc->lineId;
 
 		pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 
