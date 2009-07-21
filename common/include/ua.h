@@ -181,6 +181,7 @@ extern void refreshDisplay();
 extern void createFolders();
 extern void cdrRemoveAll();
 extern unsigned long ticks();
+void cdrEmpty();
 //for voip quality
 void setBandwidth(unsigned long timeTaken,int byteCount);
 #ifdef __cplusplus

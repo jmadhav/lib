@@ -332,7 +332,7 @@ end:
 	CDR functions
 */
 
-static void cdrEmpty()
+ void cdrEmpty()
 {
 	struct CDR *p, *q;
 
