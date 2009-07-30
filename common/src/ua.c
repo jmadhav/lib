@@ -848,7 +848,7 @@ struct VMail *vmsById(char *id)
 	struct VMail *p;
 	
 	for (p = listVMails; p; p = p->next)
-		if (!strcmp(p->hashid, id))
+		if (!strcmp(p->vmsid, id))
 			return p;
 	return NULL;
 }
@@ -910,7 +910,7 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		return NULL;
 
 	//if no vmail exists, then create a new one at the head of listVMails
-	p = vmsById(hashid->txt);
+	p = vmsById(vmsid->txt);
 
 	if (!p){
 		p = (struct VMail *) malloc(sizeof(struct VMail));
@@ -1037,8 +1037,8 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	struct	VMail	*p=NULL;
 	int		isNew=1;
 
-	if (hashid)
-		p = vmsById(hashid);
+	if (vmsid)
+		p = vmsById(vmsid);
 
 	//if it already exists, then update the status and return
 	if (p){
@@ -1689,11 +1689,11 @@ void profileMerge(){
 	}
 
 	newMails = 0;
-	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next){
+	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next)
+	{
 		struct VMail *pv = vmsRead(vms);
-		if (pv && pv->direction==VMAIL_IN && !pv->deleted)
+		if (pv && pv->direction==VMAIL_IN && !pv->deleted && pv->status==VMAIL_ACTIVE)
 		{
-			pv->isNew = 1;
 			newMails++;
 		}
 	}
