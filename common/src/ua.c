@@ -20,7 +20,7 @@ struct VMail *listVMails=NULL;
 static unsigned long	lastUpdate = 0;
 static int busy = 0;
 char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
-char mailServer[100], myTitle[200], fwdnumber[32], myDID[32];
+char mailServer[100], myTitle[200], fwdnumber[32], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[32];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
@@ -1530,7 +1530,7 @@ void profileClear()
 
 void profileMerge(){
 	FILE	*pf;
-	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref;
+	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref,*palert;
 	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated;
 	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert;
 	struct AddressBook *pc;
@@ -1559,11 +1559,15 @@ void profileMerge(){
 	//Tasvir Rohila - 10-04-2009 - bug#19095
 	//For upgrades or any other notification server sends <alert href="">Some msg</alert> in down.xml
 
-	if (xmlalert = ezxml_child(xml, "alert"))
+	if (xmlalert = ezxml_child(xml, "client"))
 	{
 		phref = NULL;
-		phref = ezxml_attr(xmlalert, "href");
-		sprintf(stralert, "%s%c%s", phref ? phref : "", SEPARATOR, xmlalert->txt);
+		palert = NULL;
+		if(palert = ezxml_attr(xmlalert, "alert"))
+		{
+			phref = ezxml_attr(xmlalert, "href");
+			sprintf(stralert, "%s%c%s", phref ? phref : "", SEPARATOR, palert );
+		}
 	}
 
 	title = ezxml_child(xml, "t");
@@ -1715,7 +1719,7 @@ void profileMerge(){
 		relistContacts();
 	}
 
-	if (xmlalert)
+	if (palert)
 		alert(-1, ALERT_SERVERMSG, stralert);
 }
 
@@ -1759,8 +1763,9 @@ THREAD_PROC profileDownload(void *extras)
 	"<profile>\n"
 	" <u>%s</u>\n"
 	" <key>%s</key> \n"
+	" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
 	" <since>%u</since> \n", 
-	pstack->ltpUserid, key, lastUpdate);
+	pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
 
 	/*if (extras){
 		int	param = (int)extras;*/
