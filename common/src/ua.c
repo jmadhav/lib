@@ -1764,6 +1764,8 @@ THREAD_PROC profileDownload(void *extras)
 	" <u>%s</u>\n"
 	" <key>%s</key> \n"
 	" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
+	" <query>contacts</query> \n"
+	" <query>vms</query> \n"
 	" <since>%u</since> \n", 
 	pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
 
