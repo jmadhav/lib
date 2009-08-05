@@ -1386,7 +1386,7 @@ void profileLoad()
     BLOWFISH_CTX ctx;
 	int i, j, len;
 
-	strcpy(pstack->ltpServerName, "64.49.236.88");
+	//strcpy(pstack->ltpServerName, "64.49.236.88");
 	sprintf(pathname, "%s\\profile.xml", myFolder);
 
 	pf = fopen(pathname, "r");
@@ -1446,8 +1446,8 @@ void profileLoad()
 		}
 	}
 
-	if (server = ezxml_child(xml, "server"))
-		strcpy(pstack->ltpServerName, server->txt);
+	/*if (server = ezxml_child(xml, "server"))
+		strcpy(pstack->ltpServerName, server->txt);*/
 	
 	if (lastupdate = ezxml_child(xml, "dt"))
 		lastUpdate = atol(lastupdate->txt);
@@ -1707,11 +1707,13 @@ void profileMerge(){
 	fclose(pf);
 
 	//TBD detect new voicemails and alert the user
-	if (newMails){
+	if (newMails)
+	{
 		alert(-1, ALERT_NEWVMAIL, NULL);
-		vmsSort();
-		relistVMails();	
-	} 
+	}
+	vmsSort();
+	relistVMails();	
+		
 
 	//relist contacts if any contacts have changed or are added
 	if (nContacts){
@@ -1932,7 +1934,7 @@ THREAD_PROC profileDownload(void *extras)
 	vmsUploadAll();
 	relistVMails();
 	vmsDownload();
-
+	//vmsSort();
 	busy = 0;
 	//add by mukesh for bug id 20359
 	threadStatus = ThreadNotStart ;
