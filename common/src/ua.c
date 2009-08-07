@@ -1446,8 +1446,10 @@ void profileLoad()
 		}
 	}
 
-	/*if (server = ezxml_child(xml, "server"))
-		strcpy(pstack->ltpServerName, server->txt);*/
+	if (server = ezxml_child(xml, "server"))
+		strcpy(pstack->ltpServerName, server->txt);
+	else
+		strcpy(pstack->ltpServerName, "64.49.236.88");
 	
 	if (lastupdate = ezxml_child(xml, "dt"))
 		lastUpdate = atol(lastupdate->txt);
