@@ -848,7 +848,7 @@ struct VMail *vmsById(char *id)
 	struct VMail *p;
 	
 	for (p = listVMails; p; p = p->next)
-		if (!strcmp(p->vmsid, id))
+		if (!strcmp(p->hashid, id))
 			return p;
 	return NULL;
 }
@@ -910,7 +910,7 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		return NULL;
 
 	//if no vmail exists, then create a new one at the head of listVMails
-	p = vmsById(vmsid->txt);
+	p = vmsById(hashid->txt);
 
 	if (!p){
 		p = (struct VMail *) malloc(sizeof(struct VMail));
@@ -1446,7 +1446,8 @@ void profileLoad()
 		}
 	}
 
-	if (server = ezxml_child(xml, "server"))
+	 server = ezxml_child(xml,"server");
+	 if(server && strlen(server->txt))
 		strcpy(pstack->ltpServerName, server->txt);
 	else
 		strcpy(pstack->ltpServerName, "64.49.236.88");
@@ -1936,9 +1937,11 @@ THREAD_PROC profileDownload(void *extras)
 	relistContacts();
 	refreshDisplay();
 	vmsUploadAll();
-	relistVMails();
+	
 	vmsDownload();
 	//vmsSort();
+	relistVMails();
+
 	busy = 0;
 	//add by mukesh for bug id 20359
 	threadStatus = ThreadNotStart ;
