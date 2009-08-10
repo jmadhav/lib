@@ -848,7 +848,7 @@ struct VMail *vmsById(char *id)
 	struct VMail *p;
 	
 	for (p = listVMails; p; p = p->next)
-		if (!strcmp(p->hashid, id))
+		if (!strcmp(p->vmsid, id))
 			return p;
 	return NULL;
 }
@@ -910,7 +910,7 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		return NULL;
 
 	//if no vmail exists, then create a new one at the head of listVMails
-	p = vmsById(hashid->txt);
+	p = vmsById(vmsid->txt);
 
 	if (!p){
 		p = (struct VMail *) malloc(sizeof(struct VMail));
@@ -1146,7 +1146,10 @@ static void vmsUpload(struct VMail *v)
 				if (!strcmp(status->txt, "active"))
 					v->status = VMAIL_ACTIVE;
 				else
+				{
 					alert(-1, ALERT_VMAILERROR, "Voicemail upload failed");
+					
+				}
 			}
 			ezxml_free(xml);
 		}
@@ -1939,7 +1942,7 @@ THREAD_PROC profileDownload(void *extras)
 	vmsUploadAll();
 	
 	vmsDownload();
-	//vmsSort();
+	vmsSort();
 	relistVMails();
 
 	busy = 0;
