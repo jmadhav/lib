@@ -1264,13 +1264,13 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 	// we keep writing a very small packet to our network to keep our NAT session alive
 	// through a proxy. this is set to 2 minutes at the moment (120 seconds) 
 
-	/* it is probably intefering with gprs 2006/11/4
+	//it is probably intefering with gprs 2006/11/4
 	if (ps->loginStatus == LOGIN_STATUS_ONLINE && ps->nat && ps->dateNextEcho < ps->now)
 	{
 		ltpWrite(ps, (struct ltp *)&ps->loginSession, 4, ps->ltpServer, (short16)(ps->bigEndian ? RTP_PORT : flip16(RTP_PORT)));
-		ps->dateNextEcho = timeNow + 120;
+		ps->dateNextEcho = timeNow + 60;
 	}
-	*/
+	
 
 
 	/* give each non-idle call a slice of time */
