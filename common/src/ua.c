@@ -876,7 +876,7 @@ static void vmsSort()
 		else {
 			//forward to the object with id greater than the new object
 			for (prev = NULL, p = newList; p; p = p->next){
-				if (atol(p->vmsid) < atol(i->vmsid))
+				if (p->date < i->date)
 					break;
 				prev = p;
 			}
