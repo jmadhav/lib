@@ -65,6 +65,7 @@ This is the implementation of managing the contacts
 #define VCARD_MOBILE 3
 #define VCARD_OTHER 4
 #define VCARD_EMAIL 5
+#define VCARD_SPOKNID 6
 
 struct AddressBook{
 	unsigned long		id;
@@ -74,6 +75,7 @@ struct AddressBook{
 	char	mobile[32];
 	char	other[32];
 	char	email[128];
+	char    spoknid[7];
 	int		presence;
 	int		isFavourite;
 	int		dirty;
@@ -86,8 +88,8 @@ int isMatched(char *title, char *query);
 int indexOf(char *title, char *query);
 extern struct AddressBook *listContacts;
 void resetContacts();
-struct AddressBook *addContact(char *title, char *mobile, char *home, char *business, char *other, char *email);
-struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, char *home, char *business, char *other, char *email);
+struct AddressBook *addContact(char *title, char *mobile, char *home, char *business, char *other, char *email, char *spoknid);
+struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, char *home, char *business, char *other, char *email, char *spoknid);
 //void updateContactPresence(int id, int presence);
 void deleteContactLocal(int index);
 //void deleteContactOnServer(int id);

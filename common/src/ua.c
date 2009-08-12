@@ -682,7 +682,7 @@ void deleteContactLocal(int id)
 		}
 }
 
-struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, char *home, char *business, char *other, char *email)
+struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, char *home, char *business, char *other, char *email, char *spoknid)
 {
 	struct AddressBook	*p, *q;
 
@@ -696,6 +696,8 @@ struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, c
 				strcpy(p->other, other);
 			if (email)
 				strcpy(p->email, email);
+			if (spoknid)
+				strcpy(p->spoknid, spoknid);
 			p->dirty = 1;
 			return p;
 		}
@@ -713,7 +715,8 @@ struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, c
 		strcpy(q->other, other);
 	if (email)
 		strcpy(q->email, email);
-
+	if (spoknid)
+		strcpy(q->spoknid, spoknid);
 	q->dirty = 1;
 	//insert in at the head and sort
 	q->next = listContacts;
@@ -721,7 +724,7 @@ struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, c
 	return q;
 }
 
-struct AddressBook *addContact(char *title, char *mobile, char *home, char *business, char *other, char *email)
+struct AddressBook *addContact(char *title, char *mobile, char *home, char *business, char *other, char *email, char *spoknid)
 {
 	struct AddressBook	*q;
 
@@ -736,6 +739,8 @@ struct AddressBook *addContact(char *title, char *mobile, char *home, char *busi
 		strcpy(q->other, other);
 	if (email)
 		strcpy(q->email, email);
+	if (spoknid)
+		strcpy(q->spoknid, spoknid);
 	q->dirty = 1;
 
 	//insert in at the head and sort
@@ -1357,6 +1362,8 @@ void profileSave(){
 			fprintf(pf, "<b>%s</b>", p->business);
 		if (p->email[0])
 			fprintf(pf, "<e>%s</e>", p->email);
+		if (p->spoknid[0])
+			fprintf(pf, "<ltp>%s</ltp>", p->spoknid);
 		if (p->dirty)
 			fprintf(pf, "<dirty>1</dirty>");
 		if (p->isDeleted)
@@ -1381,7 +1388,7 @@ void profileLoad()
 	FILE	*pf;
 	int	 xmllength;
 	char *strxml;
-	ezxml_t xml, contact, id, title, mobile, home, business, favourite, mailserverip;
+	ezxml_t xml, contact, id, title, mobile, home, business, favourite, mailserverip, spoknid;
 	ezxml_t userid, password, server, lastupdate, dirty, status, vms, fwd, email;
 	char empty[] = "";
 	struct AddressBook *p;
@@ -1478,6 +1485,7 @@ void profileLoad()
 		business = ezxml_child(contact, "b");
 		home = ezxml_child(contact, "h");
 		status  = ezxml_child(contact, "s");
+		spoknid = ezxml_child(contact, "ltp");
 		dirty  = ezxml_child(contact, "dirty");
 		favourite = ezxml_child(contact, "fav");
 		email = ezxml_child(contact, "e");
@@ -1488,7 +1496,8 @@ void profileLoad()
 			home ? home->txt : empty, 
 			business ? business->txt : empty, 
 			"",
-			email ? email->txt: empty);
+			email ? email->txt: empty,
+			spoknid ? spoknid->txt: empty);
 	
 		if (favourite){
 			if (!strcmp(favourite->txt, "1"))
@@ -1537,7 +1546,7 @@ void profileClear()
 void profileMerge(){
 	FILE	*pf;
 	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref,*palert;
-	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated;
+	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid;
 	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert;
 	struct AddressBook *pc;
 	int		nContacts = 0, xmllength, newMails;
@@ -1641,6 +1650,7 @@ void profileMerge(){
 		business = ezxml_child(contact, "b");
 		home = ezxml_child(contact, "h");
 		email  = ezxml_child(contact, "e");
+		spoknid  = ezxml_child(contact, "ltp");
 		presence = ezxml_child(contact, "p");
 
 		if (!pc){
@@ -1660,7 +1670,8 @@ void profileMerge(){
 			home ? home->txt : empty, 
 			business ? business->txt : empty, 
 			"",
-			email ? email->txt: empty);
+			email ? email->txt: empty,
+			spoknid ? spoknid->txt: empty);
 		}
 		else{
 			//dont null the title
@@ -1678,6 +1689,9 @@ void profileMerge(){
 
 			if (email) 
 				strcpy(pc->email, email->txt);
+
+			if (spoknid) 
+				strcpy(pc->spoknid, spoknid->txt);
 		}
 
 		if (status){
@@ -1818,8 +1832,8 @@ THREAD_PROC profileDownload(void *extras)
 		for (pc = getContactsList(); pc; pc = pc->next)
 			if (pc->dirty && !pc->id)
 				fprintf(pfOut, 		
-				"<vc><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><token>%x</token></vc>\n", 
-				pc->title, pc->mobile, pc->business, pc->home, pc->email, (unsigned int)pc);
+				"<vc><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp><token>%x</token></vc>\n", 
+				pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid,(unsigned int)pc);
 		fprintf(pfOut, "</add>\n");
 	}
 
@@ -1849,8 +1863,8 @@ THREAD_PROC profileDownload(void *extras)
 		for (pc = getContactsList(); pc; pc = pc->next)
 			if (pc->dirty && pc->id && !pc->isDeleted)
 				fprintf(pfOut,
-				"<vc><id>%u</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e></vc>\n",
-				(unsigned long)pc->id, pc->title, pc->mobile, pc->business, pc->home, pc->email);
+				"<vc><id>%u</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp></vc>\n",
+				(unsigned long)pc->id, pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid);
 
 		//Kaustubh 19 June 09. Change for Sending the vmail status to Server: vmail Read Unread issue
 		for (vm = listVMails; vm; vm = vm->next)
