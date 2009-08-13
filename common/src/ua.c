@@ -1594,16 +1594,30 @@ void profileMerge(){
 		strcpy(myDID, did->txt);
 
 	redirector = ezxml_child(xml, "rd");
-	if (redirector){
+	if (redirector)
+	{
 		if (!strcmp(redirector->txt, "1"))
+		{
 			settingType = REDIRECT2PSTN;
-		else if (!strcmp(redirector->txt, "0"))
-			settingType = REDIRECT2VMS;
-		else if (!strcmp(redirector->txt, "2"))
-			settingType = REDIRECT2ONLINE;
-		else
+			oldSetting = settingType;
+		}
+		else if (!strcmp(redirector->txt, "3"))
+		{
 			settingType = REDIRECTBOTH;
-		oldSetting = settingType;
+			oldSetting = settingType;
+		}
+		else if(!strcmp(redirector->txt, "2"))
+		{
+			settingType = REDIRECT2ONLINE;
+			oldSetting = settingType;
+		}
+		else
+		{
+			settingType = REDIRECT2ONLINE;
+			oldSetting =-1;
+		}
+
+
 	}
 	credit = ezxml_child(xml, "cr");
 	if (credit)
