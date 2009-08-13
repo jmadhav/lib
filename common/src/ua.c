@@ -1153,7 +1153,7 @@ static void vmsUpload(struct VMail *v)
 				else
 				{
 					alert(-1, ALERT_VMAILERROR, "Voicemail upload failed");
-					
+					v->status=VMAIL_FAILED;
 				}
 			}
 			ezxml_free(xml);
@@ -1168,7 +1168,7 @@ static void vmsUploadAll()
 	struct VMail *p;
 
 	for (p = listVMails; p; p = p->next){
-		if (p->direction == VMAIL_OUT && p->status == VMAIL_NEW)
+		if (p->direction == VMAIL_OUT && p->status == VMAIL_NEW && !p->deleted && !p->toDelete)
 			vmsUpload(p);
 	}
 }
