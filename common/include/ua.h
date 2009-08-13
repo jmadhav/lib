@@ -75,7 +75,7 @@ struct AddressBook{
 	char	mobile[32];
 	char	other[32];
 	char	email[128];
-	char    spoknid[7];
+	char    spoknid[8];
 	int		presence;
 	int		isFavourite;
 	int		dirty;
