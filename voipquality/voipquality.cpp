@@ -17,23 +17,28 @@
 // ameya waingankar
 // 24/2/2009
 // to ser transport address structure
-struct  sockaddr_in SetSckAdd(Char *Servername, UInt16 port)
+int SetSckAdd(Char *Servername, UInt16 port,struct  sockaddr_in *sockAddrP)
 {
-	struct  sockaddr_in SockAddr;
+	
 	DWORD error;
 	struct hostent *pHostEnt;
 	char hostname[35];
+	if(sockAddrP==0)
+	{
+		return 1;
+	}
+	memset(sockAddrP,0,sizeof(struct  sockaddr_in));
 	strcpy(hostname,Servername);
 	pHostEnt = gethostbyname(hostname);
-	if(pHostEnt == NULL)
+	if(!pHostEnt)
 	{
 		error = GetLastError();
-		return SockAddr;
+		return error;
 	}
-    SockAddr.sin_port = htons(port);
-    SockAddr.sin_family = AF_INET;
-	SockAddr.sin_addr = *(struct in_addr *)(pHostEnt->h_addr_list[0]);
-	return SockAddr;
+    sockAddrP->sin_port = htons(port);
+    sockAddrP->sin_family = AF_INET;
+	sockAddrP->sin_addr = *(struct in_addr *)(pHostEnt->h_addr_list[0]);
+	return 0;
 }
 
 // ameya waingankar
@@ -141,7 +146,7 @@ void SendPackets(SOCKET sck,struct  sockaddr_in  SockAddr,Char *Servername, UInt
 // ameya waingankar
 // 24/2/2009
 // to recieve data from the server
-BOOL recieve(SOCKET sck, Char *buffer,struct  sockaddr_in  SockAddr,Char *Servername, UInt16 port)
+int recieve(SOCKET sck, Char *buffer,struct  sockaddr_in  SockAddr,Char *Servername, UInt16 port)
 {
 	//DWORD error;
 	//struct  sockaddr_in  SockAddr;
@@ -162,25 +167,27 @@ BOOL recieve(SOCKET sck, Char *buffer,struct  sockaddr_in  SockAddr,Char *Server
 	int timelong = 0;
 	Char recvbuf[DEFAULT_BUFLEN];
     Int16 len = 0;
-    if(Data_Recieve(sck,timelong,ReadEnum) == 0)
+	Int16 er;
+	er = Data_Recieve(sck,timelong,ReadEnum); 
+    if( er == 0)
 	{
 	    len = recvfrom(sck, recvbuf, DEFAULT_BUFLEN, 0,(struct sockaddr *)&SockAddr, &SenderAddrSize);
 	    if(len > 0)
 	    {
 		    memmove(buffer,recvbuf,len);
-			return TRUE;
+			return 0;
 	    }
 	    else
 	    {
-		    return FALSE;
+		    return 1;
 	    }
 	}
 	else
 	{
-		return FALSE;
+		return er;
 	}
 
-	return TRUE;
+	return 0;
 }
 
 // ameya waingankar
@@ -234,8 +241,11 @@ THREAD_PROC SendRecieve(void *extras)
 	Int16 matched = 0;
 	Int16 result = 0;
 	UInt32 x = 0;
+	Int16 err = 0;
 	Int16 quality = 0;
 	Int16 correctRespose = 0;
+	int er;
+	BOOL breakLoopB = TRUE ;
 	Char *tmpP;
 	GThreadDataLocal *gThreadP;
     Char recieved[DEFAULT_BUFLEN];
@@ -261,15 +271,30 @@ THREAD_PROC SendRecieve(void *extras)
 		return -1;
 	}
     
-    SockAddr = SetSckAdd(SERVERNAME, PORT);
-
+    err=  SetSckAdd(SERVERNAME, PORT,&SockAddr);
+	if(err)
+	{
+		closesocket(sck);
+		gThreadP->threadStartInt = 0;
+		if(gThreadP->voipIndCallbackP)
+		{
+			gThreadP->gThread.RunningAvg = 0;
+			gThreadP->gThread.MatchedPackets = 0;
+			gThreadP->voipIndCallbackP(InProcess,gThreadP->uDataLong,&gThreadP->gThread,0);//only data is return
+			gThreadP->voipIndCallbackP(Success,gThreadP->uDataLong,&gThreadP->gThread,0);//call deinit
+		}
+	
+		return -1;
+	}
     SendPackets(sck,SockAddr,SERVERNAME, PORT);
 
 	for(count = 1; count <= TOTALPACKETS; count ++)
 	{
-		if(recieve(sck,recieved,SockAddr,SERVERNAME, PORT))
+		er = recieve(sck,recieved,SockAddr,SERVERNAME, PORT);
+		if(er==0)//no error
 		{
-		    memmove((void*)&x,recieved,sizeof(UInt32));
+			breakLoopB = FALSE;		  
+			memmove((void*)&x,recieved,sizeof(UInt32));
 		    tmpP = recieved + sizeof(UInt32);
 
 		    if((x > 0) && (x < TOTALPACKETS))
@@ -282,6 +307,16 @@ THREAD_PROC SendRecieve(void *extras)
 			gThreadP->gThread.MatchedPackets = matched;
 		    //gThreadP->gThread.RunningAvg  = gThreadP->gThread.RunningAvg  + EvalResponse(x,count);
 		}
+		else
+		{
+			if(breakLoopB==TRUE)//request time out
+			{
+				if(count>2)
+				{
+					break;
+				}
+			}
+		}
 	}
 	   
 
@@ -291,6 +326,7 @@ THREAD_PROC SendRecieve(void *extras)
 		gThreadP->voipIndCallbackP(InProcess,gThreadP->uDataLong,&gThreadP->gThread,0);//only data is return
 		gThreadP->voipIndCallbackP(Success,gThreadP->uDataLong,&gThreadP->gThread,0);//call deinit
 	}
+	closesocket(sck);
 	return 0;
 }
 GThreadDataLocal * VoipQualityInit(VoipIndicatorCallBack voipIndCallbackP,long uDataLong)
