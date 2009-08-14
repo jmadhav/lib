@@ -1150,7 +1150,7 @@ static void vmsUpload(struct VMail *v)
 
 				if (!strcmp(status->txt, "active"))
 					v->status = VMAIL_ACTIVE;
-				else
+				else if(!strcmp(status->txt, "failed"))
 				{
 					alert(-1, ALERT_VMAILERROR, "Voicemail upload failed");
 					v->status=VMAIL_FAILED;
