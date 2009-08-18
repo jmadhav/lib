@@ -1396,7 +1396,7 @@ void profileLoad()
     BLOWFISH_CTX ctx;
 	int i, j, len;
 
-	//strcpy(pstack->ltpServerName, "64.49.236.88");
+	strcpy(pstack->ltpServerName, "64.49.236.88");
 	sprintf(pathname, "%s\\profile.xml", myFolder);
 
 	pf = fopen(pathname, "r");
@@ -1459,8 +1459,6 @@ void profileLoad()
 	 server = ezxml_child(xml,"server");
 	 if(server && strlen(server->txt))
 		strcpy(pstack->ltpServerName, server->txt);
-	else
-		strcpy(pstack->ltpServerName, "64.49.236.88");
 	
 	if (lastupdate = ezxml_child(xml, "dt"))
 		lastUpdate = atol(lastupdate->txt);
