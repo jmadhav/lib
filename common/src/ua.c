@@ -789,6 +789,10 @@ struct AddressBook *getTitleOf(char *userid, char *title){
 			sprintf(title, "%s(mail)", p->title);
 			return p;
 		}
+		if (!strcmp(p->spoknid, userid)){
+			sprintf(title, "%s(s)", p->title);
+			return p;
+		}
 	}
 
 	sprintf(title, "%s", userid);
