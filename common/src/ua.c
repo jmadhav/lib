@@ -1,2044 +1,2826 @@
-// profile.cpp : Defines the entry point for the application.
-//
-#include <windows.h>
-#include <winsock.h>
-#include <commctrl.h>
-#include <stdio.h>
+#include <ltpmobile.h>
 #include <stdlib.h>
 #include <string.h>
-#include <blowfish.h>
-#include <ltpmobile.h>
-#include <ezxml.h>
-#include <ua.h>
+#define USERAGENT  "desktop-windows-d2-1.0"
+//#define USERAGENT "ltpmobile"
+#ifdef _WIN32_WCE
+#define stricmp _stricmp
+#elif defined WIN32
+#define stricmp _stricmp
+#else
+#define stricmp strcasecmp
+#endif 
 
-// this is the single object that is the instance of the ltp stack for the user agent
-struct ltpStack *pstack;
-struct CDR *listCDRs=NULL;
-struct AddressBook *listContacts=NULL;
-struct VMail *listVMails=NULL;
+//#undef DEBUG
 
-static unsigned long	lastUpdate = 0;
-static int busy = 0;
-char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
-char mailServer[100], myTitle[200], fwdnumber[32], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[32];
-int	redirect = REDIRECT2ONLINE;
-int creditBalance = 0;
-int bandwidth;
+#ifdef DEBUG 
+#include <winsock.h>
 
-//variable to set the type for incoming call termination setting
-int settingType = -1;  //not assigned state yet
-int oldSetting = -1;
 
-//add by mukesh 20359
-ThreadStatusEnum threadStatus;
-char uaUserid[32];
+/* Note:
+ 
+ This is a modified version of the original LTP stack 5 (ltpstack5.cpp). 
+ The major change is that the chat messages are now handled with their state being
+ preserved in the struct Contact.
+ 
+ The struct Contact will all be empty unless a message arrives or has to be sent.
+ in such cases, the first thing is to locate a contact with the same userid already
+ available with a message sent or received from the same peer.
+ 
+ upon locating such a contact, the date of last activity is noted and if it is beyond
+ two minutes (or the last message failed to deliver) the routing information will be
+ trashed and the message is sent directly to the server. the server will then return 
+ the redirect address or handle the message by itself.
+ 
+ */
 
-/*
-** Translation Table as described in RFC1113
-*/
-static const char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-/*
-** Translation Table to decode (created by author)
-*/
-static const char cd64[]="|$$$}rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$$$XYZ[\\]^_`abcdefghijklmnopq";
+/* debug requires us to use printf to print the traces of the debug messages
+ which is why we will require to include stdio.h, otherwise, there is no need
+ to include it. We are trying to keep the ltp independent of any standard C library
+ */
 
-//base64 encoder
-static void encodeblock( unsigned char in[3], unsigned char out[4], int len )
+static char *netGetIPString(long address)
 {
-    out[0] = cb64[ in[0] >> 2 ];
-    out[1] = cb64[ ((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4) ];
-    out[2] = (unsigned char) (len > 1 ? cb64[ ((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6) ] : '=');
-    out[3] = (unsigned char) (len > 2 ? cb64[ in[2] & 0x3f ] : '=');
+	struct in_addr	addr;
+	
+	addr.s_addr = address;
+	return inet_ntoa(addr);
 }
 
-/*
-** (base64 decoder) decode 4 '6-bit' characters into 3 8-bit binary bytes
-*/
-static void decodeblock( unsigned char in[4], unsigned char out[3] )
-{   
-    out[ 0 ] = (unsigned char ) (in[0] << 2 | in[1] >> 4);
-    out[ 1 ] = (unsigned char ) (in[1] << 4 | in[2] >> 2);
-    out[ 2 ] = (unsigned char ) (((in[2] << 6) & 0xc0) | in[3]);
-}
+#endif
 
-//strip white space on both ends of a string
-void strTrim(char *szString)
+#ifdef _CALLBACKLTP_
+LtpCallBackPtr gltpCallBackP;
+#endif
+
+/* C library functions:
+ some library functions are required to do basic string stuff and move bytes around
+ we wrote our own to optimise on the c library requirement. (for instance,
+ the symbian won't provide it out of box) */
+
+/* zeroMemory: set all the bytes to zero */
+static void zeroMemory(void *p, int countBytes)
 {
-	int i;
-
-	if (strlen(szString) == 0)
-		return;
-
-	//trim the leading spaces
-	while (szString[0] <= ' '  && strlen(szString))
-		memmove(szString, szString+1, strlen(szString));
-
-	if (!strlen(szString))
-		return;
-
-	//trim the trailing spaces
-	for (i = strlen(szString) - 1; !isgraph(szString[i]) && i >=0; i--)
-		szString[i] = 0;
+	char *q;
+	
+	q = (char *)p;
+	while(countBytes--)
+		*q++ = 0;
 }
 
+#if 0
 
-//the digest system used in our web api authentiction
-void digest2String(unsigned char *digest, char *string)
+/* if you don't know these functions, you are early here, get yourself a
+ copy of K&R and work to chapter 5 and then head back to this place */
+int strlen(char *p)
 {
-	int	i;
-
-	for (i = 0; i < 16; i++){
-		*string++ = (digest[i] & 0x0f) + 'A';
-		*string++ = ((digest[i] & 0xf0)/16) + 'a';
-	}
-	*string = 0;
-}
-
-// the http cookie used to authenticate the user for all calls to the web apis
-void httpCookie(char *cookie)
-{
-	struct	MD5Context	md5;
-	unsigned char	digest[16];
-
-	memset(&md5, 0, sizeof(md5));
-	MD5Init(&md5);
-
-	MD5Update(&md5, (char unsigned *)pstack->ltpUserid, strlen(pstack->ltpUserid), pstack->bigEndian);
-	MD5Update(&md5, (char unsigned *)pstack->ltpPassword, strlen(pstack->ltpPassword), pstack->bigEndian);
-	MD5Update(&md5, (char unsigned *)pstack->ltpNonce, strlen(pstack->ltpNonce), pstack->bigEndian);
-	MD5Final(digest,&md5);
-
-	digest2String(digest, cookie);
-}
-
-//encode a url to escape certain characters
-void urlencode(char *s, char *t) {
-	char *p;
-	char *tp;
-
-	if(t == NULL) {
-		fprintf(stderr, "Serious memory error...\n");
-		exit(1);
-	}
-
-	tp=t;
-
-	for(p=s; *p; p++) {
-
-		if((*p > 0x00 && *p < ',') ||
-		(*p > '9' && *p < 'A') ||
-		(*p > 'Z' && *p < '_') ||
-		(*p > '_' && *p < 'a') ||
-		(*p > 'z' && *p < 0xA1)) {
-			sprintf(tp, "%%%02X", (unsigned char)*p);
-			tp += 3;
-		} else {
-			*tp = *p;
-			tp++;
-		}
-	}
-
-	*tp='\0';
-	return;
-}
-
-//encoding a value for generating xml 
-void xmlEncode(char *s, char *t) {
-	char *p;
-	char *tp;
-
-	if(t == NULL) {
-		fprintf(stderr, "Serious memory error...\n");
-		exit(1);
-	}
-
-	tp=t;
-
-	for(p=s; *p; p++) {
-		switch(*p){
-			case '<':
-				strcpy(tp, "&lt;");
-				tp += 4;
-				break;
-			case '>':
-				strcpy(tp, "&gt;");
-				tp += 4;
-				break;
-			case '&':
-				strcpy(tp, "&amp;");
-				tp += 5;
-				break;
-			case '"':
-				strcpy(tp, "&quot;");
-				tp += 6;
-				break;
-			case '\'':
-				strcpy(tp, "&apos;");
-				tp += 5;
-			default:
-				*tp = *p;
-				tp++;
-		}
-	}
-
-	*tp='\0';
-	return;
-}
-
-//this is intended to only read text or xml data, it stops at the end of the buffer, end of net
-//or end of line
-static int readNetLine(int sock, char *buff, int maxlength)
-{
-	int	i = 0;
-	char	c;
-
-	while (recv(sock, &c, 1, 0)==1){
+	int i = 0;
+	while (*p++)
 		i++;
-		*buff++ = c;
-		//have we run out of buffer?
-		if (i == maxlength)
-			return i;
-		//have we reached the end of the line?
-		if (c == '\n'){
-			//end the line gracefully
-			*buff = 0;
-			return i;
-		}
-	}
-
-	//socket closed!
 	return i;
 }
 
-
-static int restCall(char *requestfile, char *responsefile, char *host, char *url)
+char *strncpy(char *d, const char *s, short n)
 {
-	FILE	*pf;
-	SOCKET	sock;
-	char	data[10000], header[1000];
-	struct	sockaddr_in	addr;
-	int	byteCount = 0, isChunked = 1, contentLength = 0, ret, length;
-
-	pf = fopen(requestfile, "rb");
-	if (!pf)
-		return 0;
-	fseek(pf, 0, SEEK_END);
-	contentLength = ftell(pf);
-	fclose(pf);
-
-	//prepare the http header
-	sprintf(header, 
-		"POST %s HTTP/1.1\r\n"
-		"Host: %s\r\n"
-		"Content-Length: %d\r\n\r\n",
-		url, host, contentLength);
-
-	addr.sin_addr.s_addr = lookupDNS(host);
-	if (addr.sin_addr.s_addr == INADDR_NONE)
-		return 0;
+	char *dst = d;
 	
-	addr.sin_port = htons(80);	
-	addr.sin_family = AF_INET;
-
-	//try connecting the socket
-	sock = (int)socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
-		return 0;
-
-	//send the http headers
-	send(sock, header, strlen(header),0);
-	byteCount += strlen(header);
-	
-	//send the xml data
-	pf = fopen(requestfile, "rb");
-	if (!pf)
-		return 0;
-	
-	while((ret = fread(data, 1, sizeof(data), pf)) > 0){
-		send(sock, data, ret, 0);
-		byteCount += ret;
-	}
-	fclose(pf);
-
-	//read the headers
-	//Tasvir Rohila - bug#18352 & #18353 - Initialize isChunked to zero for profile to download & 
-	//Add/Delete contact to work.
-	isChunked = 0;
-	while (1){
-		int length = readNetLine(sock, data, sizeof(data));
-		byteCount += length;
-		if (length <= 0)
-			break;
-		if (!strncmp(data, "Transfer-Encoding:", 18) && strstr(data, "chunked"))
-			isChunked = 1;
-		if (!strcmp(data, "\r\n"))
-			break;
-	}
-
-	//prepare to download xml
-	pf = fopen(responsefile, "w");
-	if (!pf)
-		return 0;
-
-	//read the body 
-	while (1) {
-		if (isChunked){
-			int count;
-
-			length = readNetLine(sock, data, sizeof(data));
-			if (length <= 0)
+	if (n != 0) 
+	{
+		do 
+		{
+			if ((*d++ = *s++) == 0)
+			{
+				/* NUL pad the remaining n-1 bytes */
+				while (--n != 0)
+					*d++ = 0;
 				break;
-			byteCount += length;
-			count = strtol(data, NULL, 16);
-			if (count <= 0)
-				break;
-
-			//read the chunk in multiple calls to read
-			while(count){
-				length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
-				if (length <= 0) //crap!! the socket closed
-					goto end;
-				byteCount += length;
-				fwrite(data, length, 1, pf);
-				count -= length;
 			}
+		} 
+		while (--n != 0);
+	}
+    return (dst);
+}
 
-			//read the \r\n after the chunk (if any)
-			length = readNetLine(sock, data, 2);
-			if (length != 2)
-				break;
-			byteCount += length;
-			//loop back to read the next chunk
+int strcmp(char *p, char *q)
+{
+	while (*p == *q++)
+		if (*p++ == 0)
+			return 0;
+	
+	return (*(const unsigned char *)p - *(const unsigned char *)(q - 1));
+}
+
+
+
+void memcpy(void *q, const void *p, int count)
+{
+	char *pc, *qc;
+	
+	pc = (char *)p;
+	qc = (char *)q;
+	while (count--)
+		*qc++ = *pc++;
+}
+#endif
+/* md5 functions :
+ as md5 alogrithm is sensitive big/little endian integer representation,
+ we have adapted the original md5 source code written by Colim Plum that
+ as then hacked by John Walker.
+ If you are studying the LTP source code, then skip this section and move onto
+ the queue section. */
+
+/*typedef unsigned int32 uint32;
+ 
+ struct MD5Context {
+ uint32 buf[4];
+ uint32 bits[2];
+ unsigned char in[64];
+ };*/
+
+
+void byteReverse(unsigned char *buf, unsigned longs)
+{
+	ultpint32 t;
+	do {
+		t = (ultpint32) ((unsigned) buf[3] << 8 | buf[2]) << 16 |
+		((unsigned) buf[1] << 8 | buf[0]);
+		*(ultpint32 *) buf = t;
+		buf += 4;
+	} while (--longs);
+}
+
+/* The four core functions - F1 is optimized somewhat */
+
+/* #define F1(x, y, z) (x & y | ~x & z) */
+#define F1(x, y, z) (z ^ (x & (y ^ z)))
+#define F2(x, y, z) F1(z, x, y)
+#define F3(x, y, z) (x ^ y ^ z)
+#define F4(x, y, z) (y ^ (x | ~z))
+
+/* This is the central step in the MD5 algorithm. */
+#define MD5STEP(f, w, x, y, z, data, s) \
+( w += f(x, y, z) + data,  w = w<<s | w>>(32-s),  w += x )
+
+/*
+ * The core of the MD5 algorithm, this alters an existing MD5 hash to
+ * reflect the addition of 16 longwords of new data.  MD5Update blocks
+ * the data and converts bytes into longwords for this routine.
+ */
+void MD5Transform(ultpint32 *buf, ultpint32 *in)
+{
+	register ultpint32 a, b, c, d;
+	
+	a = buf[0];
+	b = buf[1];
+	c = buf[2];
+	d = buf[3];
+	
+	MD5STEP(F1, a, b, c, d, in[0] + 0xd76aa478, 7);
+	MD5STEP(F1, d, a, b, c, in[1] + 0xe8c7b756, 12);
+	MD5STEP(F1, c, d, a, b, in[2] + 0x242070db, 17);
+	MD5STEP(F1, b, c, d, a, in[3] + 0xc1bdceee, 22);
+	MD5STEP(F1, a, b, c, d, in[4] + 0xf57c0faf, 7);
+	MD5STEP(F1, d, a, b, c, in[5] + 0x4787c62a, 12);
+	MD5STEP(F1, c, d, a, b, in[6] + 0xa8304613, 17);
+	MD5STEP(F1, b, c, d, a, in[7] + 0xfd469501, 22);
+	MD5STEP(F1, a, b, c, d, in[8] + 0x698098d8, 7);
+	MD5STEP(F1, d, a, b, c, in[9] + 0x8b44f7af, 12);
+	MD5STEP(F1, c, d, a, b, in[10] + 0xffff5bb1, 17);
+	MD5STEP(F1, b, c, d, a, in[11] + 0x895cd7be, 22);
+	MD5STEP(F1, a, b, c, d, in[12] + 0x6b901122, 7);
+	MD5STEP(F1, d, a, b, c, in[13] + 0xfd987193, 12);
+	MD5STEP(F1, c, d, a, b, in[14] + 0xa679438e, 17);
+	MD5STEP(F1, b, c, d, a, in[15] + 0x49b40821, 22);
+	
+	MD5STEP(F2, a, b, c, d, in[1] + 0xf61e2562, 5);
+	MD5STEP(F2, d, a, b, c, in[6] + 0xc040b340, 9);
+	MD5STEP(F2, c, d, a, b, in[11] + 0x265e5a51, 14);
+	MD5STEP(F2, b, c, d, a, in[0] + 0xe9b6c7aa, 20);
+	MD5STEP(F2, a, b, c, d, in[5] + 0xd62f105d, 5);
+	MD5STEP(F2, d, a, b, c, in[10] + 0x02441453, 9);
+	MD5STEP(F2, c, d, a, b, in[15] + 0xd8a1e681, 14);
+	MD5STEP(F2, b, c, d, a, in[4] + 0xe7d3fbc8, 20);
+	MD5STEP(F2, a, b, c, d, in[9] + 0x21e1cde6, 5);
+	MD5STEP(F2, d, a, b, c, in[14] + 0xc33707d6, 9);
+	MD5STEP(F2, c, d, a, b, in[3] + 0xf4d50d87, 14);
+	MD5STEP(F2, b, c, d, a, in[8] + 0x455a14ed, 20);
+	MD5STEP(F2, a, b, c, d, in[13] + 0xa9e3e905, 5);
+	MD5STEP(F2, d, a, b, c, in[2] + 0xfcefa3f8, 9);
+	MD5STEP(F2, c, d, a, b, in[7] + 0x676f02d9, 14);
+	MD5STEP(F2, b, c, d, a, in[12] + 0x8d2a4c8a, 20);
+	
+	MD5STEP(F3, a, b, c, d, in[5] + 0xfffa3942, 4);
+	MD5STEP(F3, d, a, b, c, in[8] + 0x8771f681, 11);
+	MD5STEP(F3, c, d, a, b, in[11] + 0x6d9d6122, 16);
+	MD5STEP(F3, b, c, d, a, in[14] + 0xfde5380c, 23);
+	MD5STEP(F3, a, b, c, d, in[1] + 0xa4beea44, 4);
+	MD5STEP(F3, d, a, b, c, in[4] + 0x4bdecfa9, 11);
+	MD5STEP(F3, c, d, a, b, in[7] + 0xf6bb4b60, 16);
+	MD5STEP(F3, b, c, d, a, in[10] + 0xbebfbc70, 23);
+	MD5STEP(F3, a, b, c, d, in[13] + 0x289b7ec6, 4);
+	MD5STEP(F3, d, a, b, c, in[0] + 0xeaa127fa, 11);
+	MD5STEP(F3, c, d, a, b, in[3] + 0xd4ef3085, 16);
+	MD5STEP(F3, b, c, d, a, in[6] + 0x04881d05, 23);
+	MD5STEP(F3, a, b, c, d, in[9] + 0xd9d4d039, 4);
+	MD5STEP(F3, d, a, b, c, in[12] + 0xe6db99e5, 11);
+	MD5STEP(F3, c, d, a, b, in[15] + 0x1fa27cf8, 16);
+	MD5STEP(F3, b, c, d, a, in[2] + 0xc4ac5665, 23);
+	
+	MD5STEP(F4, a, b, c, d, in[0] + 0xf4292244, 6);
+	MD5STEP(F4, d, a, b, c, in[7] + 0x432aff97, 10);
+	MD5STEP(F4, c, d, a, b, in[14] + 0xab9423a7, 15);
+	MD5STEP(F4, b, c, d, a, in[5] + 0xfc93a039, 21);
+	MD5STEP(F4, a, b, c, d, in[12] + 0x655b59c3, 6);
+	MD5STEP(F4, d, a, b, c, in[3] + 0x8f0ccc92, 10);
+	MD5STEP(F4, c, d, a, b, in[10] + 0xffeff47d, 15);
+	MD5STEP(F4, b, c, d, a, in[1] + 0x85845dd1, 21);
+	MD5STEP(F4, a, b, c, d, in[8] + 0x6fa87e4f, 6);
+	MD5STEP(F4, d, a, b, c, in[15] + 0xfe2ce6e0, 10);
+	MD5STEP(F4, c, d, a, b, in[6] + 0xa3014314, 15);
+	MD5STEP(F4, b, c, d, a, in[13] + 0x4e0811a1, 21);
+	MD5STEP(F4, a, b, c, d, in[4] + 0xf7537e82, 6);
+	MD5STEP(F4, d, a, b, c, in[11] + 0xbd3af235, 10);
+	MD5STEP(F4, c, d, a, b, in[2] + 0x2ad7d2bb, 15);
+	MD5STEP(F4, b, c, d, a, in[9] + 0xeb86d391, 21);
+	
+	buf[0] += a;
+	buf[1] += b;
+	buf[2] += c;
+	buf[3] += d;
+}
+
+/*
+ * Start MD5 accumulation.	Set bit count to 0 and buffer to mysterious
+ * initialization constants.
+ */
+void MD5Init(struct MD5Context *ctx)
+{
+	ctx->buf[0] = 0x67452301;
+	ctx->buf[1] = 0xefcdab89;
+	ctx->buf[2] = 0x98badcfe;
+	ctx->buf[3] = 0x10325476;
+	
+	ctx->bits[0] = 0;
+	ctx->bits[1] = 0;
+}
+
+
+
+/*
+ * Update context to reflect the concatenation of another buffer full
+ * of bytes.
+ */
+void MD5Update(struct MD5Context *ctx, unsigned char const  *buf, unsigned len, int isBigEndian)
+{
+	ultpint32 t;
+	
+	/* Update bitcount */
+	
+	t = ctx->bits[0];
+	if ((ctx->bits[0] = t + ((ultpint32) len << 3)) < t)
+		ctx->bits[1]++; 		/* Carry from low to high */
+	ctx->bits[1] += len >> 29;
+	
+	t = (t >> 3) & 0x3f;		/* Bytes already in shsInfo->data */
+	
+	/* Handle any leading odd-sized chunks */
+	
+	if (t) {
+		unsigned char *p = (unsigned char *) ctx->in + t;
+		
+		t = 64 - t;
+		if (len < t) {
+			memcpy(p, buf, len);
+			return;
 		}
-		else{ // read it in fixed blocks of data
-			while (1){
-				length = recv(sock, data, sizeof(data), 0);
-				if (length > 0)
-					fwrite(data, length, 1, pf);
-				else 
-					goto end;
-				byteCount += length;
-			}
+		memcpy(p, buf, (size_t) t);
+		if (isBigEndian)
+			byteReverse(ctx->in, 16);
+		MD5Transform(ctx->buf, (ultpint32 *) ctx->in);
+		buf += t;
+		len -= (int) t;
+	}
+	/* Process data in 64-byte chunks */
+	
+	while (len >= 64) {
+		memcpy(ctx->in, buf, 64);
+		if (isBigEndian)
+			byteReverse(ctx->in, 16);
+		MD5Transform(ctx->buf, (ultpint32 *) ctx->in);
+		buf += 64;
+		len -= 64;
+	}
+	
+	/* Handle any remaining bytes of data. */
+	
+	memcpy(ctx->in, buf, len);
+}
+
+/*
+ * Final wrapup - pad to 64-byte boundary with the bit pattern 
+ * 1 0* (64-bit count of bits processed, MSB-first)
+ */
+void MD5Final(unsigned char *digest, struct MD5Context *ctx)
+{
+	unsigned count;
+	unsigned char *p;
+	
+	/* Compute number of bytes mod 64 */
+	count = (unsigned) ((ctx->bits[0] >> 3) & 0x3F);
+	
+	/* Set the first char of padding to 0x80.  This is safe since there is
+	 always at least one byte free */
+	p = ctx->in + count;
+	*p++ = 0x80;
+	
+	/* Bytes of padding needed to make 64 bytes */
+	count = 64 - 1 - count;
+	
+	/* Pad out to 56 mod 64 */
+	if (count < 8) {
+		/* Two lots of padding:  Pad the first block to 64 bytes */
+		memset(p, 0, count);
+		byteReverse(ctx->in, 16);
+		MD5Transform(ctx->buf, (ultpint32 *) ctx->in);
+		
+		/* Now fill the next block with 56 bytes */
+		memset(ctx->in, 0, 56);
+	} else {
+		/* Pad block to 56 bytes */
+		memset(p, 0, count - 8);
+	}
+	byteReverse(ctx->in, 14);
+	
+	/* Append length in bits and transform */
+	((ultpint32 *) ctx->in)[14] = ctx->bits[0];
+	((ultpint32 *) ctx->in)[15] = ctx->bits[1];
+	
+	MD5Transform(ctx->buf, (ultpint32 *) ctx->in);
+	byteReverse((unsigned char *) ctx->buf, 4);
+	memcpy(digest, ctx->buf, 16);
+    memset(ctx, 0, sizeof(ctx));        /* In case it's sensitive */
+}
+
+
+/* a hash function to compute chat string hashes */
+static unsigned long hash(void *data, int length){
+	unsigned long hash = 5381;
+    int c;
+	unsigned char *str = (unsigned char *)data;
+	
+    while (length--)
+	{
+		c = *str++;
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+	}
+    return hash;
+}
+
+/* queue functions:
+ we use these queues for piping pcm samples.
+ 
+ You basically init the queue, enque samples and then read them back
+ with deque. Quite handy in other places too.
+ 
+ I suspect that these queues are thread-safe.
+ The reason is that the enque deque functions dont access
+ the same variables. so as long as you read from one thread
+ and write in another all the time, you are fine. 
+ 
+ There are a couple of interesting, non-standard behaviours in this queue.
+ First, these never block. second, dequeing from an empty queue will
+ return '0'samples.
+ 
+ */
+
+
+void queueInit(struct Queue *p)
+{
+	p->head = 0;
+	p->tail = 0;
+	p->count = 0;
+	p->stall = 1;
+}
+
+void queueEnque(struct Queue *p, short16 w)
+{
+	if (p->count == MAX_Q)
+		return;
+	
+	p->data[p->head++] = w;
+	p->count++;
+	if (p->head == MAX_Q)
+		p->head = 0;
+	if (p->count > 1600 && p->stall == 1)
+	{
+		p->stall = 0;
+	}
+}
+
+short16 queueDeque(struct Queue *p)
+{
+	short data;
+	
+	if (!p->count || p->stall)
+		return 0;
+	
+	data = p->data[p->tail++];
+	p->count--;
+	if (p->tail == MAX_Q)
+		p->tail = 0;
+	return data;
+}
+
+
+/* byte flipping functions:
+ These are required when we have to flip bytes within an int32 (4 bytes = 32bit integer)
+ to convert between big-endian and little-endian system.
+ 
+ The ltpStack structure has a flag called bigEndian. When we init the ltpStack, we
+ write '1' to an int and check which byte gets set and hence we detect if the system
+ is bigEndian. the flip16 (for 16-bit flips) and flip32 (for 32-bit flips are called
+ mostly upon checking the bigEndian property of the stack.
+ 
+ */
+
+static unsigned short16 flip16(unsigned short16 input)
+{
+	unsigned short16 output;
+	unsigned char *p, *q;
+	
+	
+	p = (unsigned char *)&input;
+	q = (unsigned char *)&output;
+	
+	*q++ = p[1];
+	*q = p[0];
+	return output;
+}
+
+static int32 flip32(int32 input)
+{
+	int32 output;
+	unsigned char *p, *q;
+	
+	
+	p = (unsigned char *)&input;
+	q = (unsigned char *)&output;
+	
+	*q++ = p[3];
+	*q++ = p[2];
+	*q++ = p[1];
+	*q = p[0];
+	return output;
+}
+
+static void ltpFlip(struct ltp *ppack)
+{
+	ppack->version	= flip16(ppack->version);
+	ppack->command	= flip16(ppack->command);
+	ppack->response	= flip16(ppack->response);
+	ppack->msgid	= flip32(ppack->msgid);
+	ppack->wparam	= flip16(ppack->wparam);
+	ppack->lparam	= flip32(ppack->lparam);
+}
+
+/* callInit:
+ Initializes the call to be ready for the next call. Becareful in not
+ initializing by calling zeroMemory on this structure, that will free
+ up the code structures that are dynamically allocated in ltpInit()
+ */
+static void callInit(struct Call *p, short16 defaultCodec)
+{
+	int	i;
+	
+	p->remoteUserid[0]	= 0;
+	p->title[0] = 0;
+	p->remoteIp	= 0;
+	p->remotePort	= 0;
+	p->ltpSession = 0;
+	p->ltpState	= CALL_IDLE;
+	p->maxTime	= -1;
+	p->ltpSeq	= 0;
+	p->ltpSession = 0;
+	p->retryNext	= 0;
+	p->retryCount	= 0;
+    p->rtpSequence = 0;
+    p->rtpTimestamp = 0;
+	p->timeStart = p->timeStop = 0;
+	p->ltpLastMsgReceived = 0;
+	p->codec = defaultCodec;
+	p->remoteVoice = 0;
+	p->InConference = 0;
+	p->kindOfCall = 0;
+	p->fwdIP = 0;
+	p->fwdPort = 0;
+	p->nRingMessages = 0;
+	p->prevSample = 0;
+	p->inTalk = 0;
+	p->directMedia = 0;
+	
+	for (i = 0; i < 12; i++)
+		p->delay[i] = 0;
+	
+	p->coef[0] =	   2087;
+	p->coef[1] =	   5979;
+	p->coef[2] =     -7282;
+	p->coef[3] =     -6747;
+	p->coef[4] =	  28284;
+	p->coef[5] =	  52763;
+	p->coef[6] =	  28284;
+	p->coef[7] =     -6747;
+	p->coef[8] =     -7282;
+	p->coef[9] =	   5979;
+	p->coef[10] =	   2087;
+	p->coef[11] =    -4816;
+	
+	
+	queueInit(&(p->pcmOut));
+	queueInit(&(p->pcmIn));
+}
+
+/* 
+ ltpInit:
+ this is the big one. It calls malloc (from standard c library). If your system doesn't support
+ dynamic memory, no worry, just pass a pointer to a preallocated block of the size of ltpStack. It is
+ a one time allocation. The call structures inside are also allocated just once in the entire stack's
+ lifecycle. The memory is nevery dynamically allocated during the runtime.
+ 
+ We could have declared ltpStack and Calls as global data, however a number of systems do not allow
+ global writeable data (like the Symbian) hence, we request for memory. Most systems can simply return 
+ a pointer to preallocated memory */
+
+struct ltpStack  *ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
+{
+	int	i;
+#ifdef SUPPORT_SPEEX
+	int x;
+#endif
+	struct Call *p;
+	struct ltpStack *ps;
+	
+	ps = (struct ltpStack *)malloc(sizeof(struct ltpStack));
+	if (!ps)
+		return NULL;
+	
+	zeroMemory(ps, sizeof(struct ltpStack));	
+	
+	ps->defaultCodec = (short16) maxbitrate;
+	ps->loginCommand = CMD_LOGIN;
+	ps->nextCallSession=1;
+	ps->nat=1;
+	ps->loginStatus = LOGIN_STATUS_OFFLINE;
+	ps->myPriority = NORMAL_PRIORITY;
+	ps->ringTimeout  = 30;
+	ps->nextCallSession = 786;
+	ps->soundBlockSize = framesPerPacket * 160;
+	ps->myPriority = NORMAL_PRIORITY;
+	strncpy(ps->userAgent,USERAGENT, MAX_USERID);
+	ps->ltpPresence = NOTIFY_ONLINE;
+	ps->updateTimingAdvance = 0;
+	
+	ps->maxSlots = maxslots;
+	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
+	if (!ps->call)
+		return NULL;
+	zeroMemory(ps->call, sizeof(struct Call) * maxslots);	
+	
+	ps->chat = (struct Message *) malloc(sizeof(struct Call) * MAX_CHATS);
+	if (!ps->chat)
+		return NULL;
+	zeroMemory(ps->chat, sizeof(struct Message) * MAX_CHATS);
+	ps->maxMessageRetries = 3;
+	
+	for (i=0; i<maxslots; i++)
+	{
+		p = ps->call + i;
+		callInit(p, ps->defaultCodec);
+		
+		/* init gsm codec */
+		p->gsmIn = gsm_create();
+		p->gsmOut = gsm_create();
+		
+#ifdef SUPPORT_SPEEX
+		/* init speex codec */
+		speex_bits_init(&(p->speexBitEnc));
+		p->speex_enc = speex_encoder_init(&speex_nb_mode);
+		
+		//		x = ps->defaultCodec; /*set the bit-rate*/
+		x = 8000;
+		speex_encoder_ctl(p->speex_enc,SPEEX_SET_BITRATE,&x);
+		//		x = 0;
+		//		speex_encoder_ctl(p->speex_enc,SPEEX_SET_COMPLEXITY,&x);
+		x = 8000;  /*set the sampling rate*/
+		speex_encoder_ctl(p->speex_enc,SPEEX_SET_SAMPLING_RATE,&x);	
+		
+		
+		speex_bits_init(&(p->speexBitDec));		
+		p->speex_dec = speex_decoder_init(&speex_nb_mode);
+		
+		/* speex wideband codec */
+		speex_bits_init(&(p->speexWideBitEnc));
+		p->speex_wb_enc = speex_encoder_init(&speex_wb_mode);
+		x = 22000; /* set the bit-rate */
+		speex_encoder_ctl(p->speex_wb_enc,SPEEX_SET_BITRATE,&x);
+		x = 16000;  /* set the sampling rate */
+		speex_encoder_ctl(p->speex_wb_enc,SPEEX_SET_SAMPLING_RATE,&x);	
+		
+		speex_bits_init(&(p->speexWideBitDec));
+		p->speex_wb_dec = speex_decoder_init(&speex_wb_mode);
+#endif
+		/* assign lineId */
+		p->lineId = i;
+	}
+	
+	
+	/* determine if we are on a big-endian architecture */
+	i = 1;
+	if (*((char *)&i))
+		ps->bigEndian = 0;
+	else
+		ps->bigEndian = 1;
+	
+	return ps;
+}
+
+
+/* ltpWrite:
+ Sends an ltp packet out, it might require some bits to be flipped over
+ if you are running on a big endian system */
+
+int ltpWrite(struct ltpStack *ps, struct ltp *ppack, unsigned int length, unsigned int32 ip, unsigned short16  port)
+{
+	int ret;
+#ifdef DEBUG
+	if (ps->doDebug)
+		ltpTrace(ppack);
+#endif	
+	if (ps->bigEndian)
+		ltpFlip(ppack);
+	
+	ret = netWrite(ppack, length, ip, port);
+	
+	/* added this so that the ppack refered to after sending the packet is still readable */
+	if (ps->bigEndian)
+		ltpFlip(ppack);
+	
+	return ret;
+}
+/* callStartRequest:
+ A Call repeatedly sends an ltp message to a remote end-point (or the ltp server)
+ until a response is received or time-out */
+static void callStartRequest(struct ltpStack *ps, struct Call *pc, struct ltp *pltp)
+{
+	struct ltp	*p;
+	
+	/* copy the ltp request to the per-call buffer */
+	if (pltp)
+		memcpy(pc->ltpRequest, pltp, sizeof(struct ltp) + strlen(pltp->data));
+	
+	/* calculate the length of the ltp buffer (it ends with a human readable, null terminated string) */
+	p = (struct ltp *) pc->ltpRequest;
+	pc->ltpRequestLength = sizeof(struct ltp) + strlen(p->data);
+	if (pc->ltpRequestLength > 1000)
+		return;
+	
+	/* send out the packet */
+	ltpWrite(ps, (struct ltp *)pc->ltpRequest, pc->ltpRequestLength, pc->remoteIp, pc->remotePort);
+	
+#if DEBUG
+	
+	printf("out[%d] %02d %03d %s %s to %s %d\n", pc->lineId,
+		   p->command, p->response, p->from, p->to, 
+		   netGetIPString(pc->remoteIp), ntohs(pc->remotePort));
+#endif
+	
+	/* schedule at least 10 retries of the request  at five seconds intervals*/
+	pc->retryCount = 10;
+	pc->retryNext = ps->now + 5;
+}
+
+
+
+/* callStopRequest:
+ Stop resending the packets, often called when a proper response is received for a request
+ or it has timed-out */
+static void callStopRequest(struct Call *pc)
+{
+	pc->retryCount = 0;
+}
+
+/*  
+ callFindIdle:
+ finds an empty slot to start a new call
+ returns NULL if not found (quite possible), always check for null */
+struct Call *callFindIdle(struct ltpStack *ps)
+{
+	int     i;
+	struct Call *p;
+	
+	for (i = 0; i < ps->maxSlots; i++)
+	{
+		p = ps->call + i;
+		if(p->ltpState == CALL_IDLE) 
+		{
+			callInit(p, ps->defaultCodec);
+#if DEBUG
+			printf("free slot %d\n", p->lineId);
+#endif
+			return p;
 		}
 	}
-end:
-	fclose(pf); // close the download.xml handle
-	return byteCount;
+#if DEBUG
+	printf("free slot: none\n");
+#endif
+	return NULL;
+}
+
+
+/* callSearchByRTP:
+ When an incoming RTP packet arrives, we need to match that with an existing call.
+ This function cannot use userids etc. to do the matching, hence it is less
+ restrictive than the search used for ltp packets.
+ */
+struct Call *callSearchByRtp(struct ltpStack *ps, unsigned int32 ltpIp, unsigned short16 ltpPort, unsigned int32 fwdip, unsigned short16 fwdport, unsigned int session)
+{
+	int     i;
+	struct Call *call = ps->call;
+	
+	for (i = 0; i < ps->maxSlots; i++)
+		if (call[i].remoteIp == ltpIp && call[i].remotePort == ltpPort && 
+			call[i].fwdIP == fwdip && call[i].fwdPort == fwdport &&
+			call[i].ltpState != CALL_IDLE && call[i].ltpSession == session)
+			return call + i;
+	
+	return NULL;
+}
+
+/* callMatch:
+ Matches an incoming LTP message (request or response) to a call.
+ */
+static struct Call *callMatch(struct ltpStack *ps, struct ltp *p, unsigned int32 ip, unsigned short16 port, 
+							  unsigned int sessionid)
+{
+	char	*remote;
+	struct Call	*pc;
+	int		i;
+	
+	if (p->response)
+		remote = p->to;
+	else
+		remote = p->from;
+	
+#if DEBUG
+	printf("searching for %s:%d from %s:%d\n", p->from, p->session, netGetIPString(ip), ntohs(port));
+#endif
+	
+	for (i = 0; i < ps->maxSlots; i++)
+	{
+		pc = ps->call + i;
+		if (pc->ltpState != CALL_IDLE 
+			&& pc->ltpSession == p->session
+			&& ip == pc->remoteIp && port == pc->remotePort)
+		{
+#if DEBUG
+			printf("findSlot:%d\n", pc->lineId);
+#endif
+			return pc;
+		}
+	}
+	
+	/* 
+	 A message can arrive after a call is ended and the slot is freed.
+	 but we dont destroy the details of the previous call in the freed slot
+	 unless it is claimed by a new call so even after the call is ended, a message
+	 can be received by that slot.
+	 mostly used to inform the user about call charges etc.
+	 '*/
+	if (p->command == CMD_MSG)
+	{
+		for (i = 0; i < ps->maxSlots; i++)
+		{
+			pc = ps->call + i;
+			if (pc->ltpState == CALL_IDLE //&& !strcmp(remote, pc->remoteUserid) 
+				&& pc->ltpSession == p->session
+				&& ip == pc->remoteIp && port == pc->remotePort)
+			{
+#if DEBUG
+				printf("matched expired Slot:%d\n", pc->lineId);
+#endif
+				return pc;
+			}
+		}		
+	}
+	
+	return NULL;
+}
+
+/* callTimeout:
+ called when requests to a remote user have timed out
+ */
+static void callTimeOut(struct Call *pc)
+{
+	struct ltp *pm = (struct ltp *)pc->ltpRequest;
+	
+	switch (pm->command)
+	{
+		case CMD_RING:
+		case CMD_TALK:
+		case CMD_ANSWER:
+		case CMD_REFUSE:
+		case CMD_HANGUP:
+			/*we just mark the slot idle and preserve the other variables
+			 so that we can still accept out-of-call messages for this call
+			 like a message or a late hangup */
+			pc->ltpState = CALL_IDLE;
+			alert(pc->lineId, ALERT_DISCONNECTED, "Not reachable");
+			break;
+			
+		case CMD_MSG:
+			/* alert(pc->lineId, ALERT_MESSAGE, pm->data); */
+			break;
+	}
+}
+
+/* 
+ callFree:
+ free a call */
+/*
+ static void callFree(struct ltpStack *ps, struct Call *pc)
+ {
+ int i;
+ 
+ //this check is for a valid pc pointer
+ for (i=0; i < ps->maxSlots; i++)
+ if (pc == ps->call + i)
+ callInit(pc, ps->defaultCodec);
+ }
+ */
+
+/*
+ first try locating a chat session with userd,
+ if found, check if it has an active session and return the session.
+ if not found, search for a free chat session and initialize it.
+ */
+struct Message *getMessage(struct ltpStack *ps, char *userid)
+{
+	int i;
+	struct Message *pchat;
+	struct Message *pbest;
+	
+	if (!*userid)
+		return NULL;
+	
+	//do we have an existing and active chat with this userid?
+	for (i = 0; i < MAX_CHATS; i++){
+		pchat = ps->chat + i;
+		if (!strcmp(pchat->userid, userid)){
+			//has the session expired
+			if (pchat->dateLastMsg + 120 < ps->now && !pchat->retryCount){
+				//null everything
+				pchat->ip = ps->ltpServer;
+				pchat->fwdip = 0;
+				pchat->fwdport = 0;
+				pchat->port = ps->ltpServerPort;
+				pchat->retryCount = 0;
+				//				pchat->session = ps->nextCallSession++;
+				return pchat;
+			}
+			//ok, we have a chat session (it might be busy)
+			return pchat;
+		}
+	}
+	
+	//search for an empty chat object
+	//init it with the userid, we are careful not to initialize other fields
+	//they will get initialized by the sending or receiving functions
+	for (i = 0; i < MAX_CHATS; i++){
+		pchat = ps->chat + i;
+		if (!pchat->userid[0]){
+			strcpy(pchat->userid, userid);
+			pchat->session = ps->nextCallSession++;
+			return pchat;
+		}
+	}
+	
+	//we didn't find any empty chat slot either, 
+	//now search for an inactive chat slot of another userid
+	//pbest holds the least recently used, inactive chat slot
+	pbest = NULL;
+	for (i = 0; i < MAX_CHATS; i++){
+		pchat = ps->chat + i;
+		if (pchat->retryCount) //skip all the slots with pending outgoing messages
+			continue;
+		
+		if (!pbest)
+			pbest = pchat;
+		else if (pbest->dateLastMsg > pchat->dateLastMsg) //least recently used
+			pchat = pbest;
+	}
+	
+	if (pbest){
+		pbest->ip = ps->ltpServer;
+		pbest->fwdip = 0;
+		pbest->fwdport = 0;
+		pbest->port = ps->ltpServerPort;
+		pbest->retryCount = 0;
+		pchat->session = ps->nextCallSession++;
+	}
+	return pbest; //might be NULL if all slots were busy
+}
+
+/* redirect:
+ the redirection is a response to an request originated by us.
+ usually, when we send a call/ptt/msg request packet to the ltp server,
+ ltp server redirects us to the destination's ip/port and the current and future
+ messages are to be exchanged with the remote destination directly
+ */
+static void redirect(struct ltpStack *ps, struct ltp *response, unsigned int fromip, unsigned short fromport)
+{	
+	int32	ip;
+	short16 port;
+	struct Call *pc=NULL;
+	int	i;
+	
+	//26 april, 2009, farhan
+	//if we are redirecting the ring, then the call object must be updated to point to the new end-point
+	//otherwise, we will end up spawing redirects in several directions.
+	if (response->command == CMD_RING){
+		
+		for (i = 0; i < ps->maxSlots; i++){
+			pc = ps->call + i;
+			if (!strcmp(pc->remoteUserid, response->to) && 
+				pc->ltpSession == response->session && 
+				pc->remoteIp == fromip && 
+				pc->remotePort == fromport)
+			{
+				pc->remoteIp = response->contactIp;
+				pc->remotePort = response->contactPort;
+			}
+		}
+		return;
+	}
+	
+	
+	//ensure that redirect message is one that is acceptable
+	if (response->command == CMD_RING ||
+		response->command == CMD_MSG ||
+		response->command == CMD_NOTIFY)
+	{
+		ip = response->contactIp;
+		port = response->contactPort;
+		
+		response->response = 0;
+		//response->data[0]=0;
+		response->contactIp = 0;
+		response->contactPort = 0;
+		
+		ltpWrite(ps, response, sizeof(struct ltp) + strlen(response->data), ip, port);
+	}
+}
+
+
+/* login/logout:
+ 
+ This function is called for login as well as logut.
+ 
+ Though login is called every second through the tick function,
+ the login() decides whether to (a) do nothing, (b) repeat a 
+ pending login or (c) start a new login. It also checks if
+ a login has timedout/
+ 
+ login keeps checking the time and tries logging onto the server
+ after every LTP_LOGIN_INTERVAL number of seconds. 
+ usually logging in every 15 minutes is a good idea.
+ as login serves others to know if you are online or not
+ 
+ you can force the login or logout by supplying CMD_LOGIN or
+ CMD_LOGOUT as a parameter when calling this function
+ 
+ how it works:
+ every few, a series of CMD_LOGIN messages are sent
+ to the server until a response is obtained and then there is
+ peace and quite until the time for the next login.
+ 
+ Notes:
+ 1. the retry interval between successive packets is LTP_RETRY_INTERVAL
+ 2. after a successful login, you wait for LTP_LOGIN_INTERVAL seconds before starting again
+ */
+void ltpLogin(struct ltpStack *ps, int command)
+{
+    struct ltp *ppack = (struct ltp *)ps->scratch;
+	int i;
+	
+	/* if the command is non-zero then force a fresh
+	 login/logout starting now */
+	if (command)
+	{
+		ps->loginNextDate = 0;
+		ps->loginCommand = command;
+		ps->loginRetryCount = 0;
+		if (command == CMD_LOGIN)
+			ps->myPriority = NORMAL_PRIORITY + 1;
+		/* added for fast login */
+		zeroMemory(ps->ltpNonce, sizeof(ps->ltpNonce));
+	}
+	
+	/* 
+	 on each login attempt (every few minutes), login packets are sent to the server 
+	 repeatedly every few seconds until we get a response or timeout.
+	 
+	 loginNextDate tells us when we should retransmit the login message. on each login attempt 
+	 Note:  'now' contains a recently read julian time value. Don't know what is julian date? google it.
+	 */
+	if((unsigned int) ps->now < ps->loginNextDate)
+		return;
+	
+	/* if loginRetry count is zero, it means, it is time for a fresh login */
+	if (ps->loginRetryCount == 0)
+	{
+		/* If the operating system can resolve the ip address of a domain name,
+		 it means that the internet connectivity is working and we can actually try a login.
+		 
+		 trying to resolve the server's domain name into an ip adddress
+		 is a hackful way of knowing if we have internet connectivity.
+		 */
+		ps->ltpServer = lookupDNS(ps->ltpServerName);
+		if (!ps->ltpServer || ps->ltpServer == -1)
+		{
+			/* Implementors Note : lookupDNS is expected to return a 0 if it fails to
+			 resolve the server name or if the net is down.
+			 
+			 if we cannot resolve the ip address, then lets hang around and retry later
+			 abandon login attempt for the time being */
+			ps->loginNextDate = (unsigned int)ps->now + LTP_LOGIN_INTERVAL;
+			ps->loginStatus = LOGIN_STATUS_NO_ACCESS;
+			ps->myPriority = NORMAL_PRIORITY;
+			return;
+		}
+		
+		/* LTP keeps it's users online by re-logging them in every few minutes. While
+		 an attempt is on to re-login, the ltp stack should not be signalled as offline.
+		 On the other hand, if the user has requested a login manually, then the ltp stack
+		 should be set to offline until the login succeeds.
+		 set loginstatus to offline if login() was called with CMD_LOGIN from the user interface */
+		if (command == CMD_LOGIN)
+		{
+			ps->loginStatus = LOGIN_STATUS_OFFLINE;
+			ps->myPriority = NORMAL_PRIORITY+1;
+		}
+		
+		/* Do we have userid and password ready? if not probably
+		 we are dealing with a new user. ask her to get a userid from the server
+		 abandon login attempt for the time being */
+		if (!strlen(ps->ltpUserid) || !strlen(ps->ltpPassword))
+		{
+			ps->loginNextDate = (unsigned int)ps->now + LTP_RETRY_INTERVAL;
+			return;
+		}
+		
+		/* if we are logged off then display to the user that we
+		 are attempting to login again */
+		if (ps->loginStatus != LOGIN_STATUS_ONLINE)
+			ps->loginStatus = LOGIN_STATUS_TRYING_LOGIN;
+		
+		if (ps->loginStatus == LOGIN_STATUS_ONLINE && command == CMD_LOGOUT)
+		{
+			ps->loginStatus = LOGIN_STATUS_TRYING_LOGOUT;
+			for (i = 0; i < ps->maxSlots; i++)
+				if (ps->call[i].ltpState != CALL_IDLE)
+					ltpHangup(ps, i);
+		}
+		
+		/* on each login attempt, we increment the session count
+		 initialise the number of retries to be made and how many seconds we
+		 wait between the retries */
+		ps->loginSession++;
+		ps->loginRetryCount = LTP_MAX_RETRY;
+		ps->loginRetryDate = ps->now + LTP_RETRY_INTERVAL;
+	}
+	/* this is the block for retrying an ongoing login attempt */
+	else if (ps->now > ps->loginRetryDate)
+	{
+		/* decrement the count */
+		ps->loginRetryCount--;
+		if (ps->loginRetryCount <= 0)
+		{
+			/* if we have retried LTP_MAX_RETRY times, then we 
+			 give up and declare ourselves offline */
+			if (ps->loginCommand == CMD_LOGIN)
+				ps->loginStatus = LOGIN_STATUS_NO_ACCESS;
+			else
+				ps->loginStatus = LOGIN_STATUS_OFFLINE;
+			
+			ps->myPriority = NORMAL_PRIORITY;
+			/* let's rest and try after sometime */
+			ps->loginNextDate = (unsigned int)ps->now + LTP_LOGIN_INTERVAL;
+			return;
+		}
+		/*
+		 there are still more retry attempts left
+		 we are going ahead with the sending off another packet (see the code a few lines down)
+		 also schedule another one after a few seconds */
+		ps->loginRetryDate = ps->now + LTP_RETRY_INTERVAL;
+	}
+	else
+	/* we return if all is fine and there we are logged in at the moment 
+	 and there is no need to start another attempt yet */
+		return;
+	
+	
+	/* SENDING A LOGIN PACKET !!! we are here because we have eliminated all the cases
+	 that can abort our attempt at a login */
+	
+	/* won't happen unless we have a userid, password, server ip are in place */
+	if (!strlen(ps->ltpUserid) || !strlen(ps->ltpPassword) || ps->ltpServer == 0)
+		return;
+	
+	/* init the packet */
+	zeroMemory(ppack, sizeof(struct ltp));
+	ppack->version = 1;
+	ppack->command = (short16) ps->loginCommand;
+	strncpy(ppack->from, ps->userAgent, MAX_USERID);
+	strncpy(ppack->to, ps->ltpUserid, MAX_USERID);
+	ppack->session = ps->loginSession;
+	ppack->msgid = ps->msgCount;
+	ppack->wparam = ps->myPriority;
+	
+	ppack->contactIp = 0;
+	ppack->lparam = ps->ltpPresence;
+	strncpy(ppack->data, ps->ltpLabel, 128);
+	
+	ltpWrite(ps, ppack, sizeof(struct ltp) + strlen(ppack->data), ps->ltpServer, (short16)(ps->bigEndian ? RTP_PORT : flip16(RTP_PORT)));
+#if DEBUG
+	printf("lgn %02d %03d %s %s contact:%u to %s %d\n", ppack->command, ppack->response, ppack->from, ppack->to, 
+		   ppack->contactIp, netGetIPString(ps->ltpServer), RTP_PORT);
+#endif
+}
+
+
+/*loginCancel:
+ cancels any ongoing login or logout */
+void ltpLoginCancel(struct ltpStack *ps)
+{
+	if (ps->loginStatus == LOGIN_STATUS_TRYING_LOGIN)
+	{
+		ps->ltpPassword[0] = 0;
+		ps->loginStatus = LOGIN_STATUS_OFFLINE;
+		ps->myPriority = NORMAL_PRIORITY;
+	}
+	
+	ps->loginRetryCount = 0;
+	ps->loginNextDate = ps->now + LTP_LOGIN_INTERVAL;
+}
+
+/* callTick:
+ This is called from a timer function every second. Don't panic
+ if you can't accurately call this every second. This is just an approximation.
+ 
+ It is called only on non-idle channels
+ */
+
+static void callTick(struct ltpStack *ps, struct Call *pc)
+{
+	struct ltp *p = (struct ltp *)pc->ltpRequest;
+	
+	if (pc->ltpState == CALL_RING_RECEIVED && pc->timeStart + ps->ringTimeout < ps->now)
+	{
+		//added by mukesh to remove hungup button
+		pc->ltpState = CALL_IDLE;
+		alert(pc->lineId, ALERT_DISCONNECTED, "Missed");
+		ltpRefuse(ps, pc->lineId, "missed");
+		return;
+	}
+	
+	/* if no packet out is pending, then skip this slot */
+	
+	if (pc->retryCount == 0)
+	{
+		if (pc->ltpState == CALL_HANGING)
+			pc->ltpState = CALL_IDLE;
+		return;
+	}
+	
+	/* complain if the retrycount dips below 0: shouldn't happen */
+	if (pc->retryCount < 0)
+	{
+#if DEBUG
+		printf("retryCount = %d for call to %s, state=%d\n", 
+			   pc->retryCount, pc->remoteUserid, pc->ltpState);
+#endif
+		if (pc->ltpState == CALL_HANGING)
+			pc->ltpState = CALL_IDLE;
+		return;
+	}
+	
+	/* retry not due yet? */
+	if (ps->now < pc->retryNext)
+		return;
+	
+	/* added on feb 11, 2006. the packets are proxied
+	 by force if they were initiated before onRing decided
+	 to go through the proxy
+	 */
+	if (pc->fwdIP && !p->contactIp)
+	{
+		p->contactIp = pc->fwdIP;
+		p->contactPort = pc->fwdPort;
+	}
+	/* the message is already lying in the ltpRequest array, just send it out again */
+	ltpWrite(ps, (struct ltp *)pc->ltpRequest, pc->ltpRequestLength, pc->remoteIp, pc->remotePort);
+	
+#if DEBUG
+	
+	printf("outr %02d %03d %s %s to %s %d\n", p->command, 
+		   p->response, p->from, p->to, netGetIPString(pc->remoteIp), ntohs(pc->remotePort));
+#endif
+	/* decrement the request retry count */
+	pc->retryCount--;
+	if (!pc->retryCount)
+		callTimeOut(pc);
+	else
+		pc->retryNext = ps->now + 5;
+}
+
+
+/* tick:
+ Make you system timer call this every second (approximately).
+ If the system freezes for a few seconds, dont panic, nothing bad is going to happen, relax.
+ 
+ the timeNow is the current julian date (google out the definition). typically, time(NULL)
+ will return this on a system with standard c lib support */
+void ltpTick(struct ltpStack *ps, unsigned int timeNow)
+{
+	int		i;
+	struct Call	*p;
+	int soundRequired;
+	//	struct Contact *pcon;
+	
+	// we'd normally call time(NULL) here but some crazy systems don't support it 
+	ps->now = timeNow;
+	
+	// login() does not do something every second,
+	// usually retuns quickly if it is not in the middle of a login 
+	ltpLogin(ps, 0);
+	
+	// we keep writing a very small packet to our network to keep our NAT session alive
+	// through a proxy. this is set to 2 minutes at the moment (120 seconds) 
+	
+	//it is probably intefering with gprs 2006/11/4
+	if (ps->loginStatus == LOGIN_STATUS_ONLINE && ps->nat && ps->dateNextEcho < ps->now)
+	{
+		ltpWrite(ps, (struct ltp *)&ps->loginSession, 4, ps->ltpServer, (short16)(ps->bigEndian ? RTP_PORT : flip16(RTP_PORT)));
+		ps->dateNextEcho = timeNow + 60;
+	}
+	
+	
+	
+	/* give each non-idle call a slice of time */
+	soundRequired = 0;
+	for (i =0; i < ps->maxSlots; i++)
+	{
+		p = ps->call + i;
+		if (p->ltpState == CALL_IDLE)
+			continue;
+		
+		callTick(ps, p);
+		
+		/* check if any of the calls still require the sound card */
+		if (p->ltpState == CALL_CONNECTED)
+			soundRequired = 1;
+	}
+	
+	
+	
+	//every five seconds, retry sending pending messages
+	if ((timeNow % 5)== 0)
+		for (i=0; i < MAX_CHATS; i++){
+			struct Message *pmsg = ps->chat + i;
+			if (pmsg->retryCount <= 0)
+				continue;
+			ltpWrite(ps, (struct ltp *)pmsg->outBuff, pmsg->length, pmsg->ip, pmsg->port);
+			pmsg->retryCount--;
+			if (!pmsg->retryCount)
+				alert(-1, ALERT_MESSAGE_ERROR, pmsg);
+		}
+	
+	// closeSound to be called by alert_disconnected
+	/* free up the card if required 
+	 if (!soundRequired)
+	 closeSound(); */
+}
+
+
+/* 
+ onChallenge:
+ any request can be challenged by the server.
+ the challenge works like this ...
+ First: you send server a message, the server responds back 
+ with a) response code 407 and b) some random bits in authenticate field (called the challenge)
+ Second: you take an md5 of the entire original request + your password + the challenge 
+ put the md5 checksum in the authenticate field and resend the request back to the server.
+ 
+ As the server knows your password and the random challenge it had issued, it can check if the md5
+ is proper by recalcuating it and hence authenticates you without you sending your password over
+ the pubic Internet.
+ 
+ mainly used with login attempts
+ 
+ dont know what is md5 and challenge? read the RFC on http digest authentication 
+ */
+static void onChallenge(struct ltpStack *ps, struct ltp *response, unsigned int fromip, unsigned short fromport)
+{
+	struct  MD5Context      md5;
+	unsigned char digest[16];
+	unsigned int32		tempIp;
+	unsigned short16 tempPort;
+	
+	/* back up authenticate field of the response
+	 zero authenticate field as it was in the orignal request
+	 the challenge issued by the server is usually called 'Nonce' (short for nonsense)
+	 as it contains random bit pattern that is unpredictable */
+	if (response->command == CMD_LOGIN || response->command == CMD_LOGOUT)
+	{
+		zeroMemory(ps->ltpNonce, 16);
+		strncpy(ps->ltpNonce, response->authenticate, 16);
+	}
+	
+	zeroMemory(response->authenticate, 16);
+	zeroMemory(&md5,sizeof(md5));
+	
+	/* convert the response back into request by resetting the response code */
+	response->response = 0;
+	
+	/* we exclude the contact info from digest as
+	 the contact info field can be legitimately rewritten by proxies and the server
+	 THOUGHT: should the redirected ip/port be stored somewhere?
+	 */
+	tempIp = response->contactIp;
+	tempPort = response->contactPort;
+	
+	response->contactIp = 0;
+	response->contactPort = 0;
+	
+	/* flip to the original shape */
+	if (ps->bigEndian)
+		ltpFlip(response);
+	
+	MD5Init(&md5);
+	MD5Update(&md5, (unsigned char *)response, sizeof(struct ltp) + strlen(response->data), ps->bigEndian);
+	MD5Update(&md5, (unsigned char *)ps->ltpPassword, strlen(ps->ltpPassword), ps->bigEndian);
+	MD5Update(&md5, (unsigned char *)ps->ltpNonce, 16, ps->bigEndian);
+	MD5Final(digest,&md5);
+	
+	/* back to the host byte-order */
+	if (ps->bigEndian)
+		ltpFlip(response);
+	
+	/* put the md5 response to the challenge back into the */ 
+	memcpy(response->authenticate, digest, 16);
+	
+	/* restore the contact info back to the message */
+	response->contactIp = tempIp;
+	response->contactPort = tempPort;
+	
+	ltpWrite(ps, response, sizeof(struct ltp) + strlen(response->data), fromip, fromport);
+	
+#if DEBUG
+	printf("out challenge response %02d %03d %s %s from %s %d: %s\n", response->command, response->response, response->from, 
+		   response->to, netGetIPString(fromip), ntohs(fromport), response->authenticate);
+#endif
+}
+
+/* loginResponse:
+ A login response can be on of the four:
+ 
+ RESPONSE_OK: login has suceeded and you are logged in
+ RESPONSE_REDIRECT: login has to be tried at the end point indicated in contact fields
+ RESPONSE_AUTHENTICATION_REQUIRED: login has been challenged with a challenge set in the authenticate field
+ 40x: login has failed.
+ 
+ AUTHENTICATE_REQUIRED is universally handled for all incoming messages within the universal onResponse()
+ hence it is not handled here
+ */
+void loginResponse(struct ltpStack *ps, struct ltp *msg)
+{
+    int i;
+	//	char	*p, *q;
+	
+	/* server redirection?
+	 the server might ask us to retry login in through a proxy or a different server (different domain) */
+	if (msg->response == RESPONSE_REDIRECT)
+	{
+		ps->ltpServer = msg->contactIp;
+		msg->response = 0;
+		ltpWrite(ps, msg, sizeof(struct ltp) + strlen(msg->data), ps->ltpServer, (short16)(ps->bigEndian? RTP_PORT : flip16(RTP_PORT)));
+		return;
+	}
+	
+	/* set the next login date and reset the current retry count */
+	ps->loginNextDate = ps->now + LTP_LOGIN_INTERVAL;
+	ps->loginRetryCount = 0;
+	
+	/* check if this was a response to a pending request */
+	if (msg->response == RESPONSE_OK)
+	{
+		/* store the authenticate field just in case */
+		strncpy(ps->ltpNonce, msg->authenticate, 16);
+		
+		/* usually there is a message of the day with each login */
+		strncpy(ps->ltpTitle, msg->data, MAX_TITLE);
+		for (i = 0; i < sizeof(ps->motd)-1 && msg->data[i] > 0; i++)
+			ps->motd[i] = msg->data[i];
+		ps->motd[i] = 0;
+		
+		/* if not already logged in, make some song and dance about it (alert!)*/
+		if (ps->loginStatus != LOGIN_STATUS_ONLINE)
+			alert(-1, ALERT_ONLINE, "Online");
+		
+		ps->loginStatus = LOGIN_STATUS_ONLINE;
+		ps->myPriority = NORMAL_PRIORITY;
+	}
+	else if (msg->response == RESPONSE_BUSY)
+	{
+		ps->loginStatus = LOGIN_STATUS_BUSY_OTHERDEVICE;
+		ps->loginNextDate = ps->now + LTP_LOGIN_INTERVAL;
+		ps->loginRetryCount = 0;
+		ps->myPriority = NORMAL_PRIORITY;
+		
+		alert(-1, ALERT_OFFLINE, msg->data);
+	}
+	else
+	{
+		ps->loginStatus = LOGIN_STATUS_FAILED;
+		ps->loginNextDate = ps->now + LTP_LOGIN_INTERVAL;
+		ps->loginRetryCount = 0;
+		ps->myPriority = NORMAL_PRIORITY;
+		
+		alert(-1, ALERT_OFFLINE, msg->data);
+	}
+}
+
+/*
+ logoutResponse:
+ It is pretty trivial right now, assume that you are logged out in anycase upon
+ a response.
+ */
+static void logoutResponse(struct ltpStack *ps, struct ltp *msg)
+{
+	/* server redirection?
+	 the server might ask us to retry logout in through a proxy or a different server (different domain) */
+	if (msg->response == RESPONSE_REDIRECT)
+	{
+		ps->ltpServer = msg->contactIp;
+		msg->response = 0;
+		ltpWrite(ps, msg, sizeof(struct ltp) + strlen(msg->data), ps->ltpServer, (short16)(ps->bigEndian? RTP_PORT : flip16(RTP_PORT)));
+		return;
+	}
+	
+	ps->loginNextDate = ps->now + LTP_LOGIN_INTERVAL;
+	ps->loginRetryCount = 0;
+	
+	ps->loginStatus = LOGIN_STATUS_OFFLINE;
+	ps->myPriority = NORMAL_PRIORITY;
+	
+	ps->ltpUserid[0] = 0;
+	ps->ltpPassword[0] = 0;
+	ps->ltpLabel[0] = 0;
+	ps->ltpTitle[0] = 0;
+	
+	/* check if this was a response to a pending request */
+	if (msg->response == RESPONSE_OK)
+		alert(-1, ALERT_OFFLINE, "");
+	else
+		alert(-1, ALERT_OFFLINE, msg->data);
+}
+
+
+
+static void  messageResponse(struct ltpStack *ps, struct ltp *pack, unsigned int32 ip, unsigned short16 port)
+{
+	struct Message *pchat=NULL;
+	
+	pchat = getMessage(ps, pack->to);
+	if (!pchat)
+		return;
+	
+	//if this is a confirmation of some other message, skip it.
+	if (pchat->lastMsgSent != pack->msgid)
+		return;
+	
+	//if we are redirected directly to the peer, so be it.
+	if (pack->response == RESPONSE_REDIRECT){
+		pchat->ip = pack->contactIp;
+		pchat->port = pack->contactPort;
+		ltpWrite(ps, pack, pchat->length, pchat->ip, pchat->port);
+		return;
+	}
+	
+	//this is a successful response
+	pchat->retryCount = 0;
+	pchat->ip = ip;
+	pchat->port = port;
+	pchat->dateLastMsg = ps->now;
+	
+	if (pack->contactIp){
+		pchat->fwdip = pack->contactIp;
+		pchat->fwdport = pack->contactPort;
+	}
+	
+	if (pack->response >= 400)
+		alert(-1, ALERT_MESSAGE_ERROR, pack);
+	else
+		alert(-1, ALERT_MESSAGE_DELIVERED, pack);
 }
 
 
 /*
-	CDR functions
-*/
-
- void cdrEmpty()
+ ringResponse:
+ ring response is one of the trickiest part of the LTP protocol.
+ Try understanding what it does before hacking into it.
+ 
+ It is best if you read the protocol definiton before dipping into it.
+ 
+ Here is what happens:
+ ring response is received usually after having despatched one or more ring
+ command messages to the server, the server would have redirected you (by a 
+ RESPONSE_REDIRECT : 302 response either directly the remote party's end-point or to a relay 
+ that the remote party is logged in from.
+ 
+ The 302 response (redirection) is handled by onResponse() which calls ringResponse
+ only if the response was either a 20x or a 40x message.
+ 
+ The ringResponse might be directly coming in from the remote end-point rather than 
+ from the end-point that you sent your original ring command to. Hence, the
+ standard callMatch() function wont' work and we use a slightly less strict algorithm
+ to find a matching call for this ring response.
+ 
+ If the response is 40x we assume the call failed and end the call right there.
+ 
+ If the response is a RESPONSE_OK, then it means we were able to get a direct hit from the
+ called end-point. and hence we set the directMedia flag which tells us that we are
+ able to send packets between each other without requiring a relay.
+ 
+ 
+ The remote party will try sending a couple of RESPONSE_OK responses to check if it can 
+ make through directly, in the end it will send a RESPONSE_OK_RELAYEd response (meaning, relaying
+ is required).
+ 
+ It might happen that we get a RESPONSE_OK_RELAYED as well RESPONSE_OK response in which case, 
+ directMedia flag helps us avoid unecessary relaying.
+ */
+static void  ringResponse(struct ltpStack *ps, struct ltp *pack, unsigned int ip, unsigned short port)
 {
-	struct CDR *p, *q;
-
-	p = listCDRs;
-	while (p){
-		q = p->next;
-		free(p);
-		p = q;
-	}
-	listCDRs = NULL;
-}
-
-static void cdrSave(){
-	char pathname[MAX_PATH];
-	struct	 CDR *q;
-	char	line[1000];
-	FILE	*pf;
-
-	sprintf(pathname, "%s\\calls.txt", myFolder);
-	pf = fopen(pathname, "w");
-	if (!pf)
-		return;
-	
-	for (q = listCDRs; q; q = q->next){
-		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
-		(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid);
-		fwrite(line, strlen(line), 1, pf);
-	}
-	fclose(pf);
-}
-
-
-static void cdrCompact() {
-	struct CDR *p, *q;
-	//check if the cdr count has exceeded 200
-	int i = 0;
-	for (q = listCDRs; q; q = q->next)
-		i++;
-	
-	//high water point is 300
-	if (i < 300)
-		return;
-
-	//remove all the cdrs past the 200th
-	for (i = 0, p = listCDRs; p; p = p->next)
-		if (i == 200)
-			break;
-
-	//place a null to truncate this list
-	q = p->next;
-	p->next = NULL;
-
-	//remove the rest of the tail
-	while (q){
-		p = q->next;
-		free(q);
-		q = p;
-	}
-	cdrSave();
-}
-
-void cdrAdd(char *userid, time_t time, int duration, int direction)
-{
-	//write to the disk
-	char	pathname[MAX_PATH];
-	char	line[300];
-	struct	CDR	*p;
-	FILE	*pf;
 	int i;
-	if (listCDRs){
-		// compare the last call with this 
-		if (!strcmp(listCDRs->userid, userid) && listCDRs->direction == direction
-			&& listCDRs->date == (time_t)time)
-			return;
-	}
-
-	p = (struct CDR *) malloc(sizeof(struct CDR));
-	if (!p)
-		return;
-
-	memset(p, 0, sizeof(struct CDR));
-	//Kaustubh Deshpande 21114 fixed-Junk characters are displayed in call list on calling a long number.
-	//the userid has limit of 32, and we were not checking the limit earlier. Now a check is added for that.
-	for (i=0;i<31;i++)
-	{
-		p->userid[i]=userid[i];
-	}
-	p->userid[32]=0;
-	///
+	struct Call *pc=NULL;
 	
-	p->date = (time_t)time;
-	p->duration = duration;
-	p->direction = direction;
-	getTitleOf(p->userid, p->title);
-
-	//add to the linked list
-	p->next = listCDRs;
-	listCDRs = p;
-
-	sprintf(pathname, "%s\\calls.txt", myFolder);
-	sprintf(line, "<cdr><date>%ul</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
-		(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid);
-
-	pf = fopen(pathname, "a");
-	fwrite(line, strlen(line), 1, pf);
-	fclose(pf);
+	for (i = 0; i < ps->maxSlots; i++)
+	{
+		pc = ps->call + i;
+		if (!strcmp(pc->remoteUserid, pack->to) && pc->ltpSession == pack->session)
+			break;
+	}
+	
+	if (i == ps->maxSlots || !pc)
+		return;
+	
+	/* stop sending more ring requests */
+	if(pc->ltpState == CALL_RING_SENT)
+		callStopRequest(pc);
+	
+	if (pack->response >= 400)
+	{
+		if (pc->ltpState != CALL_IDLE)
+		{
+			pc->kindOfCall = CALLTYPE_MISSED;
+			if (pack->response == RESPONSE_OFFLINE)
+				pc->kindOfCall = CALLTYPE_OFFLINE;
+			else if (pack->response == RESPONSE_NOT_FOUND)
+				pc->kindOfCall = CALLTYPE_BADADDRESS;
+			else
+				pc->kindOfCall = CALLTYPE_BUSY;
+		}
+		pc->ltpState = CALL_IDLE;
+		alert(pc->lineId, ALERT_DISCONNECTED, pack->data);
+	}
+	else
+	{
+		if (pack->response == 202 && !pc->directMedia)
+		{
+			pc->remoteIp = ip;
+			pc->remotePort = port;
+			pc->fwdIP = pack->contactIp;
+			pc->fwdPort = pack->contactPort;
+			if (pc->ltpState == CALL_RING_SENT)
+				pc->ltpState = CALL_RING_ACCEPTED;
+			alert(pc->lineId, ALERT_RINGING, pack->data);			
+		}
+		
+		if (pack->response == RESPONSE_OK)
+		{
+			pc->remoteIp = ip;
+			pc->remotePort = port;
+			pc->fwdIP = 0;
+			pc->fwdPort = 0;
+			if (pc->ltpState == CALL_RING_SENT)
+				pc->ltpState = CALL_RING_ACCEPTED;
+			pc->directMedia = 1;
+			alert(pc->lineId, ALERT_RINGING, pack->data);			
+		}
+	}
 }
 
-void cdrRemove(struct CDR *p)
+/*
+ hangupResponse:
+ here regardless of what the other side says, you wanted to drop the call
+ you have asked the other side to do that, now that the message has made its
+ way to the other side, forget about it */
+static void hangupResponse(struct ltpStack *ps, struct Call *pc /*, struct ltp *pack, int ip, short port*/)
 {
-	struct CDR *q;
-	if (!p)
-		return;
+	/* reset the request state */
+	callStopRequest(pc);
+	
+	pc->ltpState = CALL_IDLE;
+	pc->timeStop = ps->now;
+	//20070722 changed the data to what the remote is saying
+	alert(pc->lineId, ALERT_DISCONNECTED, "");
+}
 
-	if (p == listCDRs) {
-		listCDRs = p->next;
+
+
+
+/* onResponse:
+ All the response packet are handled by this big switch.
+ The challenge, redirect etc are all handled similarly and hence 
+ they all branch to the same functions.
+ there are specific handlers for individual requests
+ */
+
+/* onResponse:
+ All the response packet are handled by this big switch.
+ The challenge, redirect etc are all handled similarly and hence 
+ they all branch to the same functions.
+ there are specific handlers for individual requests
+ */
+static void onResponse(struct ltpStack *ps, struct ltp *pack, unsigned int ip, unsigned short port)
+{
+	struct Call	*pc;
+	
+	if (pack->response == RESPONSE_AUTHENTICATION_REQUIRED)
+	{
+		onChallenge(ps, pack, ip, port);
+		return;
+	}
+	
+	if (pack->command == CMD_LOGIN)
+	{
+		loginResponse(ps, pack);
+		return;
+	}
+	
+	if (pack->command == CMD_LOGOUT)
+	{
+		logoutResponse(ps, pack);
+		return;
+	}
+	
+	if (pack->command == CMD_MSG){
+		messageResponse(ps, pack, ip, port);
+		return;
+	}
+	
+	if(pack->response == RESPONSE_REDIRECT)
+	{
+		redirect(ps, pack, ip, port);
+		return;
+	}
+	
+	/* ring response will not match ordinarily */ 
+	if(pack->command == CMD_RING || pack->command == CMD_TALK)
+	{
+		ringResponse(ps, pack, ip, port);
+		return;
+	}
+	
+	/* the rest of the messages are call slot specific, hence we need to match this
+	 with specific calls*/
+	
+	pc = callMatch(ps, pack, ip, port, pack->session);
+	if (!pc)
+		return;
+	
+	switch(pack->command)
+	{
+		case CMD_ANSWER:
+			if (pack->response == RESPONSE_OK)
+			{
+				pc->ltpState = CALL_CONNECTED;
+				/* pc->timeStart = now; */
+				
+				// the sound has already been opened on call ltpAnswer, it is pointless opening it again on response to it
+				//if (!openSound(1))
+				//	alert(-1, ALERT_ERROR, "Trouble with sound system");
+			}
+			else
+			{
+				if (pc->ltpState != CALL_IDLE)
+				{
+					if (pc->ltpState != CALL_IDLE)
+					{
+						pc->kindOfCall = CALLTYPE_MISSED;
+						if (pack->response == RESPONSE_OFFLINE)
+							pc->kindOfCall = CALLTYPE_OFFLINE;
+						else if (pack->response == RESPONSE_NOT_FOUND)
+							pc->kindOfCall = CALLTYPE_BADADDRESS;
+						else
+							pc->kindOfCall = CALLTYPE_BUSY;
+					}
+				}
+				pc->ltpState = CALL_IDLE;
+			}
+			break;
+			
+		case CMD_REFUSE:
+			if (pc && pc->ltpState == CALL_HANGING)
+			{
+				pc->kindOfCall |= CALLTYPE_MISSED;
+				pc->ltpState = CALL_IDLE;
+				alert(pc->lineId, ALERT_DISCONNECTED, "Refused");
+			}
+			break;
+			
+		case CMD_HANGUP:
+			hangupResponse(ps, pc/*, pack, ip, port*/);
+			break;		
+	}
+	
+	callStopRequest(pc);
+}
+
+/*
+ sendResponse:
+ This sends a response to a packet with a response code and an optional message in the data field
+ 
+ responses are sent always and only upon receiving a request. the response are never retransmitted
+ if the remote side sending the request fails to send receive the response, 
+ the remote retransmit the original request and the response will be resent */
+static void sendResponse(struct ltpStack *ps, struct ltp *pack, short16 responseCode, char *message, unsigned int ip, unsigned short16 port)
+{
+	char scratch[1000];
+	struct ltp *p;
+	
+	p = (struct ltp *) scratch;
+	memcpy(p, pack, sizeof(struct ltp));
+	strncpy(p->data, message, 256);
+	p->response = responseCode;
+	
+#if DEBUG
+	printf("response cmd:%02d/%03d %s %s sent to %s %d\n",  p->command, p->response, p->from, 
+		   p->to, netGetIPString(ip), ntohs(port));
+#endif
+	ltpWrite(ps, p, sizeof(struct ltp) + strlen(p->data), ip, port);
+}
+
+/*onRing:
+ A  big one, read this along with the ringResponse comments.
+ 
+ 1. For a fresh call, first a struct Call is allocated from the pool.
+ 2. If the contact fields are set, it means, it has been relayed. Hence, the
+ fwd fields are set in the Call. Otherwise, we know it is direct packet from the caller
+ and hence, we set directMedia flag in the Call to '1'.
+ 3. For relayed rings, unless we are forced to proxy (forceProxy set), we try punch a UDP
+ hole for at least three times before deciding use the relay.
+ 4. This function compares it's own default Codec with the codec recommended by the call
+ and tries arriving at a compromise.
+ */
+static struct Call *onRing(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
+{
+	struct Contact *pcon = NULL;
+	struct Call *pc=NULL;
+	int	i;
+	short responseCode = RESPONSE_OK;
+	
+	for (i = 0; i < ps->maxSlots; i++)
+	{
+		pc = ps->call + i;
+		if (pc->ltpSession == ppack->session && !strcmp(ppack->from, pc->remoteUserid)
+			&& pc->ltpState != CALL_IDLE)
+			break;
+		pc = NULL;
+	}
+	
+	
+	if (pc)
+	{
+		if (pc->ltpState == CALL_HANGING)
+		{
+			sendResponse(ps, ppack, RESPONSE_BUSY, "Busy", fromip, fromport);
+			return pc;
+		}
+		
+		/* if direct media is set */
+		if (pc->directMedia)
+		{
+			sendResponse(ps, ppack,RESPONSE_OK,"OK", pc->remoteIp, pc->remotePort);
+			return pc;
+		}
+		
+		/* did we get this directly from the remote end */
+		if (!ppack->contactIp)
+		{
+			pc->remoteIp = fromip;
+			pc->remotePort = fromport;
+			pc->fwdIP = 0;
+			pc->fwdPort = 0;
+			pc->directMedia = 1;
+			/* directly try responding to the ring's originaiting ep */ 
+			sendResponse(ps, ppack, RESPONSE_OK, "OK", pc->remoteIp, pc->remotePort);
+			return pc;
+		}
+		
+		/* further processing only for packets being relayed (contactIp set)
+		 and directmedia not yet set */
+		pc->nRingMessages++;
+		
+		/* try sending it off to the remote end-point event */
+		if (pc->nRingMessages < 3 && !ps->forceProxy)
+		{
+			/* directly try responding to the ring's originaiting ep  */
+			sendResponse(ps, ppack, RESPONSE_OK, "OK", pc->remoteIp, pc->remotePort);
+			return pc;
+		}
+		/* we have tried this three times already, lets give up trying directly
+		 and request for proxy*/
+		else
+		{
+			pc->fwdIP =  ppack->contactIp;
+			pc->fwdPort = ppack->contactPort;
+			pc->remoteIp = fromip;
+			pc->remotePort = fromport;
+			
+			ppack->response = RESPONSE_OK_RELAYED;
+			sendResponse(ps, ppack, 202, "OK", fromip, fromport);
+#if DEBUG
+			
+			puts("* call set to proxy and set through proxy server ");
+#endif
+			return pc;
+		}
+	}
+	else
+	{
+		/* this is a new call */
+		pc = callFindIdle(ps);
+		if (!pc)
+		{
+			sendResponse(ps, ppack, RESPONSE_BUSY,"Busy", fromip, fromport);
+			return NULL;
+		}
+		
+		callInit(pc, ps->defaultCodec);
+		
+		strncpy(pc->remoteUserid, ppack->from, MAX_USERID);
+		pc->ltpSession = ppack->session;
+		pc->ltpSeq = 0;
+		pc->ltpState = CALL_RING_RECEIVED;
+		pc->kindOfCall = CALLTYPE_IN | CALLTYPE_CALL;	
+		strncpy(pc->remoteUserid, ppack->from, MAX_USERID);
+		strncpy(pc->title, ppack->data, MAX_TITLE);
+		pc->timeStart = ps->now;
+		
+		if (ppack->command == CMD_TALK)
+			pc->inTalk = 1;
+		
+		if(ppack->contactIp)
+		{
+			pc->remoteIp = ppack->contactIp;
+			pc->remotePort = ppack->contactPort;
+		}
+		else
+		{
+			/* this means, we have a direct hit. */
+			pc->remoteIp = fromip;
+			pc->remotePort = fromport;
+			pc->directMedia = 1;
+		}
+		
+		/* negotiate the codec */
+		if (ppack->wparam ==  LTP_CODEC_SPEEX && ps->defaultCodec == LTP_CODEC_SPEEX)
+			pc->codec = LTP_CODEC_SPEEX;
+		else
+			pc->codec = LTP_CODEC_GSM;
+		
+		ppack->wparam = pc->codec;	
+		
+		if (ps->forceProxy)
+		{
+			pc->fwdIP =  ppack->contactIp;
+			pc->fwdPort = ppack->contactPort;
+			pc->remoteIp = fromip;
+			pc->remotePort = fromport;
+			responseCode = 202;
+		}
+		
+		sendResponse(ps, ppack, responseCode, "OK", pc->remoteIp, pc->remotePort);
+		alert(pc->lineId, ALERT_INCOMING_CALL, pc->remoteUserid);
+	}
+	return pc;
+}
+
+/*
+ onAnswer:
+ We have sent a ring request and we might or might not have received a ringResponse yet
+ but if the remote has answered, so we need to move to that CALL_CONNECTED state and
+ open up the media streams.
+ */
+static void onAnswer(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
+{
+	struct Call	*pc;
+	
+	pc = callMatch(ps, ppack, fromip, fromport, ppack->session);
+	
+	if (!pc)
+	{
+		sendResponse(ps, ppack, RESPONSE_NOT_FOUND, "Not found", fromip, fromport);
+		return;
+	}
+	
+	pc->remoteIp = fromip;
+	pc->remotePort = fromport;
+	if (strlen(ppack->data) > 0)
+		strncpy(pc->title, ppack->data, MAX_TITLE);
+	
+	/* if the call is an earlier state, then transit to CALL_CONNECTED */
+	if (pc->ltpState == CALL_RING_ACCEPTED || pc->ltpState == CALL_RING_SENT)
+	{
+		callStopRequest(pc);
+		pc->ltpState = CALL_CONNECTED;
+		pc->timeStart = ps->now;
+		//Tasvir Rohila, 17/7/2009, bug#21083, latest call to be established should become active.
+		ps->activeLine = pc->lineId;
+		
+		pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
+		
+		// alert_connected opens sound within the app
+		//if (!openSound(1))
+		//	alert(-1, ALERT_ERROR, "Trouble with sound system");
+		
+		alert(pc->lineId, ALERT_CONNECTED, pc->title);
+	}
+	
+	/* we assume that ANSWER request carries a codec that is satisfactory to both sides
+	 this is because ANSWER request is always from the actual end-point */
+	pc->codec = ppack->wparam;
+	
+	ppack->contactIp = pc->fwdIP;
+	ppack->contactPort = pc->fwdPort;
+	
+	sendResponse(ps, ppack, RESPONSE_OK, "OK", fromip, fromport);
+}
+
+
+/* onRefuse:
+ If we get a refuse request for a non-existing call, just be polite and accept it.
+ The other side might have missed an earlier response sent by you and you would have
+ released the call structure in anycase */
+static void onRefuse(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
+{
+	struct Call	*pc;
+	
+	pc = callMatch(ps, ppack, fromip, fromport, ppack->session);
+	
+	if (!pc)
+	{
+		sendResponse(ps, ppack, RESPONSE_NOT_FOUND, "Not found", fromip, fromport);
+		return;
+	}
+	
+	ppack->contactIp = pc->fwdIP;
+	ppack->contactPort = pc->fwdPort;
+	pc->timeStop = ps->now;
+	alert(pc->lineId, ALERT_DISCONNECTED, "Busy");
+	pc->ltpState = CALL_IDLE;
+	pc->ltpSession = 0;
+	sendResponse(ps, ppack, RESPONSE_OK, "OK", fromip, fromport);
+	
+}
+
+/* onRefuse:
+ If we get a hnagup request for a non-existing call, just be polite and accept it.
+ The other side might have missed an earlier response sent by you and you would have
+ released the call structure in anycase */
+
+static void onHangup(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
+{
+	struct Call	*pc;
+	
+	pc = callMatch(ps, ppack, fromip, fromport, ppack->session);
+	
+	if (!pc)
+	{
+		sendResponse(ps, ppack, RESPONSE_OK, "OK", fromip, fromport);
+		return;
+	}
+	
+	ppack->contactIp = pc->fwdIP;
+	ppack->contactPort = pc->fwdPort;
+	pc->timeStop = ps->now;
+	//added by mukesh to remove hungup button
+	
+	if (pc->ltpState != CALL_IDLE)
+	{
+		if (pc->ltpState != CALL_CONNECTED)
+			pc->kindOfCall |= CALLTYPE_MISSED;
+	}
+	pc->ltpState = CALL_IDLE;
+	//20070722 changed the data to what the remote is saying
+	alert(pc->lineId, ALERT_DISCONNECTED, ppack->data);
+	pc->ltpState = CALL_IDLE;
+	pc->ltpSession = 0;
+	
+	sendResponse(ps, ppack, RESPONSE_OK, "OK", fromip, fromport);
+}
+
+static void onMessage(struct ltpStack *ps, struct ltp *ppack, unsigned int fromip, unsigned short fromport)
+{
+	struct Message *pmsg;
+	int iContact=-1;
+	unsigned short16 prevport;
+	unsigned int32	previp;
+	
+	if (strcmp(ps->ltpUserid, ppack->to))
+		return;
+	
+	pmsg = getMessage(ps, ppack->from);
+	previp = pmsg->fwdip;
+	prevport = pmsg->fwdport;
+	
+	/* fresh notification? */
+	if (pmsg->lastMsgRecvd != ppack->msgid || pmsg->session != ppack->session)
+	{
+		pmsg->lastMsgRecvd = ppack->msgid;
+		pmsg->session = ppack->session;
+		pmsg->dateLastMsg = ps->now;
+		alert(-1, ALERT_MESSAGE, ppack);
+	}
+	
+	pmsg->ip	= fromip;
+	pmsg->port	= fromport;
+	
+	/* relayed message? */
+	if (ppack->contactIp)
+	{
+		pmsg->fwdip = ppack->contactIp;
+		pmsg->fwdport = ppack->contactPort;
 	}
 	else {
-		//delink the cdr
-		for (q = listCDRs; q->next; q = q->next){
-			if (q->next == p){
-				q->next = p->next;
-				break;
-			}
-		}
+		pmsg->fwdip = 0;
+		pmsg->fwdport = 0;
 	}
-
-	free(p);
-	cdrSave();
+	
+	sendResponse(ps, ppack, 202, ps->ltpTitle, fromip, fromport);
 }
 
-void cdrLoad() {
-	FILE	*pf;
-	char	pathname[MAX_PATH];
-	struct CDR *p;
-	int		index;
-	char	line[1000];
-	ezxml_t	cdr, duration, date, userid, type;
 
-	sprintf(pathname, "%s\\calls.txt", myFolder);
-	pf = fopen(pathname, "r");
-	if (!pf)
+#if DEBUG
+void ltpTrace(struct ltp *msg)
+{
+	switch (msg->command)
+	{
+        case CMD_RING:
+			printf("RING ");
+			break;
+        case CMD_NEWUSER:
+			printf("NEWUSER ");
+			break;
+        case CMD_LOGIN:
+			printf("LOGIN ");
+			break;
+        case CMD_LOGOUT:
+			printf("LOGOFF ");
+			break;
+        case CMD_MSG:
+			printf("MSG ");
+			break;
+        case CMD_ANSWER:
+			printf("ANSWER ");
+			break;
+        case CMD_HANGUP:
+			printf("HANGUP ");
+			break;
+        case CMD_CANCEL:
+			printf("CANCEL ");
+			break;
+        case CMD_NOTIFY:
+			printf("NOTIFY ");
+			switch(msg->wparam)
+		{
+			case NOTIFY_ONLINE: printf(" ONLINE "); break;
+			case NOTIFY_SILENT: printf(" SILENT "); break;
+		}
+			break;
+        default:
+			printf("CMD(%d) ", (int)msg->command);
+	}
+	printf(" /%d to:%s from:%s msgid:%d session:%d contact:%s:%d <%s>\n", (int)msg->response,
+		   msg->to, msg->from, msg->msgid, msg->session, netGetIPString(msg->contactIp), 
+		   flip16(msg->contactPort), msg->data);
+}
+#endif
+
+
+/* ltpIn:
+ Establishes entry point for all incoming LTP packets (the RTP are handled separately)
+ */
+static void ltpIn(struct ltpStack *ps, unsigned int fromip, short unsigned fromport, char *buffin, int len)
+{
+	struct ltp *ppack;
+	struct Call *pc;
+	
+	/* we are using a single buffer to handle all incoming ltp packets. 
+	 This means, when we multi-thread, we have to use a thread-specific buffer */
+	memcpy(ps->inbuff, buffin, len);
+	
+	if (len < sizeof(struct ltp))
 		return;
-
-	index = 0;
-	while (fgets(line, 999, pf)){
-		cdr = ezxml_parse_str(line, strlen(line));
-		if (!cdr)
-			continue;
-
-		date = ezxml_child(cdr, "date");
-		duration = ezxml_child(cdr, "duration");
-		type = ezxml_child(cdr, "type");
-		userid = ezxml_child(cdr, "userid");
-
-
-		p = (struct CDR *) malloc(sizeof(struct CDR));
-		if (!p){
-			fclose(pf);
-			ezxml_free(cdr);
-			return;
-		}
-		memset(p, 0, sizeof(struct CDR));
-		if (date)
-			p->date = (unsigned long)atol(date->txt);
-		if (duration)
-			p->duration = atoi(duration->txt);
-		else
-			p->duration = 0;
-		if (userid)
-			strcpy(p->userid, userid->txt);
-		if (type)
-			p->direction = atoi(type->txt);
-
-		getTitleOf(p->userid, p->title);
-		
-		//add to the linked list
-		p->next = listCDRs;
-		listCDRs = p;
-
-	}
-	fclose(pf);
-}
-
-void cdrRemoveAll()
-{	
-	cdrEmpty();
-	cdrSave();
-}
-
-/**
- Contacts functions
-*/
-
-struct AddressBook *getContactsList()
-{
-	return listContacts;
-}
-
-void resetContacts(){
-	struct AddressBook	*p, *q;
-	p = listContacts;
-	while(p){
-		q = p->next;
-		free(p);
-		p  = q;
-	}
-	listContacts = NULL;
-}
-
-static int strCompare(const char *p, const char *q) 
-{
-	char x, y;
-	while(*p && *q) {
-		x = tolower(*p);
-		y = tolower(*q);
-		if (x < y)
-			return -1;
-		if (x > y)
-			return 1;
-		p++;q++;
-	}
-	return 0;
-}
-
-
-void sortContacts()
-{
-	struct AddressBook *newList, *i, *p, *prev, *nextOld;
-
-	newList = NULL;
-
-	for (i = listContacts; i; i = nextOld){
-
-		nextOld = i->next;
-
-		//insert it in the begining if the list is empty
-		if (!newList){
-			i->next =NULL; //keep the pointers of the current list clean - multithreading requirement
-			newList = i;
-		}
-		else {
-			//forward to the object with title greater than the new object
-			for (prev = NULL, p = newList; p; p = p->next){
-				if (strCompare(p->title, i->title) > 0)
-					break;
-				prev = p;
-			}
-
-			//i has to be inserted before p
-			if (prev)
-				prev->next = i;
-			else
-				newList = i;
-			i->next = p; //keep the pointers of the current list clean - multithreading requirement
-		}
-
-	} //take the next item of the old list
-
-	//swap the lists
-	listContacts = newList;
-}
-
-int countOfContacts()
-{
-	struct AddressBook	*p;
-	int	i;
-	for (i = 0, p = listContacts; p; p = p->next)
-		i++;
-
-	return i;
-}
-
-struct AddressBook *getContact(int id)
-{
-	struct AddressBook	*p;
-
-	for (p = listContacts; p; p = p->next)
-		if (p->id == id && !p->isDeleted)
-			return p;
-	return NULL;
-}
-
-//used to match substrings against title
-int isMatched(char *title, char *query)
-{
-	char *r;
-	int qlen, last;
-
-	if (!*query)
-		return 1;
-
-	qlen = strlen(query);
-
-	//check if the query matches the starting
-	r = title;
-	last = ' ';
-	for (r = title; *r; r++){
-		//if the match occurs at a word boundary, select it
-		if ((last == ' '  || last == '.') && *r > ' ')
-			if (!_strnicmp(r, query, qlen))
-				return 1;
-		last = *r;
-	}
-
-	return 0;
-}
-
-//used to highlight the matched parts of a contact's title against a search string
-int indexOf(char *title, char *query)
-{
-	char lowertitle[100], *r;
-	int i;
-
-	if (!*query)
-		return -1;
-
-	for (i = 0; i < 99 && title[i]; i++)
-		lowertitle[i] = tolower(title[i]);
-
-	lowertitle[i] = 0;
-	 r = strstr(lowertitle, query);
-	 if (!r)
-		 return -1;
-	 else
-		 return r - lowertitle;
-}
-
-
-static void updateContactPresence(int id, int presence)
-{
-	struct AddressBook	*p;
-
-	for (p = listContacts; p; p = p->next)
-		if (p->id == id)
-			p->presence = presence;
-}
-
-void deleteContactLocal(int id) 
-{
-	struct AddressBook	*p;
-
-	for (p = listContacts; p; p = p->next)
-		if (p->id == id){
-			p->isDeleted = 1;
-			p->dirty = 1;
-		}
-}
-
-struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, char *home, char *business, char *other, char *email, char *spoknid)
-{
-	struct AddressBook	*p, *q;
-
-	for (p = listContacts; p; p = p->next)
-		if (id == p->id){
-			strcpy(p->title, title);
-			strcpy(p->mobile, mobile);
-			strcpy(p->home, home);
-			strcpy(p->business, business);
-			if (other)
-				strcpy(p->other, other);
-			if (email)
-				strcpy(p->email, email);
-			if (spoknid)
-				strcpy(p->spoknid, spoknid);
-			p->dirty = 1;
-			return p;
-		}
-
-	q = (struct AddressBook *)malloc(sizeof(struct AddressBook));
-	memset(q, 0, sizeof(struct AddressBook));
 	
-	q->id = id;
+	ppack = (struct ltp *) ps->inbuff;
 	
-	strcpy(q->title, title);
-	strcpy(q->mobile, mobile);
-	strcpy(q->home, home);
-	strcpy(q->business, business);
-	if (other)
-		strcpy(q->other, other);
-	if (email)
-		strcpy(q->email, email);
-	if (spoknid)
-		strcpy(q->spoknid, spoknid);
-	q->dirty = 1;
-	//insert in at the head and sort
-	q->next = listContacts;
-	listContacts = q;
-	return q;
-}
-
-struct AddressBook *addContact(char *title, char *mobile, char *home, char *business, char *other, char *email, char *spoknid)
-{
-	struct AddressBook	*q;
-
-	q = (struct AddressBook *)malloc(sizeof(struct AddressBook));
-	memset(q, 0, sizeof(struct AddressBook));
+	/* flip it in place to the host's byte order */
+	if (ps->bigEndian)
+		ltpFlip(ppack);
 	
-	strcpy(q->title, title);
-	strcpy(q->mobile, mobile);
-	strcpy(q->home, home);
-	strcpy(q->business, business);
-	if (other)
-		strcpy(q->other, other);
-	if (email)
-		strcpy(q->email, email);
-	if (spoknid)
-		strcpy(q->spoknid, spoknid);
-	q->dirty = 1;
-
-	//insert in at the head and sort
-	q->next = listContacts;
-	listContacts = q;
-	return q;
-}
-
-
-struct AddressBook *getTitleOf(char *userid, char *title){
-	struct AddressBook	*p;
-
-	title[0] = 0;
-
-	if (*userid == 0){
-		strcpy(title, "(Unknown)");
-		return NULL;
-	}
+#if DEBUG
 	
-	for (p = listContacts; p; p = p->next){
-
-		if (p->isDeleted)
-			continue;
-
-		if (!strcmp(p->mobile, userid)){
-			sprintf(title, "%s(m)", p->title);
-			return p;
-		}
-
-		if (!strcmp(p->home, userid)){
-			sprintf(title, "%s(h)", p->title);
-			return p;
-		}
-
-		if (!strcmp(p->business, userid)){
-			sprintf(title, "%s(b)", p->title);
-			return p;
-		}
-
-		if (!strcmp(p->other, userid)){
-			sprintf(title, "%s(o)", p->title);
-			return p;
-		}
-
-		if (!strcmp(p->email, userid)){
-			sprintf(title, "%s(mail)", p->title);
-			return p;
-		}
-		if (!strcmp(p->spoknid, userid)){
-			sprintf(title, "%s(s)", p->title);
-			return p;
-		}
-	}
-
-	sprintf(title, "%s", userid);
-	return NULL;
-}
-
-struct AddressBook *getContactOf(char *userid)
-{
-	struct AddressBook	*p;
-
-	for (p = listContacts; p; p = p->next){
+	printf("RECV: [%s:%d]\r\n", netGetIPString(fromip), ntohs(fromport));
+	ltpTrace(ppack);
 	
-		if (p->isDeleted)
-			continue;
-
-		if (!strcmp(p->mobile, userid))
-			return p;
-
-		if (!strcmp(p->home, userid))
-			return p;
-
-		if (!strcmp(p->business, userid))
-			return p;
-
-		if (!strcmp(p->other, userid))
-			return p;
-
-		if (!strcmp(p->email, userid))
-			return p;
-	}
-
-	return NULL;
-}
-
-/*
-VMS routines
-
-voice mails are held in memory as a linked list with the latest voice mail at the head of the list
-voice mails are stored on the disk as individual xml objects with one line for each object in the same orde
-as the linked list.
-
-note: while loading the vmails back, each successive object read from the disk is added to the tail of the list
-to preserve the same order as saved.
-*/
-
-void vmsEmpty()
-{
-	struct VMail *p, *q;
-   
-	p = listVMails;
-	while (p)
+#endif
+	if (ppack->version != 1)
+		return;
+	
+	if (ppack->response)
 	{
-		q = p->next;
-		free(p);
-		p = q;
+		onResponse(ps, ppack, fromip, fromport);
+		return;
 	}
-	listVMails = NULL;
-}
-
-struct VMail *vmsById(char *id)
-{
-	struct VMail *p;
 	
-	for (p = listVMails; p; p = p->next)
-		if (!strcmp(p->vmsid, id))
-			return p;
-	return NULL;
-}
-
-static void vmsSort()
-{
-	struct VMail *newList, *i, *p, *prev, *nextOld;
-
-	newList = NULL;
-
-	for (i = listVMails; i; i = nextOld){
-
-		nextOld = i->next;
-
-		//insert it in the begining if the list is empty
-		if (!newList){
-			i->next =NULL; //keep the pointers of the current list clean - multithreading requirement
-			newList = i;
-		}
-		else {
-			//forward to the object with id greater than the new object
-			for (prev = NULL, p = newList; p; p = p->next){
-				if (p->date < i->date)
-					break;
-				prev = p;
-			}
-
-			//i has to be inserted before p
-			if (prev)
-				prev->next = i;
-			else
-				newList = i;
-			i->next = p; //keep the pointers of the current list clean - multithreading requirement
-		}
-
-	} //take the next item of the old list
-
-	//swap the lists
-	listVMails = newList;
-}
-
-static struct VMail *vmsRead(ezxml_t vmail)
-{
-	struct VMail *p;
-	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete;
-
-	date = ezxml_child(vmail, "dt");
-	vmsid = ezxml_child(vmail, "id");
-	userid = ezxml_child(vmail, "u");
-	direction = ezxml_child(vmail, "dir");
-	status = ezxml_child(vmail, "status");
-	hashid = ezxml_child(vmail, "hashid");
-	deleted = ezxml_child(vmail, "deleted");
-	toDelete = ezxml_child(vmail, "todelete");
-
-	//check for all the required tags within <vm>
-	if (!status || !date || !vmsid || !userid || !direction 
-		|| !status || !hashid)
-		return NULL;
-
-	//if no vmail exists, then create a new one at the head of listVMails
-	p = vmsById(vmsid->txt);
-
-	if (!p){
-		p = (struct VMail *) malloc(sizeof(struct VMail));
-		if (!p)
-			return NULL;
-		memset(p, 0, sizeof(struct VMail));
-		strcpy(p->hashid, hashid->txt);
-		strcpy(p->vmsid, vmsid->txt);
-		//make this 'starred', this is fresh mail
 	
-		if(listVMails)
-			p->next = listVMails;
-		listVMails = p;
-	}
-
-	//update the vmail
-	p->date = (unsigned long)atol(date->txt);
-	strcpy(p->userid, userid->txt);
-	strcpy(p->vmsid, vmsid->txt);
-
-	if (deleted){
-		if (!strcmp(deleted->txt, "1"))
-			p->deleted = 1;
-		else
-			p->deleted = 0;
-	}
-
-	if (toDelete)
-		p->toDelete = 1;
-
-	if (!strcmp(direction->txt, "out"))
-		p->direction = VMAIL_OUT;
-	else
-		p->direction = VMAIL_IN;
+	/* handle incoming requests only when logged in. */
+	if (ps->loginStatus != LOGIN_STATUS_ONLINE)
+		return;
 	
-	if (!strcmp(status->txt, "new"))
-		p->status = VMAIL_NEW;
-	else if (!strcmp(status->txt, "active"))
-		p->status = VMAIL_ACTIVE;
-	else if (!strcmp(status->txt, "delivered"))
+    /* handle the incoming message, based on the message type */ 
+	switch(ppack->command)
 	{
-		p->status = VMAIL_DELIVERED;
-		if(p->direction==VMAIL_OUT)
-			p->dirty=FALSE;
+		case CMD_RING:
+			onRing(ps, ppack, fromip, fromport);
+			break;
+		case CMD_TALK:
+			pc = onRing(ps, ppack, fromip, fromport);
+			if (pc)
+				pc->inTalk;
+			break;
+		case CMD_ANSWER:
+			onAnswer(ps, ppack, fromip, fromport);
+			break;
+		case CMD_REFUSE:
+			onRefuse(ps, ppack, fromip, fromport);
+			break; 
+		case CMD_HANGUP:
+			onHangup(ps, ppack, fromip, fromport);
+			break;
+		case CMD_MSG:
+			onMessage(ps, ppack, fromip, fromport);
+			break;
 	}
-	else
-		p->status = VMAIL_FAILED;
-
-	return p;
 }
 
-static int vmsWrite(FILE *pf, struct VMail *p)
+
+/* ltpMessage:
+ A simple request to send text in the data field of the ltp message 
+ to the remote end-point in a call
+ */
+int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 {
-	//don't write those that are deleted already
-	if (p->deleted)
+	struct Message *pmsg;
+	struct ltp *ppack;
+	
+	if (strlen(msg) > 999)
 		return 0;
-
-	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir>",
-		(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in");
 	
-	if (p->deleted)
-		fprintf(pf, "<deleted>1</deleted>");
-	switch(p->status){
-	case VMAIL_NEW:
-		fprintf(pf, "<status>new</status>");
-		break;
-	case VMAIL_DELIVERED:
-		fprintf(pf, "<status>delivered</status>");
-		break;
-	case VMAIL_ACTIVE:
-		fprintf(pf, "<status>active</status>");
-		break;
-	default:
-		fprintf(pf, "<status>failed</status>");
+	pmsg = getMessage(ps, userid);
+	if (!pmsg)
+		return 0;
+	if (pmsg->retryCount)
+		return -1;
+	
+	//if nothing was successfully sent or received in the last two minutes
+	//reset the remote endpoint details
+	if (pmsg->dateLastMsg + 120 < ps->now){
+		pmsg->ip = ps->ltpServer;
+		pmsg->port = ps->bigEndian ? RTP_PORT : flip16(RTP_PORT);
+		pmsg->fwdip = 0;
+		pmsg->fwdport = 0;
 	}
-
-	if (p->toDelete)
-		fprintf(pf, "<todelete>1</todelete>");
-	fprintf(pf, "</vm>\n");
-
+	
+	ppack = (struct ltp *) pmsg->outBuff;
+	zeroMemory(ppack, sizeof(struct ltp));
+	
+	ppack->version = 1;
+	ppack->command = CMD_MSG;
+    ppack->msgid = ps->nextMsgID++;
+	strncpy(ppack->to, userid, MAX_USERID);
+	strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+	strncpy(ppack->data, msg, 999);
+	ppack->wparam = 1; //for replyable messages
+	ppack->session = pmsg->session;
+	ppack->contactIp = pmsg->fwdip;
+	ppack->contactPort = pmsg->fwdport;
+	
+	pmsg->length = sizeof(struct ltp) + strlen(ppack->data);
+	pmsg->retryCount = ps->maxChatRetries;
+	pmsg->lastMsgSent = ppack->msgid;
+	pmsg->dateLastMsg = ps->now;
+	
+	ltpWrite(ps, (struct ltp *)pmsg->outBuff, pmsg->length, pmsg->ip, pmsg->port);
 	return 1;
 }
 
-static void vmsCompact(){
-	char path[MAX_PATH];
-	struct VMail *p, *q;
-	int i = 0;
-
-	for (p = listVMails; p && i < VMAIL_MAXCOUNT; p = p->next)
-		i++;
+/* ltpRing:
+ sends a ring reqest
+ It can get quite complex in the way this is received at the other
+ end. read the comments on onRing()
+ */
+int ltpRing(struct ltpStack *ps, char *remoteid, int mode)
+{
+	struct Call *pc;
+	struct ltp *ppack;
 	
-	if (!p)
-		return;
-
-	//remove all the cdrs past this point
-	q = p->next;
-	p->next = NULL;
-
-	while (q){
-		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
-		unlink(path);
-		p = q->next;
-		free(q);
-		q = p;
+	pc = callFindIdle(ps);
+	if (!pc)
+	{
+		alert(-1, ALERT_ERROR, "Disconnect before calling");
+		return 0;
 	}
+	callInit(pc, ps->defaultCodec);
+	
+	strncpy(pc->remoteUserid, remoteid, MAX_USERID);
+	pc->ltpSession = ++ps->nextCallSession;
+	pc->ltpSeq = 0;
+	pc->ltpState = CALL_RING_SENT;
+	pc->remoteIp = ps->ltpServer;
+	pc->remotePort = ps->bigEndian ? RTP_PORT : flip16(RTP_PORT);
+	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
+	pc->timeStart = ps->now;
+	if (mode == CMD_TALK)
+		pc->inTalk = 1;
+	
+	ppack = (struct ltp *)pc->ltpRequest;
+	
+	zeroMemory(ppack, sizeof(struct ltp));
+	ppack->version = 1;
+	ppack->command = mode;
+	strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+	strncpy(ppack->to, remoteid, MAX_USERID);
+	ppack->session = pc->ltpSession;
+	ppack->msgid = pc->ltpSeq++;
+	
+	/* sub version */
+	ppack->wparam = ps->defaultCodec;
+	strncpy(ppack->data, ps->ltpTitle, MAX_TITLE);
+	
+	callStartRequest(ps, pc, NULL);
+	
+	return pc->lineId;
 }
 
-void vmsDelete(struct VMail *p)
+/* ltpAnswer, ltpRefuse and ltpHangup assume
+ that the route to the remote end-point is already established
+ through the CMD_RING's negotiations
+ */
+void ltpAnswer(struct ltpStack *ps, int lineid)
 {
-	char	path[MAX_PATH];
-	if (!p)
+	struct Call *pc;
+	struct ltp *ppack;
+	
+	if (lineid < 0 || ps->maxSlots <= lineid)
 		return;
-
-	//keep the vmail in the log file
-	p->toDelete = 1;
-	sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
-	unlink(path);
-
-	//profileResync();
+	
+	pc = ps->call + lineid;
+	
+	if (pc->ltpState != CALL_RING_RECEIVED)
+		return;
+	
+	ppack = (struct ltp *) pc->ltpRequest;
+	zeroMemory(ppack, sizeof(struct ltp));
+    ppack->version = 1;
+    ppack->command = CMD_ANSWER;
+    strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+    strncpy(ppack->to, pc->remoteUserid, MAX_USERID);
+	strncpy(ppack->data, ps->ltpTitle, MAX_USERID);
+    ppack->session = pc->ltpSession;
+    ppack->msgid = pc->ltpSeq++;
+	ppack->wparam = pc->codec;
+	
+	ppack->contactIp = pc->fwdIP;
+	ppack->contactPort = pc->fwdPort;
+	
+	pc->timeStart = ps->now;
+    pc->ltpState = CALL_CONNECTED;
+	alert(pc->lineId, ALERT_CONNECTED, pc->title);
+	callStartRequest(ps, pc, NULL);
+	
+	// the app opens sound on alert_connected
+	//	openSound(1);
 }
 
-struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
+void ltpRefuse(struct ltpStack *ps, int lineid, char *msg)
 {
-	struct	VMail	*p=NULL;
-	int		isNew=1;
-
-	if (vmsid)
-		p = vmsById(vmsid);
-
-	//if it already exists, then update the status and return
-	if (p){
-		p->status = status;
-		return p;
-	}
-
-	//hmm this looks like a new one
-	p = (struct VMail *) malloc(sizeof(struct VMail));
-	if (!p)
-		return NULL;
-	memset(p, 0, sizeof(struct VMail));
-
-	strcpy(p->userid, userid);
-	if (vmsid)
-		strcpy(p->vmsid, vmsid);
-	strcpy(p->hashid, hashid);
-	p->date = (time_t)time;
-	p->direction = direction;
-	p->status = status;
-
-	//add to the head of the list
-	if (!listVMails)
-		listVMails = p;
-	else {
-		p->next = listVMails;
-		listVMails = p;
-	}
-
-	profileSave();
-	return p;
+	struct Call *pc;
+	struct ltp *ppack;
+	
+	if (lineid < 0 || ps->maxSlots <= lineid)
+		return;
+	
+	pc = ps->call + lineid;
+	
+	if (pc->ltpState != CALL_RING_RECEIVED)
+		return;
+	
+	ppack = (struct ltp *) pc->ltpRequest;
+	zeroMemory(ppack, sizeof(struct ltp));
+	
+    ppack->version = 1;
+    ppack->command = CMD_REFUSE;
+    strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+    strncpy(ppack->to, pc->remoteUserid, MAX_USERID);
+    ppack->session = pc->ltpSession;
+    ppack->msgid = pc->ltpSeq++;
+	
+	ppack->contactIp = pc->fwdIP;
+	ppack->contactPort = pc->fwdPort;
+	
+    
+	if (!msg)
+		strncpy(ppack->data, "Busy. Please try after sometime.", MAX_TITLE);
+    else
+		strncpy(ppack->data, msg, MAX_TITLE);
+	
+    pc->ltpState = CALL_HANGING;
+	pc->kindOfCall |= CALLTYPE_MISSED;
+	
+	callStartRequest(ps, pc, NULL);
 }
 
-static void vmsUpload(struct VMail *v)
+void ltpHangup(struct ltpStack *ps, int lineid)
 {
-	char	key[100], *strxml;
-	unsigned char g[10], b64[10], buffer[10000];
-	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
-	FILE	*pfIn, *pfOut;
-	int		length, byteCount;
-
-	if (v->direction != VMAIL_OUT || v->status != VMAIL_NEW)
+	struct Call *pc;
+	struct ltp *ppack;
+	
+	if (lineid < 0 || ps->maxSlots <= lineid)
 		return;
-
-	sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
-	pfIn = fopen(path, "rb");
-	if (!pfIn){
-		v->toDelete = 1;
+	
+	pc = ps->call + lineid;
+	
+	if (pc->ltpState == CALL_IDLE || pc->ltpState == CALL_HANGING)
+		return;
+	
+	if (pc->ltpState != CALL_IDLE)
+	{
+		if (pc->ltpState != CALL_CONNECTED)
+			pc->kindOfCall |= CALLTYPE_MISSED;
+	}
+	
+	//if there is no reply yet from the called party
+	if (pc->ltpState == CALL_RING_SENT)
+	{
+		pc->ltpState = CALL_IDLE;
+		pc->timeStop = 0;
+		alert(pc->lineId, ALERT_DISCONNECTED, "noreply");
 		return;
 	}
+	
+	//set the timer
+	if (pc->ltpState == CALL_CONNECTED)
+		pc->timeStop = ps->now;
+	else
+		pc->timeStop = 0;
+	
+	pc->ltpState = CALL_HANGING;
+	
+	ppack = (struct ltp *) pc->ltpRequest;
+	zeroMemory(ppack, sizeof(struct ltp));
+	ppack->version = 1;
+	ppack->command = CMD_HANGUP;
+	ppack->session = pc->ltpSession;
+    ppack->msgid = pc->ltpSeq++;
+	strncpy(ppack->to, pc->remoteUserid, MAX_USERID);
+	strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+	
+	ppack->contactIp = pc->fwdIP;
+	ppack->contactPort = pc->fwdPort;
+	
+	
+	callStartRequest(ps, pc, NULL);
+	pc->retryCount = 3;
+	alert(pc->lineId, ALERT_DISCONNECTED, "");
+}
 
-	sprintf(requestfile, "%s\\vmaireq.txt", myFolder);
-	sprintf(responsefile, "%s\\vmailresp.txt", myFolder);
 
-	pfOut = fopen(requestfile, "wb");
-	if (!pfOut){
-		fclose(pfIn);
-		return;
+
+/*
+ rtpIn:
+ All the rtp packets are read in here.
+ They are matched against the existing active calls
+ The codec are detected from the rtp stack and the pcm is decoded
+ 
+ If the rtp packet belongs to an active call (and it is not in confernece)
+ then the pcm samples are directly sent to the outputSound routine
+ 
+ If the rtp packets belong to a call in conference, they are simply queued up to be
+ mixed and played in sync with the audio from the local source (microphone). check
+ ltpSoundInput()
+ */
+
+//static unsigned int prevstamp = 0;
+void rtpIn(struct ltpStack *ps, unsigned int ip, unsigned short port, char *buff, int length)
+{
+	int	i, nsamples=0, fwdip = 0, nframes, x;
+	unsigned char	*data;
+	struct Call	*pc = NULL;
+	struct rtp *prtp;
+	struct rtpExt *pex;
+	short frame[160], fwdport = 0, prev, *p, *pcmBuff;
+	
+	pcmBuff = ps->rtpInBuff;
+	
+	prtp = (struct rtp *)buff;
+	
+	if(prtp->flags & RTP_FLAG_EXT)
+	{
+		pex = (struct rtpExt *)prtp->data;
+		fwdip = pex->fwdIP;
+		fwdport = pex->fwdPort;
+		pc = callSearchByRtp(ps, ip, port, fwdip, fwdport, prtp->ssrc);
+		data = prtp->data + RTP_EXT_SIZE;
+		length -= RTP_EXT_SIZE;	
 	}
-
-	httpCookie(key);
-	fprintf(pfOut, "<?xml version=\"1.0\"?><vms>\n <u>%s</u><key>%s</key>\n <dest>%s</dest><hashid>%s</hashid>\n <gsm>", 
-		pstack->ltpUserid, key, v->userid, v->hashid);
-	while (fread(g, 3, 1, pfIn)>0){
-		encodeblock(g, b64, 3);
-		fwrite(b64, 4, 1, pfOut);
+	else
+	{
+		pc = callSearchByRtp(ps, ip, port,0,0,prtp->ssrc);
+		data = prtp->data;
 	}
-	fclose(pfIn);
-	fprintf(pfOut, "</gsm>\n</vms>\n");
-	fclose(pfOut);
-
-	byteCount = restCall(requestfile, responsefile, mailServer, "/cgi-bin/vmsoutbound.cgi");
-	if (!byteCount)
+	
+	if (!pc)
 		return;
-
-	pfIn = fopen(responsefile, "rb");
-	if (!pfIn){
-		alert(-1, ALERT_VMAILERROR, "Failed to upload.");
-		return;
-	}
-
-	length = fread(buffer, 1, sizeof(buffer), pfIn);
-	fclose(pfIn);
-	if (length < 40){
-		alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
-		return;
-	}
-	buffer[length] = 0;
-
-	strxml = strstr(buffer, "<?xml");
-
-	//todo check that the response is not 'o' and store the returned value as the vmsid
-	if (strxml){
-		ezxml_t xml, status, vmsid;
-
-		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
-			if (status = ezxml_child(xml, "status")){
-
-				vmsid = ezxml_child(xml, "id");
-				if (vmsid)
-					strcpy(v->vmsid, vmsid->txt);
-				else
-					alert(-1, ALERT_VMAILERROR, "Voicemail response incorrect");
-
-				if (!strcmp(status->txt, "active"))
-					v->status = VMAIL_ACTIVE;
-				else if(!strcmp(status->txt, "failed"))
-				{
-					alert(-1, ALERT_VMAILERROR, "Voicemail upload failed");
-					v->status=VMAIL_FAILED;
-				}
-			}
-			ezxml_free(xml);
+	
+	length -= RTP_HEADER_SIZE;
+	
+	if (prtp->payload & 0x80)
+		pc->remoteVoice = 1;
+	else
+		pc->remoteVoice = 0;
+	
+	//now play the bloody thing!
+	if ((prtp->payload & 0x7f)== GSM)
+	{
+		nframes = length/33;
+		prev=0;
+		for (i = 0; i < nframes; i++)
+		{
+			gsm_decode(pc->gsmIn, data+(i*33), frame);
+			x=0;
+			p = pcmBuff + (i * 160);
+			
+			for (x = 0; x < 160; x++)
+				*p++ = frame[x];
+			nsamples += 160;
+		}
+	} 
+#ifdef SUPPORT_SPEEX
+	else if((prtp->payload & 0x7f)== SPEEX && pc->codec < 16000) 
+	{
+		speex_bits_read_from(&(pc->speexBitDec), (char *)data, length);
+		for (i =0; i < 4000; i += 160)
+		{
+			if (speex_decode_int(pc->speex_dec, &(pc->speexBitDec), frame))
+				break;
+			
+			p = pcmBuff + i;
+			for (x = 0; x < 160; x++)
+				*p++ = frame[x];
+			nsamples += 160;
 		}
 	}
-	unlink(requestfile);
-	unlink(responsefile);
-}
-
-static void vmsUploadAll()
-{
-	struct VMail *p;
-
-	for (p = listVMails; p; p = p->next){
-		if (p->direction == VMAIL_OUT && p->status == VMAIL_NEW && !p->deleted && !p->toDelete)
-			vmsUpload(p);
+	else
+	{
+		printf("payload different");
+	}
+#endif
+	//play this directly if you are on the active line and you are not in conference
+	if (pc->lineId == ps->activeLine && !pc->InConference)
+		outputSound(ps, pc, pcmBuff, nsamples);
+	else //otherwise stuff the audio up the pipe
+	{
+		for (i =0; i < nsamples; i++)
+			queueEnque(&(pc->pcmIn), pcmBuff[i]);
 	}
 }
 
-static void vmsDownload()
+extern int lastCount;
+static int rtpOut(struct ltpStack *ps, struct Call *pc, int nsamples, short *pcm, int isSpeaking)
 {
-	char	data[1000], key[64], header[2000];
-	int		nMails = 0;
-	char	pathname[MAX_PATH];
-	struct VMail	*q;
-	struct VMail	*p;
-	SOCKET	sock;
-	struct sockaddr_in	addr;
-	FILE	*pfIn;
-	int		length, isChunked=0, count=0;
-	//change by mukesh for bug id 20359
-	p =(struct VMail*) malloc(sizeof(struct VMail));
-
-	for (q = listVMails; listVMails && q; q = q->next) {
+	struct rtp *q;
+	struct rtpExt	*pex;
+	int i, j = RTP_HEADER_SIZE, x;
+	short	frame[160];
+	char	scratch[1000];
 	
-		//add by mukesh for bugid 20359
-		// as we are not using any memory protection function it better to make new memory for node	
-		memmove(p,q,sizeof(struct VMail));
-		if (p->status == VMAIL_NEW)
+	q = (struct rtp *)scratch;
+	q->flags = 0x80;
+	q->sequence = ps->bigEndian ? pc->rtpSequence : flip16(pc->rtpSequence);
+	q->ssrc = pc->ltpSession;
+	q->timestamp = ps->bigEndian? pc->rtpTimestamp: flip32(pc->rtpTimestamp);
+	pc->rtpSequence++;
+	
+	//add the extension if required
+	
+	if (pc->fwdIP)
+	{
+		q->flags |= RTP_FLAG_EXT;
+		pex = (struct rtpExt *)q->data;
+		pex->extID = ps->bigEndian ? 786 : flip16(786);
+		pex->intCount = ps->bigEndian ? 2 : flip16(2);
+		pex->fwdIP = pc->fwdIP;
+		pex->fwdPort = pc->fwdPort;
+		ps->debugCount = 73;
+		
+		j+= RTP_EXT_SIZE;
+	}
+	
+	//new implementation of speex
+#ifdef SUPPORT_SPEEX
+	if (pc->codec == LTP_CODEC_SPEEX){
+		q->payload = SPEEX;
+		pc->rtpTimestamp += nsamples;
+		
+		for (i = 0; i < nsamples; i += 160, j+=20)
+		{
+			speex_bits_reset(&(pc->speexBitEnc));
+			speex_encode_int(pc->speex_enc, pcm + i, &(pc->speexBitEnc));		
+			speex_bits_write(&(pc->speexBitEnc), scratch+j, 1000);
+		}
+	}
+	else
+#endif
+	{
+		q->payload = GSM;
+		pc->rtpTimestamp += nsamples;
+		
+		for (i = 0; i < nsamples; i += 160, j+=33)
+		{
+			for (x = 0; x < 160; x++)
+				frame[x] = (short)pcm[i+x];
+			gsm_encode(pc->gsmOut, frame, (unsigned char *)scratch+j);
+		}	
+	}
+	
+	//turn on the marker bit for voiced segments
+	if (isSpeaking)
+		q->payload |= 0x80;
+	
+	if (ps->doDebug > 3)
+	{
+#if DEBUG
+		printf("rtp via %s:%u\r\n", 
+			   netGetIPString(pc->fwdIP), flip16(pc->fwdPort));
+#endif
+	}
+	netWrite(scratch, j, pc->remoteIp, pc->remotePort);
+	
+	return j;
+}
+
+/*
+ ltpSoundInput:
+ 
+ Called by the application when it has pcm samples ready.
+ 
+ If there is no conference on, then it is easy, just pass it on to the rtpOut.
+ 
+ The conference is done very simply, one sample is read from each of the participant's
+ input pcm queue. All the samples are added up and then written back to each participant's
+ output pcm queue (after subtracting that paricipant's own sample: to prevent echo).
+ 
+ When all the participant queues are processed, the output queues are read back one 
+ by one and output through rtpOut()
+ */
+void ltpSoundInput(struct ltpStack *ps, short *pcm, int nsamples, int isSpeaking)
+{
+	//count conferenceed calls
+	int		count, i, j;
+	int	activeInConference=0;
+	short sample[100], mixer;
+	struct Call	*pc=NULL;
+	short pcmBuff[3200];
+	
+	count = 0;
+	for (i=0; i < ps->maxSlots; i++)
+		if (ps->call[i].InConference)
+			count++;
+	
+	//if the activeLine is not on conference, handle it quickly
+	if (ps->activeLine >= 0 && ps->activeLine < ps->maxSlots)
+	{
+		pc = ps->call + ps->activeLine;
+		
+		if (pc->inTalk)
+		{
+			if (isSpeaking)
+				rtpOut(ps, pc, nsamples, pcm, isSpeaking);
+			return;
+		}
+		
+		
+		if (!pc->InConference && pc->ltpState == CALL_CONNECTED)
+			rtpOut(ps, pc, nsamples, pcm, isSpeaking);
+		else if (pc->ltpState == CALL_CONNECTED)
+			activeInConference = 1;
+	}
+	
+	if (!count)
+		return;
+	
+	zeroMemory(pcmBuff, sizeof(short) * nsamples);
+	
+	for (i = 0; i < nsamples; i++)
+	{
+		//collect and add one sample from each participant
+		if (activeInConference)
+			mixer = pcm[i];
+		else
+			mixer = 0;
+		
+		for (j = 0; j < ps->maxSlots; j++)
+		{
+			pc = ps->call + j;
+			if (!pc->InConference)
+				continue;
+			sample[j] = queueDeque(&(pc->pcmIn)); 
+			mixer += (short)sample[j];
+		}
+		
+		if (activeInConference)
+			pcmBuff[i] = (short)(mixer - pcm[i]);
+		
+		//now we have the mixed sample with us, replicate it back to each participant
+		//after subtracting the echo
+		for (j = 0; j < ps->maxSlots; j++)
+		{
+			pc = ps->call + j;
+			if (!pc->InConference || pc->ltpState != CALL_CONNECTED)
+				continue;
+			
+			queueEnque(&(pc->pcmOut), (short)(mixer - sample[pc->lineId]));
+		}
+	}
+	
+	//pcmBuff has temporarily the mixed output of all the remote participants
+	if (activeInConference)
+		outputSound(ps, ps->call + ps->activeLine, pcmBuff, nsamples);
+	
+	//now we have all the samples in each participant's queue
+	for (i = 0; i < ps->maxSlots; i++)
+	{
+		pc = ps->call + i;
+		
+		if (pc->pcmOut.count < nsamples)
 			continue;
 		
-		//if the file is already downloaded, move on
-		sprintf(pathname, "%s\\%s.gsm", vmFolder, p->hashid);
-		pfIn = fopen(pathname, "r");
-		if (pfIn){
-			fclose(pfIn);
-			continue;
-		}
-		httpCookie(key);
+		for (j = 0; j < nsamples; j++)
+			pcmBuff[j] = queueDeque(&(pc->pcmOut));
+		rtpOut(ps, pc, nsamples, pcmBuff, 0);
+	}
+}
 
-		//prepare the http header
-		sprintf(header, 
-			"GET /cgi-bin/download.cgi?userid=%s&key=%s&hashid=%s&type=gsm HTTP/1.1\r\n"
-			"Host: %s\r\n\r\n",
-			pstack->ltpUserid, key, p->hashid, mailServer);
+/*
+ ltpOnPacket()
+ called by the application when any packet arrives at the ltp udp port
+ */
+void ltpOnPacket(struct ltpStack *ps, char *msg, int length, unsigned int address, unsigned short port)
+{	
+	if (length == 4)
+		return;
+	
+	if (!(msg[0] & 0x80))
+		ltpIn(ps, address, port, msg, length);
+	else
+		rtpIn(ps, address, port, msg, length);
+}
+void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
+{
+	struct Call *pc;
+	struct ltp *ppack;
+	char *buff;
+	buff = malloc(1000);
+	if (lineid < 0 || ps->maxSlots <= lineid)
+	{
+		free(buff);	
+		return;
+	}
+	pc = ps->call + lineid;
+	
+	if (pc->ltpState == CALL_IDLE || pc->ltpState == CALL_HANGING || strlen(msg) > 256)
+		return;
+	
+	ppack = (struct ltp *) pc->ltpRequest;
+	
+	ppack = (struct ltp *)buff;
+	zeroMemory(ppack, sizeof(struct ltp));
+	ppack->version = 1;
+	ppack->command = CMD_MSG;
+	ppack->session = pc->ltpSession;
+    ppack->msgid = pc->ltpSeq++;
+	strncpy(ppack->to, pc->remoteUserid, MAX_USERID);
+	strncpy(ppack->from, ps->ltpUserid, MAX_USERID);
+	strncpy(ppack->data, msg, 256);
+	
+	callStartRequest(ps, pc, ppack);
+	free(buff);	
+}
+#ifdef _CALLBACKLTP_
 
-		addr.sin_addr.s_addr = lookupDNS(mailServer);
-		if (addr.sin_addr.s_addr == INADDR_NONE)
-			return;
-		addr.sin_port = htons(80);	
-		addr.sin_family = AF_INET;
-
-		//try connecting the socket
-		sock = (int)socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
-			break;
-
-		//send the http headers
-		send(sock, header, strlen(header),0);
-
-		//read the headers
-		while (1){
-			length = readNetLine(sock, data, sizeof(data));
-			if (length <= 0)
-				break;
-			if (!strncmp(data, "Transfer-Encoding:", 18) && strstr(data, "chunked"))
-				isChunked = 1;
-			if (!strcmp(data, "\r\n"))
-				break;
-		}
-
-		//prepare to download gsm
-		pfIn = fopen(pathname, "wb");
-		if (!pfIn){
-			closesocket(sock);
-			return;
-		}
-
-		//read the body 
-		while (1) {
-			if (isChunked){
-				int count;
-
-				length = readNetLine(sock, data, sizeof(data));
-				if (length <= 0)
-					break;
-				count = strtol(data, NULL, 16);
-				if (count <= 0)
-					break;
-				//read the chunk in multiple calls to read
-				while(count){
-					length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
-					if (length <= 0) //crap!! the socket closed
-						goto end;
-					fwrite(data, length, 1, pfIn);
-					count += length;
-				}
-
-				//read the \r\n after the chunk (if any)
-				length = readNetLine(sock, data, 2);
-				if (length != 2)
-					break;
-				//loop back to read the next chunk
-				count += 2;
-			}
-			else{ // read it in fixed blocks of data
-				while (1){
-					length = recv(sock, data, sizeof(data), 0);
-					if (length > 0)
-						fwrite(data, length, 1, pfIn);
-					else 
-						goto end;
-					count += length;
-				}
-			}
+void SetLtpCallBack(struct ltpStack *ps,LtpCallBackPtr ltpCallbackPtr)
+{
+	if(ltpCallbackPtr)
+	{	
+		if(ps->ltpCallbackPtr==0)
+		{
+			ps->ltpCallbackPtr = (LtpCallBackPtr)malloc(sizeof(LtpCallBackType));
 			
 		}
-end:
-		fclose(pfIn); // close the download.xml handle
-		if (!count)
-			unlink(pathname);
-		closesocket(sock);
-		if(threadStatus == ThreadTerminate)
-		{
-			break;
-		}
+		gltpCallBackP = ps->ltpCallbackPtr;
 		
-	} //loop over for the next voice mail
-	//add by mukesh for bug id 20359
-	free(p);
+		*ps->ltpCallbackPtr = *ltpCallbackPtr;
+	}	
 }
-
-/** 
-profile routines
-*/
-
-//save only if the login was valid, as a result save is called from alert() upon getting ALERT_ONLINE
-void profileSave(){
-	char	pathname[MAX_PATH];
-	struct AddressBook *p;
-	struct VMail *v;
-	FILE	*pf;
-	unsigned char szData[32], szEncPass[64], szBuffIn[10], szBuffOut[10];
-	BLOWFISH_CTX ctx;
-	int i, len;
-
-	sprintf(pathname, "%s\\profile.xml", myFolder);
-	pf = fopen(pathname, "w");
-	if (!pf)
-		return;
-
-	//Tasvir Rohila - 25/02/2009 - bug#17212.
-	//Encrypt the password before saving to profile.xml
-	memset(szData, '\0', sizeof(szData));
-	strcpy(szData,pstack->ltpPassword);
-
-	Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
-
-	for (i = 0; i < sizeof(szData); i+=8)
-		   Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
-	szData[31] = '\0'; //important to NULL terminate;
-
-	//Output of Blowfish_Encrypt() is binary, which needs to be stored in plain-text in profile.xml for ezxml to understand and parse.
-	//Hence base64 encode the cyphertext.
-	memset(szEncPass, 0, sizeof(szEncPass));
-	memset(szBuffIn, 0, sizeof(szBuffIn));
-	memset(szBuffOut, 0, sizeof(szBuffOut));
-	len = strlen(szData);
-	for (i=0; i<len; i+=3)
-	{
-		szBuffIn[0]=szData[i];
-		szBuffIn[1]=szData[i+1];
-		szBuffIn[2]=szData[i+2];
-		encodeblock(szBuffIn, szBuffOut, 3);
-		strcat(szEncPass, szBuffOut);
-	}
-
-	fputs("<?xml version=\"1.0\"?>\n", pf);
-	//Now that password is stored encrypted, <password> tag is replaced by <encpassword>
-	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <encpassword>%s</encpassword>\n <server>%s</server>\n",
-		pstack->ltpUserid, lastUpdate, szEncPass, pstack->ltpServerName);
-
-	if (strlen(fwdnumber))
-		fprintf(pf, "<fwd>%s</fwd>\n", fwdnumber);
-	if (strlen(mailServer))
-		fprintf(pf, "<mailserver>%s</mailserver>\n", mailServer);
-	
-	//the contacts
-	for (p = getContactsList(); p; p = p->next){
-		fprintf(pf, " <vc><id>%u</id><t>%s</t>", p->id, p->title);
-		if (p->mobile[0])
-			fprintf(pf, "<m>%s</m>", p->mobile);
-		if (p->home[0])
-			fprintf(pf, "<h>%s</h>", p->home);
-		if (p->business[0])
-			fprintf(pf, "<b>%s</b>", p->business);
-		if (p->email[0])
-			fprintf(pf, "<e>%s</e>", p->email);
-		if (p->spoknid[0])
-			fprintf(pf, "<ltp>%s</ltp>", p->spoknid);
-		if (p->dirty)
-			fprintf(pf, "<dirty>1</dirty>");
-		if (p->isDeleted)
-			fprintf(pf, "<s>deleted</s>");
-		if (p->isFavourite)
-			fprintf(pf, "<fav>1</fav>");
-		fprintf(pf, "</vc>\n");
-	}
-
-	//the vmails
-	for (v = listVMails; v; v = v->next)
-		vmsWrite(pf, v);
-
-	fprintf(pf, "</profile>\n");
-	fclose(pf);
-}
-
-//load is called only once, when we start the application. if you think about it, it is never needed again
-void profileLoad()
+unsigned int32 lookupDNS(char *host)
 {
-	char	pathname[MAX_PATH];
-	FILE	*pf;
-	int	 xmllength;
-	char *strxml;
-	ezxml_t xml, contact, id, title, mobile, home, business, favourite, mailserverip, spoknid;
-	ezxml_t userid, password, server, lastupdate, dirty, status, vms, fwd, email;
-	char empty[] = "";
-	struct AddressBook *p;
-	unsigned char v, szData[32], szBuffIn[10], szBuffOut[10];
-    BLOWFISH_CTX ctx;
-	int i, j, len;
-
-	//strcpy(pstack->ltpServerName, "64.49.236.88");
-	sprintf(pathname, "%s\\profile.xml", myFolder);
-
-	pf = fopen(pathname, "r");
-	if (!pf)
-		return;
-
-	fseek(pf, 0, SEEK_END);
-	xmllength = ftell(pf);
-	if (xmllength <= 0){
-		fclose(pf);
-		return;
-	}
-
-	resetContacts();
-	strxml = (char *)malloc(xmllength);
-	fseek(pf, 0, SEEK_SET);
-	fread(strxml, xmllength, 1, pf);
-	fclose(pf);
-		
-	xml = ezxml_parse_str(strxml, xmllength);
-
-	if (userid = ezxml_child(xml, "u"))
-		strcpy(pstack->ltpUserid, userid->txt);
-
-	//Tasvir Rohila - 25/02/2009 - bug#17212.
-	//Decrypt the password read from profile.xml
-	//Now that password is stored encrypted, <password> tag is replaced by <encpassword>
-	if (password = ezxml_child(xml, "encpassword"))
+	
+	if(gltpCallBackP)
 	{
-		memset(szData, 0, sizeof(szData));
-		memset(szBuffIn, 0, sizeof(szBuffIn));
-		memset(szBuffOut, 0, sizeof(szBuffOut));
-
-		//base64 decode the password to be passed to Blowfish_Decrypt()
-		len = strlen(password->txt);
-		if(len)
-		{
-			for (i=0; i<len; i+=4)
-			{
-				for (j=0;j<4;j++)
-				{
-					v = password->txt[i+j];
-					v = (unsigned char) ((v < 43 || v > 122) ? 0 : cd64[ v - 43 ]);
-					if( v ) {
-							v = (unsigned char) ((v == '$') ? 0 : v - 61);
-					}
-					szBuffIn[ j ] = (unsigned char) (v - 1);
-				}
-				decodeblock(szBuffIn, szBuffOut);
-				strncat(szData, szBuffOut, 3);
-			}
-
-			Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
-			for (i = 0; i < sizeof(szData); i+=8)
-				   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
-			strcpy(pstack->ltpPassword, szData); 
-		}
+		if(gltpCallBackP->alertCallBackPtr)
+			return gltpCallBackP->lookDnsCallBackPtr(gltpCallBackP->uData,host);
 	}
-
-	 server = ezxml_child(xml,"server");
-	 if(server && strlen(server->txt))
-		strcpy(pstack->ltpServerName, server->txt);
-	else
-		strcpy(pstack->ltpServerName, "64.49.236.88");
+	return 0;
 	
-	if (lastupdate = ezxml_child(xml, "dt"))
-		lastUpdate = atol(lastupdate->txt);
-
-	if (mailserverip = ezxml_child(xml, "mailserver"))
-		strcpy(mailServer, mailserverip->txt);
-
-	fwd = ezxml_child(xml, "fwd");
-	if (fwd)
-		strcpy(fwdnumber, fwd->txt);
-
-	
-	//read all the contacts
-	for (contact = ezxml_child(xml, "vc"); contact; contact = contact->next) {
-
-		//no play without proper ID
-		id = ezxml_child(contact, "id");
-		if (!id)
-			continue;
-		title = ezxml_child(contact, "t");
-		mobile = ezxml_child(contact, "m");
-		business = ezxml_child(contact, "b");
-		home = ezxml_child(contact, "h");
-		status  = ezxml_child(contact, "s");
-		spoknid = ezxml_child(contact, "ltp");
-		dirty  = ezxml_child(contact, "dirty");
-		favourite = ezxml_child(contact, "fav");
-		email = ezxml_child(contact, "e");
-
-		p = updateContact(atol(id->txt), 
-			title ? title->txt : empty, 
-			mobile ? mobile->txt : empty, 
-			home ? home->txt : empty, 
-			business ? business->txt : empty, 
-			"",
-			email ? email->txt: empty,
-			spoknid ? spoknid->txt: empty);
-	
-		if (favourite){
-			if (!strcmp(favourite->txt, "1"))
-				p->isFavourite = 1;
-		}
-
-		p->isDeleted = 0;
-		if (status)
-			if (!strcmp(status->txt, "deleted"))
-				p->isDeleted = 1;
-			else 
-				p->isDeleted = 0;
-
-		p->dirty = 0;
-		if (dirty)
-			if (!strcmp(dirty->txt, "1"))
-				p->dirty = 1;
-	}
-	sortContacts();
-
-	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next)
-		vmsRead(vms);
-	vmsSort();
-
-	ezxml_free(xml);
-	free(strxml);
 }
-
-void profileClear()
+void alert(int lineid, int alertcode, void *data)
 {
-	char	pathname[MAX_PATH];
-
-	sprintf(pathname, "%s\\profile.xml", myFolder);
-	unlink(pathname);
-	lastUpdate = 0;
-	myTitle[0] = 0;
-	myDID[0] = 0;
-	fwdnumber[0] = 0;
-	resetContacts();
-	vmsEmpty();
-	relistContacts();
-	relistVMails();
+	if(gltpCallBackP)
+	{
+		if(gltpCallBackP->alertCallBackPtr)
+			return gltpCallBackP->alertCallBackPtr(gltpCallBackP->uData,lineid,alertcode,data);
+	}
 }
 
-
-void profileMerge(){
-	FILE	*pf;
-	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref,*palert;
-	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid;
-	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert;
-	struct AddressBook *pc;
-	int		nContacts = 0, xmllength, newMails;
-
-	char empty[] = "";
-	
-	sprintf(pathname, "%s\\down.xml", myFolder);
-	pf = fopen(pathname, "r");
-	if (!pf)
-		return;
-	fseek(pf, 0, SEEK_END);
-	xmllength = ftell(pf);
-	if (xmllength <= 0){
-		fclose(pf);
-		return;
-	}
-
-	strxml = (char *)malloc(xmllength+1);
-	fseek(pf, 0, SEEK_SET);
-	fread(strxml, xmllength, 1, pf);
-	strxml[xmllength] = 0;
-		
-	xml = ezxml_parse_str(strxml, xmllength);
-
-	//Tasvir Rohila - 10-04-2009 - bug#19095
-	//For upgrades or any other notification server sends <alert href="">Some msg</alert> in down.xml
-
-	if (xmlalert = ezxml_child(xml, "client"))
-	{
-		phref = NULL;
-		palert = NULL;
-		if(palert = ezxml_attr(xmlalert, "alert"))
-		{
-			phref = ezxml_attr(xmlalert, "href");
-			sprintf(stralert, "%s%c%s", phref ? phref : "", SEPARATOR, palert );
-		}
-	}
-
-	title = ezxml_child(xml, "t");
-	if (title)
-		strcpy(myTitle, title->txt);
-
-	did = ezxml_child(xml, "did");
-	if (did)
-		strcpy(myDID, did->txt);
-
-	redirector = ezxml_child(xml, "rd");
-	if (redirector)
-	{
-		if (!strcmp(redirector->txt, "1"))
-		{
-			settingType = REDIRECT2PSTN;
-			oldSetting = settingType;
-		}
-		else if (!strcmp(redirector->txt, "3"))
-		{
-			settingType = REDIRECTBOTH;
-			oldSetting = settingType;
-		}
-		else if(!strcmp(redirector->txt, "2"))
-		{
-			settingType = REDIRECT2ONLINE;
-			oldSetting = settingType;
-		}
-		else
-		{
-			settingType = REDIRECT2ONLINE;
-			oldSetting =-1;
-		}
-
-
-	}
-	credit = ezxml_child(xml, "cr");
-	if (credit)
-		creditBalance = atoi(credit->txt);
-
-	dated = ezxml_child(xml, "dt");
-	if (dated)
-		lastUpdate = (unsigned long)atol(dated->txt);
-
-	fwd = ezxml_child(xml, "fwd");
-	if (fwd)
-		strcpy(fwdnumber, fwd->txt);
-
-	if (mailserverip = ezxml_child(xml, "mailserver"))
-		strcpy(mailServer, mailserverip->txt);
-
-	//reset the presence all around
-	for (pc = getContactsList(); pc; pc = pc->next)
-		pc->presence = 0;
-
-	//read all the contacts
-	for (contact = ezxml_child(xml, "vc"); contact; contact = contact->next) {
-
-		//no play without proper ID
-		id = ezxml_child(contact, "id");
-		if (!id)
-			continue;
-
-		pc = getContact(atol(id->txt));
-
-		status = ezxml_child(contact, "s");
-
-		if (status){
-			if (!strcmp(status->txt, "deleted") && pc){
-				pc->isDeleted = 1;
-				pc->dirty = 0;
-				continue;
-			}
-		}
-
-		token = ezxml_child(contact, "token");
-		title = ezxml_child(contact, "t");
-		mobile = ezxml_child(contact, "m");
-		business = ezxml_child(contact, "b");
-		home = ezxml_child(contact, "h");
-		email  = ezxml_child(contact, "e");
-		spoknid  = ezxml_child(contact, "ltp");
-		presence = ezxml_child(contact, "p");
-
-		if (!pc){
-			//this is a new kid on the block, check him against what we have among new contacts
-			for (pc = getContactsList(); pc; pc = pc->next)
-				if (!pc->id && title && !strcmp(pc->title, title->txt)){
-					pc->id = atol(id->txt);
-					break;
-				}
-		}
-		//still no match? then this contact was added from another system
-		if (!pc)
-		{
-			pc = updateContact(atol(id->txt), 
-			title ? title->txt : empty, 
-			mobile ? mobile->txt : empty, 
-			home ? home->txt : empty, 
-			business ? business->txt : empty, 
-			"",
-			email ? email->txt: empty,
-			spoknid ? spoknid->txt: empty);
-		}
-		else{
-			//dont null the title
-			if (title) 
-				strcpy(pc->title, title->txt);
-
-			if (mobile) 
-				strcpy(pc->mobile, mobile->txt);
-
-			if (home) 
-				strcpy(pc->home, home->txt);
-
-			if (business) 
-				strcpy(pc->business, business->txt);
-
-			if (email) 
-				strcpy(pc->email, email->txt);
-
-			if (spoknid) 
-				strcpy(pc->spoknid, spoknid->txt);
-		}
-
-		if (status){
-			if (!strcmp(status->txt, "deleted"))
-				pc->isDeleted = 1;
-			else 
-				pc->isDeleted = 0;
-		}
-
-		if (presence){
-			if(!strcmp(presence->txt, "On"))
-				updateContactPresence((int)atol(id->txt), 1);
-			else
-				updateContactPresence((int)atol(id->txt), 0);
-		}
-		//reset the dirty flag
-		pc->dirty = 0;
-		nContacts++;
-	}
-
-	newMails = 0;
-	for (vms = ezxml_child(xml, "vm"); vms; vms = vms->next)
-	{
-		struct VMail *pv = vmsRead(vms);
-		if (pv && pv->direction==VMAIL_IN && !pv->deleted && pv->status==VMAIL_ACTIVE)
-		{
-			newMails++;
-		}
-	}
-
-	ezxml_free(xml);
-	free(strxml);
-	fclose(pf);
-
-	//TBD detect new voicemails and alert the user
-	if (newMails)
-	{
-		alert(-1, ALERT_NEWVMAIL, NULL);
-	}
-	vmsSort();
-	relistVMails();	
-		
-
-	//relist contacts if any contacts have changed or are added
-	if (nContacts){
-		sortContacts();
-		relistContacts();
-	}
-
-	if (palert)
-		alert(-1, ALERT_SERVERMSG, stralert);
-}
-
-
-
-
-//the extras are char* snippets of xml has to be sent to the server in addition to 
-//the xml that is already going (credentials + dirty contacts)
-//DWORD WINAPI downloadProfile(LPVOID extras)
-THREAD_PROC profileDownload(void *extras)
+int netWrite(void *msg, int length, unsigned int32 address, unsigned short16 port)
 {
-	char	key[64];
-	int		ndirty;
-	char	pathUpload[MAX_PATH], pathDown[MAX_PATH];
-	FILE	*pfOut;
-	struct AddressBook *pc;
-	struct VMail *vm;
-	int	byteCount = 0;
-	unsigned long timeStart, timeFinished, timeTaken;
-    
-	if (busy > 0|| !strlen(pstack->ltpUserid))
-		return 0;
-	else 
-		busy = 1;
-	//add by mukesh for bug id 20359
-	threadStatus = ThreadStart ;
-	httpCookie(key);
-
-	//prepare the xml upload
-	sprintf(pathUpload, "%s\\upload.xml", myFolder);
-	pfOut = fopen(pathUpload, "wb");
-	if (!pfOut){
-		threadStatus = ThreadNotStart ;
-		busy = 0;
-		return 0;
-	}
-	//Tasvir Rohila - 10-04-2009 - bug#19095
-	//To check for upgrades or any other notification from the server, send <useragent> to userxml.cgi
-	fprintf(pfOut,  
-	"<?xml version=\"1.0\"?>\n"
-	"<profile>\n"
-	" <u>%s</u>\n"
-	" <key>%s</key> \n"
-	" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
-	" <query>contacts</query> \n"
-	" <query>vms</query> \n"
-	" <since>%u</since> \n", 
-	pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
-
-	/*if (extras){
-		int	param = (int)extras;*/
-	if((settingType != -1) && (settingType != oldSetting))
+	if(gltpCallBackP)
 	{
-		fprintf(pfOut, " <rd>%d</rd>\n", settingType);
-		switch(settingType)
-		{
-		case REDIRECT2VMS:
-			break;
-		case REDIRECT2PSTN:
-			fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
-			break;
-		case REDIRECT2ONLINE:
-			break;
-		case REDIRECTBOTH:
-			fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
-			break;
-		}
+		if(gltpCallBackP->netWriteCallBackPtr)
+			return gltpCallBackP->netWriteCallBackPtr(gltpCallBackP->uData,msg,length,address,port);
 	}
-
-	/*}*/
-
-	//check for new contacts
-	ndirty = 0;
-	pc=getContactsList();
-	while(pc)
-	{
-		if(pc->dirty && !pc->id)
-		{
-			ndirty=TRUE;
-			pc=NULL;
-		}
-		else
-			pc=pc->next;
-	}
-	
-	if (ndirty){
-		fprintf(pfOut, "<add>\n");
-		for (pc = getContactsList(); pc; pc = pc->next)
-			if (pc->dirty && !pc->id)
-				fprintf(pfOut, 		
-				"<vc><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp><token>%x</token></vc>\n", 
-				pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid,(unsigned int)pc);
-		fprintf(pfOut, "</add>\n");
-	}
-
-
-	//check for updated contacts
-	//existing contacts have an id and isDeleted is 0
-	ndirty = 0;
-	pc=getContactsList();
-	while(pc)
-	{
-		if(pc->dirty && pc->id && !pc->isDeleted)
-		{
-			ndirty=TRUE;
-			pc=NULL;
-		}
-		else
-			pc=pc->next;
-	}
-	/*for (pc = getContactsList(); pc; pc = pc->next)
-		if (pc->dirty && pc->id && !pc->isDeleted)
-			ndirty++;*/
-	for (vm = listVMails; vm; vm = vm->next)
-		if (vm->dirty)
-			ndirty++;
-	if (ndirty){
-		fprintf(pfOut, "<mod>\n");
-		for (pc = getContactsList(); pc; pc = pc->next)
-			if (pc->dirty && pc->id && !pc->isDeleted)
-				fprintf(pfOut,
-				"<vc><id>%u</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp></vc>\n",
-				(unsigned long)pc->id, pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid);
-
-		//Kaustubh 19 June 09. Change for Sending the vmail status to Server: vmail Read Unread issue
-		for (vm = listVMails; vm; vm = vm->next)
-			if (vm->dirty)
-			{
-				switch(vm->status)
-				{
-				case VMAIL_ACTIVE:	
-					fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"active");
-					break;
-				case VMAIL_DELIVERED:
-					fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"delivered");
-					break;
-				case VMAIL_FAILED:
-					fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"failed");
-					break;
-				}
-			}
-		fprintf(pfOut, "</mod>\n");
-	}
-
-	//check for deleted contacts
-	//these contacts have an id and isDeleted is 1
-	ndirty = 0;
-	pc=getContactsList();
-	while(pc)
-	{
-		if(pc->dirty && pc->id && pc->isDeleted)
-		{
-			ndirty=TRUE;
-			pc=NULL;
-		}
-		else
-			pc=pc->next;
-	}
-
-	/*for (pc = getContactsList(); pc; pc = pc->next)
-		if (pc->dirty && pc->id && pc->isDeleted)
-			ndirty++;*/
-
-	vm=listVMails;
-	/*while(vm)
-	{
-		if(vm->toDelete)
-		{
-			ndirty=TRUE;
-			pc=NULL;
-		}
-		else
-		{
-			vm==vm->next;
-		}
-	}*/
-
-	for (vm = listVMails; vm; vm = vm->next)
-		if (vm->toDelete)
-			ndirty++;
-	
-	if (ndirty){
-		fprintf(pfOut, "<del>\n");
-		for (pc = getContactsList(); pc; pc = pc->next)
-			if (pc->dirty && pc->id && pc->isDeleted)
-				fprintf(pfOut,
-					" <vc><id>%u</id></vc>\n",
-					(unsigned long)pc->id);
-
-		for (vm = listVMails; vm; vm = vm->next)
-			if (vm->toDelete)
-				fprintf(pfOut, " <vm><id>%s</id></vm>\n", vm->vmsid);
-		fprintf(pfOut, "</del>\n");
-	}
-	
-	fprintf(pfOut, "</profile>\n");
-	fclose(pfOut);
-
-    timeStart = ticks();
-	sprintf(pathDown, "%s\\down.xml", myFolder);
-
-	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
-    
-	timeFinished = ticks();
-	timeTaken = (timeFinished - timeStart);
-	setBandwidth(timeTaken,byteCount);
-
-	profileMerge();
-	profileSave();
-	relistContacts();
-	refreshDisplay();
-	vmsUploadAll();
-	
-	vmsDownload();
-	vmsSort();
-	relistVMails();
-
-	busy = 0;
-	//add by mukesh for bug id 20359
-	threadStatus = ThreadNotStart ;
 	return 0;
 }
 
-void profileResync()
+void outputSound(struct ltpStack *ps, struct Call *pc, short *pcm, int length)
 {
-	if((uaUserid  && strcmp(uaUserid ,pstack->ltpUserid)!=0))
+	if(gltpCallBackP)
 	{
-		strcpy(uaUserid ,pstack->ltpUserid);
-		//add by mukesh for bug id 20359
-		threadStatus = ThreadTerminate;
-		profileClear();
+		if(gltpCallBackP->outputSoundCallBackPtr)
+			return gltpCallBackP->outputSoundCallBackPtr(gltpCallBackP->uData,ps,pc,pcm,length);
 	}
-	START_THREAD(profileDownload);
-//		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
 }
-
-void profileSetRedirection(int redirectTo)
+int openSound(int isFullDuplex)
 {
-	CreateThread(NULL, 0, profileDownload, (LPVOID)redirectTo, 0, NULL);
-}
-
-THREAD_PROC profileReloadEverything(void *nothing)
-{
-	lastUpdate = 0;
-	resetContacts();
-	profileDownload(NULL);
+	if(gltpCallBackP)
+	{
+		if(gltpCallBackP->openSoundCallBackPtr)
+			return	 gltpCallBackP->openSoundCallBackPtr(gltpCallBackP->uData,isFullDuplex);
+	}
 	return 0;
 }
-
-
-void uaInit()
+void closeSound()
 {
-	createFolders();
-	profileLoad();
-	uaUserid[0]=0;
-}
-
-
-void setBandwidth(unsigned long timeTaken,int byteCount)
-{
-	int bytesPerSecond = 0;
-
-	if (timeTaken <= 1)
+	if(gltpCallBackP)
 	{
-		bandwidth = 5;
+		if(gltpCallBackP->closeSoundCallBackPtr)
+			gltpCallBackP->closeSoundCallBackPtr(gltpCallBackP->uData);
 	}
-	else {
-	    bytesPerSecond = byteCount / timeTaken;
-		if (bytesPerSecond > 2000)
-			bandwidth = 5;
-		if((bytesPerSecond < 2000) && (bytesPerSecond > 1700))
-			bandwidth = 4;
-        if((bytesPerSecond < 1700) && (bytesPerSecond > 1400))
-			bandwidth = 3;
-		if((bytesPerSecond < 1400) && (bytesPerSecond > 1100))
-			bandwidth = 2;
-		if((bytesPerSecond < 1400) && (bytesPerSecond > 1100))
-			bandwidth = 1;
-		if(bytesPerSecond < 800)
-			bandwidth = 0;
-	}
+	return ;
 }
+#endif
+
