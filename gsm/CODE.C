@@ -6,7 +6,7 @@
 
 /* $Header: /home/kbs/jutta/src/gsm/gsm-1.0/src/RCS/code.c,v 1.1 1992/10/28 00:15:50 jutta Exp $ */
 //#include		"stdafx.h"
-#include <windows.h>
+#include "windows.h"
 #include        "config.h"
 #include        "private.h"
 #include        "gsm.h"
@@ -89,7 +89,7 @@ void Gsm_Coder P8((S,s,LARc,Nc,bc,Mc,xmaxc,xMc),
 				dpp += 40;
 
 		}
-
+	
 		(void)RtlCopyMemory((void *)S->dp0, (void *)(S->dp0 + 160), 
 				120 * sizeof(*S->dp0));
 }
