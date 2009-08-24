@@ -1990,7 +1990,7 @@ void profileResync()
 		strcpy(uaUserid ,pstack->ltpUserid);
 		//add by mukesh for bug id 20359
 		threadStatus = ThreadTerminate;
-		profileClear();
+		//profileClear();
 	}
 	START_THREAD(profileDownload);
 //		CreateThread(NULL, 0, downloadProfile, NULL, 0, NULL);
