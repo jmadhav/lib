@@ -1310,7 +1310,7 @@ void profileSave(){
 	struct AddressBook *p;
 	struct VMail *v;
 	FILE	*pf;
-	unsigned char szData[45], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
+	unsigned char szData[32], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
 	BLOWFISH_CTX ctx;
 	int i, len;
 
@@ -1396,7 +1396,7 @@ void profileLoad()
 	ezxml_t userid, password, server, lastupdate, dirty, status, vms, fwd, email;
 	char empty[] = "";
 	struct AddressBook *p;
-	unsigned char v, szData[45], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
+	unsigned char v, szData[33], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
     BLOWFISH_CTX ctx;
 	int i, j, len;
 
@@ -1438,6 +1438,7 @@ void profileLoad()
 		len = strlen(password->txt);
 		if(len)
 		{
+			char *p = szData;
 			for (i=0; i<len; i+=4)
 			{
 				for (j=0;j<4;j++)
@@ -1450,11 +1451,12 @@ void profileLoad()
 					szBuffIn[ j ] = (unsigned char) (v - 1);
 				}
 				decodeblock(szBuffIn, szBuffOut);
-				strncat(szData, szBuffOut, 3);
+				memcpy(p, szBuffOut, 3);
+				p += 3;
 			}
 
 			Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
-			for (i = 0; i < sizeof(szData); i+=8)
+			for (i = 0; i < 32; i+=8)
 				   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
 			strcpy(pstack->ltpPassword, szData); 
 		}
