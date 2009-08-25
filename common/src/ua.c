@@ -1310,7 +1310,7 @@ void profileSave(){
 	struct AddressBook *p;
 	struct VMail *v;
 	FILE	*pf;
-	unsigned char szData[32], szEncPass[64], szBuffIn[10], szBuffOut[10];
+	unsigned char szData[45], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
 	BLOWFISH_CTX ctx;
 	int i, len;
 
@@ -1396,7 +1396,7 @@ void profileLoad()
 	ezxml_t userid, password, server, lastupdate, dirty, status, vms, fwd, email;
 	char empty[] = "";
 	struct AddressBook *p;
-	unsigned char v, szData[32], szBuffIn[10], szBuffOut[10];
+	unsigned char v, szData[45], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
     BLOWFISH_CTX ctx;
 	int i, j, len;
 
