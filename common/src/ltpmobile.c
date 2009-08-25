@@ -1184,6 +1184,15 @@ static void callTick(struct ltpStack *ps, struct Call *pc)
 {
 	struct ltp *p = (struct ltp *)pc->ltpRequest;
 
+	/** farhan, aug 20 2009, bug id 23023
+	the call on hold was getting dropped by the asterisk side as there were no media packets received at all.
+	instead, 
+	*/
+	if (pc->ltpState == CALL_CONNECTED && ps->activeLine != pc->lineId){
+		short silence[160] = {0};
+		rtpOut(ps, pc, 160, silence, 0);
+	}
+
 	if (pc->ltpState == CALL_RING_RECEIVED && pc->timeStart + ps->ringTimeout < ps->now)
 	{
 		//added by mukesh to remove hungup button

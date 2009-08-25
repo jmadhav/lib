@@ -1322,7 +1322,7 @@ void profileSave(){
 	struct AddressBook *p;
 	struct VMail *v;
 	FILE	*pf;
-	unsigned char szData[32], szEncPass[64], szBuffIn[10], szBuffOut[10];
+	unsigned char szData[33], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 33
 	BLOWFISH_CTX ctx;
 	int i, len;
 	
@@ -1337,17 +1337,19 @@ void profileSave(){
 	strcpy(szData,pstack->ltpPassword);
 	
 	Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
-	
-	for (i = 0; i < sizeof(szData); i+=8)
-		Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
-	szData[31] = '\0'; //important to NULL terminate;
-	
+
+
+	for (i = 0; i < sizeof(szData)-1; i+=8)
+		   Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
+	szData[32] = '\0'; //important to NULL terminate;
+
+
 	//Output of Blowfish_Encrypt() is binary, which needs to be stored in plain-text in profile.xml for ezxml to understand and parse.
 	//Hence base64 encode the cyphertext.
 	memset(szEncPass, 0, sizeof(szEncPass));
 	memset(szBuffIn, 0, sizeof(szBuffIn));
 	memset(szBuffOut, 0, sizeof(szBuffOut));
-	len = strlen(szData);
+	len = sizeof(szData);//strlen(szData);
 	for (i=0; i<len; i+=3)
 	{
 		szBuffIn[0]=szData[i];
@@ -1408,11 +1410,12 @@ void profileLoad()
 	ezxml_t userid, password, server, lastupdate, dirty, status, vms, fwd, email;
 	char empty[] = "";
 	struct AddressBook *p;
-	unsigned char v, szData[32], szBuffIn[10], szBuffOut[10];
+	unsigned char v, szData[33], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
     BLOWFISH_CTX ctx;
 	int i, j, len;
-	
-	//strcpy(pstack->ltpServerName, "64.49.236.88");
+
+
+	strcpy(pstack->ltpServerName, "64.49.236.88");
 	sprintf(pathname, "%s\\profile.xml", myFolder);
 	
 	pf = fopen(pathname, "r");
@@ -1450,6 +1453,7 @@ void profileLoad()
 		len = strlen(password->txt);
 		if(len)
 		{
+			char *p = szData;
 			for (i=0; i<len; i+=4)
 			{
 				for (j=0;j<4;j++)
@@ -1462,12 +1466,14 @@ void profileLoad()
 					szBuffIn[ j ] = (unsigned char) (v - 1);
 				}
 				decodeblock(szBuffIn, szBuffOut);
-				strncat(szData, szBuffOut, 3);
+				memcpy(p, szBuffOut, 3);
+				p += 3;
 			}
 			
 			Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
-			for (i = 0; i < sizeof(szData); i+=8)
-				Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
+			for (i = 0; i < 32; i+=8)
+				   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
+
 			strcpy(pstack->ltpPassword, szData); 
 		}
 	}
@@ -1475,8 +1481,6 @@ void profileLoad()
 	server = ezxml_child(xml,"server");
 	if(server && strlen(server->txt))
 		strcpy(pstack->ltpServerName, server->txt);
-	else
-		strcpy(pstack->ltpServerName, "64.49.236.88");
 	
 	if (lastupdate = ezxml_child(xml, "dt"))
 		lastUpdate = atol(lastupdate->txt);

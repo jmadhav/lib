@@ -27,7 +27,9 @@ extern "C" {
 #ifdef SUPPORT_SPEEX
 #include <speex/speex.h>
 #endif
-
+#ifdef _MACOS_
+#define uint32 macuint32
+#endif	
 /*	Queue:
 	Before we dip into LTP proper, I have used a very simple queue of words for much of
 	my work. This has a very simple API. Lets get over with it here.
@@ -726,6 +728,7 @@ struct Contact *getContact(struct ltpStack *ps, char *userid);
 void ltpSortContacts(struct ltpStack *ps, int byGroups);
 */
 void ltpUpdatePresence(struct ltpStack *ps, unsigned short16 state, char *label);
+	static int rtpOut(struct ltpStack *ps, struct Call *pc, int nsamples, short *pcm, int isSpeaking);
 
 /* we use a slighlty modified md5 algorithm that can use a runtime flag to determine if it is
 being used on a big endian system */
