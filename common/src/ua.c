@@ -1310,7 +1310,7 @@ void profileSave(){
 	struct AddressBook *p;
 	struct VMail *v;
 	FILE	*pf;
-	unsigned char szData[32], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
+	unsigned char szData[33], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 33
 	BLOWFISH_CTX ctx;
 	int i, len;
 
@@ -1326,16 +1326,16 @@ void profileSave(){
 
 	Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
 
-	for (i = 0; i < sizeof(szData); i+=8)
+	for (i = 0; i < sizeof(szData)-1; i+=8)
 		   Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
-	szData[31] = '\0'; //important to NULL terminate;
+	szData[32] = '\0'; //important to NULL terminate;
 
 	//Output of Blowfish_Encrypt() is binary, which needs to be stored in plain-text in profile.xml for ezxml to understand and parse.
 	//Hence base64 encode the cyphertext.
 	memset(szEncPass, 0, sizeof(szEncPass));
 	memset(szBuffIn, 0, sizeof(szBuffIn));
 	memset(szBuffOut, 0, sizeof(szBuffOut));
-	len = strlen(szData);
+	len = sizeof(szData);//strlen(szData);
 	for (i=0; i<len; i+=3)
 	{
 		szBuffIn[0]=szData[i];
