@@ -134,7 +134,7 @@ fixed public IP addresses, MAIL_PRIORITY is a low priority login. */
 
 	//added by mukesh for callback 27/6/09	
 	
-#define _CALLBACKLTP_	
+
 #ifdef _CALLBACKLTP_
 	struct ltpStack;
 	struct Call;
