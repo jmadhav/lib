@@ -355,9 +355,15 @@ static void cdrSave(){
 	struct	 CDR *q;
 	char	line[1000];
 	FILE	*pf;
-	
+#ifdef _MACOS_
+	sprintf(pathname, "%s/calls.txt", myFolder);
+
+#else
 	sprintf(pathname, "%s\\calls.txt", myFolder);
-	pf = fopen(pathname, "w");
+
+#endif	
+	
+		pf = fopen(pathname, "w");
 	if (!pf)
 		return;
 	
@@ -436,9 +442,16 @@ void cdrAdd(char *userid, time_t time, int duration, int direction)
 	//add to the linked list
 	p->next = listCDRs;
 	listCDRs = p;
+#ifdef _MACOS_
+	sprintf(pathname, "%s/calls.txt", myFolder);
 	
+#else
 	sprintf(pathname, "%s\\calls.txt", myFolder);
-	sprintf(line, "<cdr><date>%ul</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
+
+	
+#endif	
+	
+		sprintf(line, "<cdr><date>%ul</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
 			(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid);
 	
 	pf = fopen(pathname, "a");
@@ -476,8 +489,15 @@ void cdrLoad() {
 	int		index;
 	char	line[1000];
 	ezxml_t	cdr, duration, date, userid, type;
+#ifdef _MACOS_
+	sprintf(pathname, "%s/calls.txt", myFolder);
 	
+#else
 	sprintf(pathname, "%s\\calls.txt", myFolder);
+	
+#endif	
+	
+	
 	pf = fopen(pathname, "r");
 	if (!pf)
 		return;
@@ -1031,8 +1051,15 @@ static void vmsCompact(){
 	p->next = NULL;
 	
 	while (q){
+	#ifdef _MACOS_
+		sprintf(path, "%s/%s.gsm", vmFolder, p->hashid);
+	#else
 		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
-		unlink(path);
+	#endif
+		
+		
+		
+			unlink(path);
 		p = q->next;
 		free(q);
 		q = p;
@@ -1047,7 +1074,13 @@ void vmsDelete(struct VMail *p)
 	
 	//keep the vmail in the log file
 	p->toDelete = 1;
-	sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
+	#ifdef _MACOS_
+		sprintf(path, "%s/%s.gsm", vmFolder, p->hashid);
+	#else
+		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
+	#endif
+	
+	
 	unlink(path);
 	
 	//profileResync();
@@ -1103,17 +1136,29 @@ static void vmsUpload(struct VMail *v)
 	
 	if (v->direction != VMAIL_OUT || v->status != VMAIL_NEW)
 		return;
+	#ifdef _MACOS_
+		sprintf(path, "%s/%s.gsm", vmFolder, v->hashid);
+	#else
+		sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
+	#endif
 	
-	sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
+	
 	pfIn = fopen(path, "rb");
 	if (!pfIn){
 		v->toDelete = 1;
 		return;
 	}
-	
+#ifdef _MACOS_
+	sprintf(requestfile, "%s/vmaireq.txt", myFolder);
+	sprintf(responsefile, "%s/vmailresp.txt", myFolder);
+
+#else
 	sprintf(requestfile, "%s\\vmaireq.txt", myFolder);
 	sprintf(responsefile, "%s\\vmailresp.txt", myFolder);
+
+#endif
 	
+		
 	pfOut = fopen(requestfile, "wb");
 	if (!pfOut){
 		fclose(pfIn);
@@ -1212,7 +1257,11 @@ static void vmsDownload()
 			continue;
 		
 		//if the file is already downloaded, move on
+	#ifdef _MACOS_
+		sprintf(pathname, "%s/%s.gsm", vmFolder, p->hashid);
+	#else
 		sprintf(pathname, "%s\\%s.gsm", vmFolder, p->hashid);
+	#endif
 		pfIn = fopen(pathname, "r");
 		if (pfIn){
 			fclose(pfIn);
@@ -1325,8 +1374,12 @@ void profileSave(){
 	unsigned char szData[33], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 33
 	BLOWFISH_CTX ctx;
 	int i, len;
+	#ifdef _MACOS_
+		sprintf(pathname, "%s/profile.xml", myFolder);
+	#else
+		sprintf(pathname, "%s\\profile.xml", myFolder);
+	#endif
 	
-	sprintf(pathname, "%s\\profile.xml", myFolder);
 	pf = fopen(pathname, "w");
 	if (!pf)
 		return;
@@ -1416,8 +1469,14 @@ void profileLoad()
 
 
 	strcpy(pstack->ltpServerName, "64.49.236.88");
-	sprintf(pathname, "%s\\profile.xml", myFolder);
-	
+	#ifdef _MACOS_
+		sprintf(pathname, "%s/profile.xml", myFolder);
+
+	#else
+		sprintf(pathname, "%s\\profile.xml", myFolder);
+
+	#endif
+		
 	pf = fopen(pathname, "r");
 	if (!pf)
 		return;
@@ -1549,8 +1608,12 @@ void profileLoad()
 void profileClear()
 {
 	char	pathname[MAX_PATH];
+	#ifdef _MACOS_
+		sprintf(pathname, "%s/profile.xml", myFolder);	
+	#else
+		sprintf(pathname, "%s\\profile.xml", myFolder);	
+	#endif
 	
-	sprintf(pathname, "%s\\profile.xml", myFolder);
 	unlink(pathname);
 	lastUpdate = 0;
 	myTitle[0] = 0;
@@ -1574,9 +1637,15 @@ void profileMerge(){
 	int		nContacts = 0, xmllength, newMails;
 	
 	char empty[] = "";
+	#ifdef _MACOS_
+	sprintf(pathname, "%s/down.xml", myFolder);
+
+	#else
+		sprintf(pathname, "%s\\down.xml", myFolder);
+
+	#endif
 	
-	sprintf(pathname, "%s\\down.xml", myFolder);
-	pf = fopen(pathname, "r");
+		pf = fopen(pathname, "r");
 	if (!pf)
 		return;
 	fseek(pf, 0, SEEK_END);
@@ -1807,7 +1876,12 @@ THREAD_PROC profileDownload(void *extras)
 	httpCookie(key);
 	
 	//prepare the xml upload
-	sprintf(pathUpload, "%s\\upload.xml", myFolder);
+	#ifdef _MACOS_
+		sprintf(pathUpload, "%s/upload.xml", myFolder);
+	#else
+		sprintf(pathUpload, "%s\\upload.xml", myFolder);
+	#endif
+	
 	pfOut = fopen(pathUpload, "wb");
 	if (!pfOut){
 		threadStatus = ThreadNotStart ;
@@ -1977,7 +2051,12 @@ THREAD_PROC profileDownload(void *extras)
 	fclose(pfOut);
 	
     timeStart = ticks();
-	sprintf(pathDown, "%s\\down.xml", myFolder);
+	#ifdef _MACOS_
+		sprintf(pathDown, "%s/down.xml", myFolder);
+	#else
+		sprintf(pathDown, "%s\\down.xml", myFolder);
+	#endif
+	
 	
 	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
     
