@@ -215,7 +215,7 @@ extern "C" {
 #define UA_ALERT     2000	
 #define REFRESH_CONTACT 1	
 #define REFRESH_VMAIL   2	
-#define REFRESH_VLOG    3	
+#define REFRESH_CALLLOG    3	
 	typedef enum 
 		{
 			GETCONTACTLIST=1,
@@ -255,7 +255,7 @@ extern "C" {
 	int GetVmsFileName(struct VMail *vmailP,char *nameP);
 	int makeVmsFileName(char *fnameP,char *fnameWithPathP);
 	int sendVms(char *remoteParty,char *vmsfileNameP);
-	
+	int getBalance();
 	void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lclientOsVer,char *lclientModel,char *clientUId);
 	
 #endif		

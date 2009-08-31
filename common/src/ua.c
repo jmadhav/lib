@@ -2111,7 +2111,8 @@ void relistContacts()
 }
 void relistCDRs()
 {
-	
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,REFRESH_CALLLOG,(unsigned long)uaCallBackObject.uData,0);	
+
 }
 void refreshDisplay()
 {
@@ -2327,5 +2328,8 @@ void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lcl
 	
 	
 }
-
+int getBalance()
+{
+	return creditBalance;
+}
 #endif
