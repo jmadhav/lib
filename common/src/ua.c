@@ -766,31 +766,31 @@ struct AddressBook *getTitleOf(char *userid, char *title){
 			continue;
 
 		if (!strcmp(p->mobile, userid)){
-			sprintf(title, "%s(m)", p->title);
+			sprintf(title, "%s (m)", p->title);
 			return p;
 		}
 
 		if (!strcmp(p->home, userid)){
-			sprintf(title, "%s(h)", p->title);
+			sprintf(title, "%s (h)", p->title);
 			return p;
 		}
 
 		if (!strcmp(p->business, userid)){
-			sprintf(title, "%s(b)", p->title);
+			sprintf(title, "%s (w)", p->title);
 			return p;
 		}
 
 		if (!strcmp(p->other, userid)){
-			sprintf(title, "%s(o)", p->title);
+			sprintf(title, "%s (o)", p->title);
 			return p;
 		}
 
 		if (!strcmp(p->email, userid)){
-			sprintf(title, "%s(mail)", p->title);
+			sprintf(title, "%s (mail)", p->title);
 			return p;
 		}
 		if (!strcmp(p->spoknid, userid)){
-			sprintf(title, "%s(s)", p->title);
+			sprintf(title, "%s (s)", p->title);
 			return p;
 		}
 	}
