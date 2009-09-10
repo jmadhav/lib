@@ -808,6 +808,9 @@ struct AddressBook *getContactOf(char *userid)
 		if (p->isDeleted)
 			continue;
 
+		if (!strcmp(p->spoknid, userid))
+			return p;
+
 		if (!strcmp(p->mobile, userid))
 			return p;
 
