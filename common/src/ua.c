@@ -1403,7 +1403,7 @@ void profileLoad()
     BLOWFISH_CTX ctx;
 	int i, j, len;
 
-	strcpy(pstack->ltpServerName, "64.49.236.88");
+	strcpy(pstack->ltpServerName, IDS_LTP_SERVERIP);
 	sprintf(pathname, "%s\\profile.xml", myFolder);
 
 	pf = fopen(pathname, "r");
