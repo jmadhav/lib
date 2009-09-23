@@ -186,7 +186,7 @@ extern unsigned long ticks();
 void cdrEmpty();
 //for voip quality
 void setBandwidth(unsigned long timeTaken,int byteCount);
-#define	IDS_LTP_SERVERIP	"64.49.236.88"
+#define	IDS_LTP_SERVERIP	"64.49.244.225"
 #ifdef __cplusplus
 }
 
