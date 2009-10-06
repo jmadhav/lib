@@ -120,7 +120,7 @@ All the voicemails are in a linked list too
 #define VMAIL_MAXCOUNT 100 //no more than VMAIL_MAXCOUNT mails to be stored on the user agent
 
 struct VMail {
-	char	userid[32];
+	char	userid[128]; //bug#26028, increased size to match AddressBook->email;
 	time_t	date;
 	char	vmsid[100];
 	char	hashid[33];
