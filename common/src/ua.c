@@ -28,6 +28,7 @@ char mailServer[100], myTitle[200], fwdnumber[32], myDID[32], client_name[32],cl
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
+int gnewMails;
 
 //variable to set the type for incoming call termination setting
 int settingType = -1;  //not assigned state yet
@@ -636,8 +637,10 @@ struct AddressBook *getContact(int id)
 	struct AddressBook	*p;
 	
 	for (p = listContacts; p; p = p->next)
+	{	
 		if (p->id == id && !p->isDeleted)
 			return p;
+	}	
 	return NULL;
 }
 
@@ -1468,7 +1471,7 @@ void profileLoad()
 	int i, j, len;
 
 
-	strcpy(pstack->ltpServerName, "64.49.236.88");
+	strcpy(pstack->ltpServerName, "64.49.244.225");
 	#ifdef _MACOS_
 		sprintf(pathname, "%s/profile.xml", myFolder);
 
@@ -1830,7 +1833,7 @@ void profileMerge(){
 	ezxml_free(xml);
 	free(strxml);
 	fclose(pf);
-	
+	gnewMails = newMails;
 	//TBD detect new voicemails and alert the user
 	if (newMails)
 	{
@@ -2179,6 +2182,8 @@ void  createFolders()
 	sprintf(newFolder, _T("%s/spokn/outbox"), myPath);
 	//CreateDirectory(newFolder, NULL);
 	uaCallBackObject.creatorDirectoryFunPtr(uaCallBackObject.uData,newFolder);
+	free(newFolder);
+	free(myPath);
 }
 void relistVMails()
 {
@@ -2197,9 +2202,10 @@ void refreshDisplay()
 {
 	
 }
-int makeVmsFileName(char *fnameP,char *fnameWithPathP)
+int makeVmsFileName(char *fnameP,char **fnameWithPathP)
 {
-	sprintf(fnameWithPathP,"%s/%s.gsm",vmFolder,fnameP);
+	*fnameWithPathP = malloc(strlen(vmFolder)+strlen(fnameP)+10);
+	sprintf(*fnameWithPathP,"%s/%s.gsm",vmFolder,fnameP);
 	return 0;
 }
 //the digest system used in our web api authentiction
@@ -2264,12 +2270,14 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 	free(newNameCharP);
 	return 0;
 }
-int GetVmsFileName(struct VMail *vmailP,char *nameP)
+int GetVmsFileName(struct VMail *vmailP,char **fnameWithPathP)
 {
 	
-	if(vmailP && nameP)
+	if(vmailP && fnameWithPathP)
 	{	
-		sprintf(nameP,"%s/%s.gsm",vmFolder,vmailP->hashid);
+		*fnameWithPathP = malloc(strlen(vmFolder)+strlen(vmailP->hashid)+20);
+		
+		sprintf(*fnameWithPathP,"%s/%s.gsm",vmFolder,vmailP->hashid);
 		return 0;
 	}
 	return 1;
@@ -2294,6 +2302,7 @@ int GetTotalCount(UAObjectType uaObj)
 		}
 			break;
 		case GETVMAILLIST:
+		case GETVMAILUNDILEVERD:	
 		{
 			struct VMail *p;
 			int	i;
@@ -2301,20 +2310,50 @@ int GetTotalCount(UAObjectType uaObj)
 			{	
 				if(!p->deleted && !p->toDelete)
 				{	
-					i++;
+					if(uaObj==GETVMAILUNDILEVERD)
+					{
+						if(p->status == VMAIL_FAILED)
+						{
+							
+							i++;
+							
+							
+						}
+						
+					}
+					else
+					{
+						i++;
+					}
 				}	
 			}	
 			return i;
 		}
 			break;
 		case GETCALLLOGLIST:
+		case GETCALLLOGMISSEDLIST:	
 		{
 			struct CDR  *p;
 			int	i;
 			for (i = 0, p = listCDRs; p; p = p->next)
 			{	
 				
-				i++;
+				if(uaObj==GETCALLLOGMISSEDLIST)
+				{
+					if(p->direction & CALLTYPE_MISSED)
+					{
+						
+							i++;
+						
+						
+					}
+										
+				}
+				else
+				{
+					i++;
+				}
+				
 				
 			}	
 			return i;
@@ -2352,6 +2391,7 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 			break;
 			
 		case GETVMAILLIST:
+		case GETVMAILUNDILEVERD:		
 		{
 			struct VMail *p;
 			int count = 0;
@@ -2360,29 +2400,62 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 			{	
 				if(!p->deleted && !p->toDelete)
 				{	
-					if (count==index)
-					{	
-						return p;
+					if(uaObj==GETVMAILUNDILEVERD)
+					{
+						if(p->status == VMAIL_FAILED)
+						{
+							if (count==index)
+							{	
+								return p;
+							}
+							++count;
+						}
+						
 					}
-					++count;
+					else
+					{	
+						if (count==index)
+						{	
+							return p;
+						}
+						++count;
+					}
+					
 				}	
 			}	
 			
 		}
 			break;
 		case GETCALLLOGLIST:
+		case GETCALLLOGMISSEDLIST:	
 		{
 			struct CDR  *p;
 			int count = 0;
 			for (p = listCDRs; p; p = p->next)
 			{	
 				
-				if (count==index)
-				{	
-					return p;
-				}
-				++count;
 				
+				
+				if(uaObj==GETCALLLOGMISSEDLIST)
+				{
+					if(p->direction & CALLTYPE_MISSED)
+					{
+						if (count==index)
+						{	
+							return p;
+						}
+						++count;
+					}
+					
+				}
+				else
+				{	
+					if (count==index)
+					{	
+						return p;
+					}
+					++count;
+				}
 			}	
 			
 		}
@@ -2410,5 +2483,103 @@ void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lcl
 int getBalance()
 {
 	return creditBalance;
+}
+//dont free this memory
+char *getForwardNo()
+{
+	return fwdnumber;
+}
+
+char *getDidNo()
+{
+	return myDID;
+}
+char *getTitle()
+{
+	return myTitle;
+}
+int newVMailCount()
+{
+	return gnewMails;
+}
+
+void newVMailCountdecrease()
+{
+	if(gnewMails)
+	{
+		gnewMails --;
+	}
+}
+void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
+{
+	if(forwardB)
+	{	
+		strncpy(fwdnumber,forwardNoCharP,sizeof(fwdnumber)-2);
+		printf("forward no %s",fwdnumber);
+		oldSetting = -1;
+		settingType = 3;
+	}
+	else
+	{
+		fwdnumber[0]=0;
+		settingType = 2;
+	}
+}
+struct AddressBook * getContactAndTypeCall(char *objStrP,/*out*/char *ltypeCharP)
+{
+	struct AddressBook *addressP;
+	char *typeCallP = "Unkonwn";
+	addressP = getContactOf(objStrP);
+	//
+	if(addressP)
+	{
+		if (!strcmp(addressP->mobile, objStrP))
+		{
+			typeCallP = "mobile";
+		}
+		
+		if (!strcmp(addressP->home, objStrP))
+		{
+			typeCallP = "home";
+		}
+		
+		if (!strcmp(addressP->business, objStrP))
+		{
+			typeCallP = "business";
+		}	
+		if (!strcmp(addressP->spoknid, objStrP))
+		{
+			typeCallP = "spokn";
+		}	
+		if (!strcmp(addressP->other, objStrP))
+		{
+			typeCallP = "other";
+		}
+		
+		if (!strcmp(addressP->email, objStrP))
+		{
+			typeCallP = "email";
+		}
+		
+		
+		
+	}
+	if(ltypeCharP)
+	{
+		strcpy(ltypeCharP,typeCallP);
+	}
+	return addressP;
+	
+}
+int vmsDeleteByID(char *idCharP)
+{
+	struct VMail *tmpVarVms;
+	tmpVarVms = vmsById(idCharP);
+	if(tmpVarVms)
+	{	
+		vmsDelete(tmpVarVms);
+		return 0;
+	}
+	return 1;
 }
 #endif

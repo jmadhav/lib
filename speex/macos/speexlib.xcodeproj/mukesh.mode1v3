@@ -300,7 +300,7 @@
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {262, 562}}</string>
+							<string>{{0, 0}, {262, 683}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -312,7 +312,7 @@
 					<key>GeometryConfiguration</key>
 					<dict>
 						<key>Frame</key>
-						<string>{{0, 0}, {279, 580}}</string>
+						<string>{{0, 0}, {279, 701}}</string>
 						<key>GroupTreeTableConfiguration</key>
 						<array>
 							<string>FileBuiltColumn</string>
@@ -321,7 +321,7 @@
 							<real>242</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>165 231 1440 621 0 0 1440 878 </string>
+						<string>0 136 1440 742 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -349,12 +349,12 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>8B889B1B1042E76C00D6A6D2</string>
+										<string>8BBC798E105FBA460022DD0C</string>
 										<key>history</key>
 										<array>
 											<string>8BF6EA340FF4CF8300E153DC</string>
 											<string>8BCC786210158EA200022C05</string>
-											<string>8BA694841042E4C1008FE0D6</string>
+											<string>8BBE30E4104C13630092967D</string>
 										</array>
 										<key>prevStack</key>
 										<array>
@@ -371,14 +371,14 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 0}, {1156, 432}}</string>
+								<string>{{0, 0}, {1156, 553}}</string>
 								<key>RubberWindowFrame</key>
-								<string>165 231 1440 621 0 0 1440 878 </string>
+								<string>0 136 1440 742 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
 							<key>Proportion</key>
-							<string>432pt</string>
+							<string>553pt</string>
 						</dict>
 						<dict>
 							<key>ContentConfiguration</key>
@@ -391,9 +391,9 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 437}, {1156, 143}}</string>
+								<string>{{0, 558}, {1156, 143}}</string>
 								<key>RubberWindowFrame</key>
-								<string>165 231 1440 621 0 0 1440 878 </string>
+								<string>0 136 1440 742 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -417,9 +417,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>8B889B1D1042E76C00D6A6D2</string>
+				<string>8BBC7990105FBA460022DD0C</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>8B889B1E1042E76C00D6A6D2</string>
+				<string>8BBC7991105FBA460022DD0C</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -538,7 +538,7 @@
 	<key>StatusbarIsVisible</key>
 	<true/>
 	<key>TimeStamp</key>
-	<real>272820076.16724098</real>
+	<real>274709062.32291198</real>
 	<key>ToolbarDisplayMode</key>
 	<integer>1</integer>
 	<key>ToolbarIsVisible</key>
@@ -557,7 +557,7 @@
 		<string>/Users/mukesh/mygit/lib/speex/macos/speexlib.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>165 231 1440 621 0 0 1440 878 </string>
+	<string>0 136 1440 742 0 0 1440 878 </string>
 	<key>WindowToolsV3</key>
 	<array>
 		<dict>
@@ -636,7 +636,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>8BF6EA180FF4C8E100E153DC</string>
-				<string>8B889B191042E76600D6A6D2</string>
+				<string>8BBC798D105FBA440022DD0C</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>

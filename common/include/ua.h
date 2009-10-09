@@ -220,7 +220,10 @@ extern "C" {
 		{
 			GETCONTACTLIST=1,
 			GETVMAILLIST = 2,
-			GETCALLLOGLIST = 3
+			GETCALLLOGLIST = 3,
+			GETCALLLOGMISSEDLIST = 4,
+			GETVMAILUNDILEVERD = 5
+			
 		}UAObjectType;
 	
 	typedef char * (*GetPathFunPtr)(void *uData);
@@ -252,12 +255,19 @@ extern "C" {
  	void UACallBackInit(UACallBackPtr uaCallbackP,struct ltpStack *pstackP);
 	int GetTotalCount(UAObjectType uaObj);
 	void * GetObjectAtIndex(UAObjectType uaObj,int index);
-	int GetVmsFileName(struct VMail *vmailP,char *nameP);
-	int makeVmsFileName(char *fnameP,char *fnameWithPathP);
+	int GetVmsFileName(struct VMail *vmailP,char **fnameWithPathP);
+	int makeVmsFileName(char *fnameP,char **fnameWithPathP);
 	int sendVms(char *remoteParty,char *vmsfileNameP);
 	int getBalance();
 	void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lclientOsVer,char *lclientModel,char *clientUId);
-	
+	char *getForwardNo();
+	char *getDidNo();
+	int newVMailCount();
+	void newVMailCountdecrease();
+	struct AddressBook * getContactAndTypeCall(char *noCharP,/*out*/char *ltypeCharP);
+	char *getTitle();
+	int vmsDeleteByID(char *idCharP);
+
 #endif		
 #ifdef __cplusplus
 }
