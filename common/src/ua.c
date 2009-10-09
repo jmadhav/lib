@@ -2582,4 +2582,14 @@ int vmsDeleteByID(char *idCharP)
 	}
 	return 1;
 }
+char *getAccountPage()
+{
+	//http://64.49.244.225/cgi-bin/accounts.cgi?userid=7865432&session=FfIpPeDhCcHkNoNkEaIeNkFaFiJdIpFn
+	char cookieCharP[200];
+	char *returnCharP;
+	httpCookie(cookieCharP);
+	returnCharP = malloc(500);
+	sprintf(returnCharP,"http://64.49.244.225/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	return returnCharP;
+}
 #endif

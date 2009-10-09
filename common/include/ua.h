@@ -216,6 +216,15 @@ extern "C" {
 #define REFRESH_CONTACT 1	
 #define REFRESH_VMAIL   2	
 #define REFRESH_CALLLOG    3	
+#define USERNAME_RANGE  30
+#define PASSWORD_RANGE  30	
+	
+#define EMAIL_RANGE  127
+#define NUMBER_RANGE  31	
+#define CONTACT_RANGE 98	
+#define SPOKN_ID_RANGE 7	
+	
+	
 	typedef enum 
 		{
 			GETCONTACTLIST=1,
@@ -267,6 +276,7 @@ extern "C" {
 	struct AddressBook * getContactAndTypeCall(char *noCharP,/*out*/char *ltypeCharP);
 	char *getTitle();
 	int vmsDeleteByID(char *idCharP);
+	char *getAccountPage();
 
 #endif		
 #ifdef __cplusplus
