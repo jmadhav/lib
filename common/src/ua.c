@@ -2340,7 +2340,7 @@ int GetTotalCount(UAObjectType uaObj)
 				
 				if(uaObj==GETCALLLOGMISSEDLIST)
 				{
-					if(p->direction & CALLTYPE_MISSED)
+					if((p->direction & CALLTYPE_IN) && (p->direction & CALLTYPE_MISSED))
 					{
 						
 							i++;
@@ -2438,7 +2438,8 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 				
 				if(uaObj==GETCALLLOGMISSEDLIST)
 				{
-					if(p->direction & CALLTYPE_MISSED)
+					if((p->direction & CALLTYPE_IN) && (p->direction & CALLTYPE_MISSED))
+						
 					{
 						if (count==index)
 						{	
@@ -2592,4 +2593,15 @@ char *getAccountPage()
 	sprintf(returnCharP,"http://64.49.244.225/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 	return returnCharP;
 }
+char *getCreditsPage()
+{
+	//http://64.49.244.225/cgi-bin/accounts.cgi?userid=7865432&session=FfIpPeDhCcHkNoNkEaIeNkFaFiJdIpFn
+	char cookieCharP[200];
+	char *returnCharP;
+	httpCookie(cookieCharP);
+	returnCharP = malloc(500);
+	sprintf(returnCharP,"http://64.49.244.225/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	return returnCharP;
+}
+
 #endif
