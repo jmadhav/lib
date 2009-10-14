@@ -880,6 +880,7 @@ void vmsEmpty()
 	p = listVMails;
 	while (p)
 	{
+		
 		q = p->next;
 		free(p);
 		p = q;
@@ -2603,5 +2604,19 @@ char *getCreditsPage()
 	sprintf(returnCharP,"http://64.49.244.225/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 	return returnCharP;
 }
+void vmailDeleteAll()
+{
+	
+	struct VMail *p;
+		
+	p = listVMails;
+	while (p)
+	{
+		p->toDelete = 1;
+		
+		
+		p = p->next;
+	}
 
+}
 #endif
