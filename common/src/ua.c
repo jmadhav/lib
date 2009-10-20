@@ -1766,8 +1766,58 @@ void profileMerge(){
 		alert(-1, ALERT_SERVERMSG, stralert);
 }
 
+static void profileGetKey()
+{
+	char	key[100], *strxml;
+	unsigned char buffer[10000];
+	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
+	FILE	*pfIn, *pfOut;
+	int		length, byteCount;
 
+	sprintf(requestfile, "%s\\keyreq.txt", myFolder);
+	sprintf(responsefile, "%s\\keyresp.txt", myFolder);
 
+	pfOut = fopen(requestfile, "wb");
+	if (!pfOut){
+		return;
+	}
+
+	httpCookie(key);
+	fprintf(pfOut, "<?xml version=\"1.0\"?><profile>\n <u>%s</u> </profile>", 
+		pstack->ltpUserid);
+	fclose(pfOut);
+
+	byteCount = restCall(requestfile, responsefile, "www.spokn.com", "/cgi-bin/userxml.cgi");
+	if (!byteCount)
+		return;
+
+	pfIn = fopen(responsefile, "rb");
+	if (!pfIn){
+		fclose(pfOut);
+		return;
+	}
+
+	length = fread(buffer, 1, sizeof(buffer), pfIn);
+	fclose(pfIn);
+	buffer[length] = 0;
+
+	strxml = strstr(buffer, "<?xml");
+
+	if (strxml){
+		ezxml_t xml, status, key;
+
+		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
+			if (key = ezxml_child(xml, "challenge")){
+				strcpy(pstack->ltpNonce, key->txt);
+			}
+			else
+				pstack->ltpNonce[0] = 0;
+			ezxml_free(xml);
+		}
+	}
+	unlink(requestfile);
+	unlink(responsefile);
+}
 
 //the extras are char* snippets of xml has to be sent to the server in addition to 
 //the xml that is already going (credentials + dirty contacts)
@@ -1787,6 +1837,9 @@ THREAD_PROC profileDownload(void *extras)
 		return 0;
 	else 
 		busy = 1;
+
+	profileGetKey();
+
 	//add by mukesh for bug id 20359
 	threadStatus = ThreadStart ;
 	httpCookie(key);
