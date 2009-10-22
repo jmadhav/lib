@@ -505,6 +505,7 @@ void cdrLoad() {
 	
 	index = 0;
 	while (fgets(line, 999, pf)){
+		printf("\ncreates");
 		cdr = ezxml_parse_str(line, strlen(line));
 		if (!cdr)
 			continue;
@@ -518,6 +519,7 @@ void cdrLoad() {
 		p = (struct CDR *) malloc(sizeof(struct CDR));
 		if (!p){
 			fclose(pf);
+			printf("\ndestroy 1");
 			ezxml_free(cdr);
 			return;
 		}
@@ -538,6 +540,8 @@ void cdrLoad() {
 		//add to the linked list
 		p->next = listCDRs;
 		listCDRs = p;
+		printf("\ndestroy 2");
+		ezxml_free(cdr);
 		
 	}
 	fclose(pf);
@@ -1247,6 +1251,7 @@ static void vmsDownload()
 	struct VMail	*p;
 	SOCKET	sock;
 	struct sockaddr_in	addr;
+	
 	FILE	*pfIn;
 	int		length, isChunked=0, count=0;
 	//change by mukesh for bug id 20359
@@ -2487,8 +2492,22 @@ int getBalance()
 	return creditBalance;
 }
 //dont free this memory
-char *getForwardNo()
+char *getForwardNo( int *forwardP)
 {
+	if(forwardP)
+	{
+		if(settingType==2)
+		{
+			*forwardP = 0;
+			
+		}
+		else
+		{
+			*forwardP = 1;
+		}
+	}
+	
+		
 	return fwdnumber;
 }
 
@@ -2516,14 +2535,17 @@ void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 {
 	if(forwardB)
 	{	
-		strncpy(fwdnumber,forwardNoCharP,sizeof(fwdnumber)-2);
-		printf("forward no %s",fwdnumber);
-		oldSetting = -1;
-		settingType = 3;
+		if(forwardNoCharP)
+		{	
+			strncpy(fwdnumber,forwardNoCharP,sizeof(fwdnumber)-2);
+			printf("forward no %s",fwdnumber);
+			oldSetting = -1;
+			settingType = 3;
+		}	
 	}
 	else
 	{
-		fwdnumber[0]=0;
+		//fwdnumber[0]=0;
 		settingType = 2;
 	}
 }

@@ -1,7 +1,7 @@
 // !$*UTF8*$!
 {
 	0867D690FE84028FC02AAC07 /* Project object */ = {
-		activeBuildConfigurationName = Release;
+		activeBuildConfigurationName = Debug;
 		activeSDKPreference = iphoneos3.0;
 		activeTarget = D2AAC07D0554694100DB518D /* speexlib */;
 		addToTargets = (
@@ -15,7 +15,7 @@
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
 					300,
-					807,
+					807.20849609375,
 				);
 				PBXFileTableDataSourceColumnsKey = (
 					PBXErrorsWarningsDataSource_TypeID,
@@ -133,16 +133,16 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 274709051;
-			PBXWorkspaceStateSaveDate = 274709051;
+			PBXPerProjectTemplateStateSaveDate = 277203543;
+			PBXWorkspaceStateSaveDate = 277203543;
 		};
 		perUserProjectItems = {
 			8BBC798E105FBA460022DD0C /* PBXTextBookmark */ = 8BBC798E105FBA460022DD0C /* PBXTextBookmark */;
-			8BBE30E4104C13630092967D /* PBXTextBookmark */ = 8BBE30E4104C13630092967D /* PBXTextBookmark */;
 			8BCC786210158EA200022C05 /* PBXTextBookmark */ = 8BCC786210158EA200022C05 /* PBXTextBookmark */;
 			8BF6EA340FF4CF8300E153DC /* PBXTextBookmark */ = 8BF6EA340FF4CF8300E153DC /* PBXTextBookmark */;
 			8BF6EA3E0FF4CF8300E153DC /* PBXTextBookmark */ = 8BF6EA3E0FF4CF8300E153DC /* PBXTextBookmark */;
 			8BF6EA480FF4CF8300E153DC /* PBXTextBookmark */ = 8BF6EA480FF4CF8300E153DC /* PBXTextBookmark */;
+			8BF7939E1085CAE600DBFC51 /* PBXTextBookmark */ = 8BF7939E1085CAE600DBFC51 /* PBXTextBookmark */;
 		};
 		sourceControlManager = 8BCF1D520FF49D0E006149DF /* Source Control */;
 		userBuildSettings = {
@@ -159,22 +159,6 @@
 		vrLoc = 0;
 	};
 	8BBC798F105FBA460022DD0C /* OSByteOrder.h */ = {
-		isa = PBXFileReference;
-		name = OSByteOrder.h;
-		path = /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS2.2.1.sdk/usr/include/libkern/arm/OSByteOrder.h;
-		sourceTree = "<absolute>";
-	};
-	8BBE30E4104C13630092967D /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8BBE30E5104C13630092967D /* OSByteOrder.h */;
-		name = "OSByteOrder.h: 8";
-		rLen = 20;
-		rLoc = 126;
-		rType = 0;
-		vrLen = 636;
-		vrLoc = 0;
-	};
-	8BBE30E5104C13630092967D /* OSByteOrder.h */ = {
 		isa = PBXFileReference;
 		lastKnownFileType = sourcecode.c.h;
 		name = OSByteOrder.h;
@@ -336,6 +320,22 @@
 		rType = 0;
 		vrLen = 188;
 		vrLoc = 0;
+	};
+	8BF7939E1085CAE600DBFC51 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF7939F1085CAE600DBFC51 /* OSByteOrder.h */;
+		name = "OSByteOrder.h: 8";
+		rLen = 20;
+		rLoc = 126;
+		rType = 0;
+		vrLen = 636;
+		vrLoc = 0;
+	};
+	8BF7939F1085CAE600DBFC51 /* OSByteOrder.h */ = {
+		isa = PBXFileReference;
+		name = OSByteOrder.h;
+		path = /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS2.2.1.sdk/usr/include/libkern/arm/OSByteOrder.h;
+		sourceTree = "<absolute>";
 	};
 	AA747D9E0F9514B9006C5449 /* speexlib_Prefix.pch */ = {
 		uiCtxt = {

@@ -269,7 +269,7 @@ extern "C" {
 	int sendVms(char *remoteParty,char *vmsfileNameP);
 	int getBalance();
 	void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lclientOsVer,char *lclientModel,char *clientUId);
-	char *getForwardNo();
+	char *getForwardNo(int *forwarddP);
 	char *getDidNo();
 	int newVMailCount();
 	void newVMailCountdecrease();
@@ -277,6 +277,7 @@ extern "C" {
 	char *getTitle();
 	int vmsDeleteByID(char *idCharP);
 	char *getAccountPage();
+	void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP);
 
 #endif		
 #ifdef __cplusplus
