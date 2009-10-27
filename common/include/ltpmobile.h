@@ -744,6 +744,7 @@ void MD5Update(struct MD5Context *ctx, unsigned char const  *buf, unsigned len, 
 void MD5Final(unsigned char *digest, struct MD5Context *ctx);
 #ifdef _CALLBACKLTP_	
 	void SetLtpCallBack(struct ltpStack *ps,LtpCallBackPtr ltpCallbackPtr);
+	void ResetLtpCallback(struct ltpStack *ps);
 #endif
 
 #ifdef __cplusplus
