@@ -1144,7 +1144,7 @@ static void vmsUpload(struct VMail *v)
 
 	//todo check that the response is not 'o' and store the returned value as the vmsid
 	if (strxml){
-		ezxml_t xml, status, vmsid;
+		ezxml_t xml, status, vmsid, code;
 
 		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
 			if (status = ezxml_child(xml, "status")){
@@ -1157,9 +1157,11 @@ static void vmsUpload(struct VMail *v)
 
 				if (!strcmp(status->txt, "active"))
 					v->status = VMAIL_ACTIVE;
+				//bug#26105, Handler for VMS delivery failure
 				else if(!strcmp(status->txt, "failed"))
 				{
-					alert(-1, ALERT_VMAILERROR, "Voicemail upload failed");
+					code = ezxml_child(xml, "code");
+					alert(code ? atoi(code->txt) : -1, ALERT_VMAILERROR, "Voicemail upload failed");
 					v->status=VMAIL_FAILED;
 				}
 			}
