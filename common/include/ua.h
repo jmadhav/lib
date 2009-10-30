@@ -293,7 +293,7 @@ void cdrEmpty();
 //for voip quality
 void setBandwidth(unsigned long timeTaken,int byteCount);
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
-
+#define _FORWARD_VMS_
 #ifdef __cplusplus
 }
 

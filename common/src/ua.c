@@ -1103,7 +1103,7 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 {
 	struct	VMail	*p=NULL;
 	int		isNew=1;
-	
+#ifndef _FORWARD_VMS_
 	if (vmsid)
 		p = vmsById(vmsid);
 	
@@ -1112,7 +1112,7 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 		p->status = status;
 		return p;
 	}
-	
+#endif	
 	//hmm this looks like a new one
 	p = (struct VMail *) malloc(sizeof(struct VMail));
 	if (!p)
@@ -2330,8 +2330,22 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 	
 	fclose(fp);
 	rename(vmsfileNameP,newNameCharP);
-	vmsP = vmsUpdate(remoteParty, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
-	//vmsUpload(vmsP);
+	char *comaSepCharP;
+	char *terminateCharP;
+	comaSepCharP = remoteParty;
+	while(comaSepCharP)
+	{	
+		terminateCharP = strstr(comaSepCharP,",");
+		if(terminateCharP)
+		{
+			*terminateCharP = 0;
+			terminateCharP++;
+			
+		}
+		vmsP = vmsUpdate(comaSepCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
+		comaSepCharP = terminateCharP;
+	}
+		//vmsUpload(vmsP);
 	//profileResyncMain();
 	profileResync();
 	//relistVMails();
@@ -2703,4 +2717,5 @@ void vmailDeleteAll()
 	}
 
 }
+
 #endif
