@@ -164,6 +164,7 @@ extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTi
 void profileResync();
 void profileClear();
 void profileSave();
+void profileGetKey();
 void profileSetRedirection(int redirectTo);
 THREAD_PROC profileReloadEverything(void *something);
 
@@ -189,6 +190,8 @@ void setBandwidth(unsigned long timeTaken,int byteCount);
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #ifdef __cplusplus
 }
+
+
 
 #endif
 #endif
