@@ -1768,7 +1768,7 @@ void profileMerge(){
 		alert(-1, ALERT_SERVERMSG, stralert);
 }
 
-static void profileGetKey()
+void profileGetKey()
 {
 	char	key[100], *strxml;
 	unsigned char buffer[10000];
