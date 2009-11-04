@@ -212,6 +212,7 @@ profile related definitions
 	void setBandwidth(unsigned long timeTaken,int byteCount);
 	
 #ifdef _MACOS_
+#define TEST_CALL_ID -2
 #define _T(X) X
 #define UA_ALERT     2000	
 #define REFRESH_CONTACT 1	

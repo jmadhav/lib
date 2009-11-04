@@ -14,7 +14,7 @@
 #include <ltpmobile.h>
 #include <ezxml.h>
 #include <ua.h>
-
+//struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
 // this is the single object that is the instance of the ltp stack for the user agent
 struct ltpStack *pstack;
 struct CDR *listCDRs=NULL;
@@ -1438,6 +1438,12 @@ void profileSave(){
 	
 	//the contacts
 	for (p = getContactsList(); p; p = p->next){
+	#ifdef TEST_CALL_ID
+		if(p->id==TEST_CALL_ID)
+		{
+			continue;
+		}
+	#endif		
 		fprintf(pf, " <vc><id>%u</id><t>%s</t>", p->id, p->title);
 		if (p->mobile[0])
 			fprintf(pf, "<m>%s</m>", p->mobile);
@@ -1507,6 +1513,31 @@ void profileLoad()
 	}
 	
 	resetContacts();
+	#ifdef TEST_CALL_ID
+	if(listContacts==0)
+	{
+		listContacts = (struct AddressBook *)malloc(sizeof(struct AddressBook));
+		memset(listContacts, 0, sizeof(struct AddressBook));
+		
+		listContacts->id = TEST_CALL_ID;
+		
+		strcpy(listContacts->title, "TestCall");
+		strcpy(listContacts->mobile, "");
+		strcpy(listContacts->home, "");
+		strcpy(listContacts->business, "");
+		
+			strcpy(listContacts->other, "");
+		
+			strcpy(listContacts->email, "");
+		
+			strcpy(listContacts->spoknid, "1234567");
+		listContacts->dirty = 0;
+		//insert in at the head and sort
+		listContacts->next = 0;
+		
+		
+	}
+#endif
 	strxml = (char *)malloc(xmllength);
 	fseek(pf, 0, SEEK_SET);
 	fread(strxml, xmllength, 1, pf);
@@ -1662,8 +1693,32 @@ void profileMerge(){
 		sprintf(pathname, "%s\\down.xml", myFolder);
 
 	#endif
-	
-		pf = fopen(pathname, "r");
+	#ifdef TEST_CALL_ID
+	if(listContacts==0)
+	{
+		listContacts = (struct AddressBook *)malloc(sizeof(struct AddressBook));
+		memset(listContacts, 0, sizeof(struct AddressBook));
+		
+		listContacts->id = TEST_CALL_ID;
+		
+		strcpy(listContacts->title, "TestCall");
+		strcpy(listContacts->mobile, "");
+		strcpy(listContacts->home, "");
+		strcpy(listContacts->business, "");
+		
+		strcpy(listContacts->other, "");
+		
+		strcpy(listContacts->email, "");
+		
+		strcpy(listContacts->spoknid, "1234567");
+		listContacts->dirty = 0;
+		//insert in at the head and sort
+		listContacts->next = 0;
+		
+		
+	}
+#endif
+	pf = fopen(pathname, "r");
 	if (!pf)
 		return;
 	fseek(pf, 0, SEEK_END);
@@ -1672,6 +1727,7 @@ void profileMerge(){
 		fclose(pf);
 		return;
 	}
+	
 	
 	strxml = (char *)malloc(xmllength+1);
 	fseek(pf, 0, SEEK_SET);
@@ -2214,6 +2270,7 @@ void setBandwidth(unsigned long timeTaken,int byteCount)
 }
 #ifdef _MACOS_
 UACallBackType uaCallBackObject;
+
 void UACallBackInit(UACallBackPtr uaCallbackP,struct ltpStack *pstackP)
 {
 	uaCallBackObject = *uaCallbackP;
@@ -2380,7 +2437,7 @@ int GetTotalCount(UAObjectType uaObj)
 					i++;
 				}	
 			}	
-			return i;
+			return i;//extra one for test call
 		}
 			break;
 		case GETVMAILLIST:
@@ -2469,6 +2526,7 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 					++count;
 				}	
 			}	
+			
 		}
 			break;
 			
