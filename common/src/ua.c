@@ -1243,7 +1243,10 @@ static void vmsUploadAll()
 	
 	for (p = listVMails; p; p = p->next){
 		if (p->direction == VMAIL_OUT && p->status == VMAIL_NEW && !p->deleted && !p->toDelete)
+		{	
+			//printf("\nvmail sent to %s",p->userid);
 			vmsUpload(p);
+		}	
 	}
 }
 
