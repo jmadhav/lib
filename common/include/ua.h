@@ -69,11 +69,11 @@ This is the implementation of managing the contacts
 
 struct AddressBook{
 	unsigned long		id;
-	char	title[100];
-	char	home[32];
-	char	business[32];
-	char	mobile[32];
-	char	other[32];
+	char	title[101];
+	char	home[33];
+	char	business[33];
+	char	mobile[33];
+	char	other[33];
 	char	email[128];
 	char    spoknid[8];
 	int		presence;
