@@ -20,7 +20,7 @@ struct VMail *listVMails=NULL;
 static unsigned long	lastUpdate = 0;
 static int busy = 0;
 char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
-char mailServer[100], myTitle[200], fwdnumber[32], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[32];
+char mailServer[100], myTitle[200], fwdnumber[33], oldForward[33], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[32];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
@@ -1128,14 +1128,14 @@ static void vmsUpload(struct VMail *v)
 
 	pfIn = fopen(responsefile, "rb");
 	if (!pfIn){
-		alert(-1, ALERT_VMAILERROR, "Failed to upload.");
+		alert(-1, ALERT_ERROR, "Failed to upload.");
 		return;
 	}
 
 	length = fread(buffer, 1, sizeof(buffer), pfIn);
 	fclose(pfIn);
 	if (length < 40){
-		alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
+		alert(-1, ALERT_ERROR, "Unable to send the VMS properly.");
 		return;
 	}
 	buffer[length] = 0;
@@ -1153,7 +1153,7 @@ static void vmsUpload(struct VMail *v)
 				if (vmsid)
 					strcpy(v->vmsid, vmsid->txt);
 				else
-					alert(-1, ALERT_VMAILERROR, "Voicemail response incorrect");
+					alert(-1, ALERT_ERROR, "Voicemail response incorrect");
 
 				if (!strcmp(status->txt, "active"))
 					v->status = VMAIL_ACTIVE;
@@ -1161,7 +1161,7 @@ static void vmsUpload(struct VMail *v)
 				else if(!strcmp(status->txt, "failed"))
 				{
 					code = ezxml_child(xml, "code");
-					alert(code ? atoi(code->txt) : -1, ALERT_VMAILERROR, "Voicemail upload failed");
+					alert(code ? atoi(code->txt) : -1, ALERT_ERROR, "Voicemail upload failed");
 					v->status=VMAIL_FAILED;
 				}
 			}
@@ -1556,9 +1556,9 @@ void profileMerge(){
 	FILE	*pf;
 	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref,*palert;
 	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid;
-	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert;
+	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert, xmlstatus;
 	struct AddressBook *pc;
-	int		nContacts = 0, xmllength, newMails;
+	int		nContacts = 0, xmllength, newMails, errorCode=0;
 
 	char empty[] = "";
 	
@@ -1580,9 +1580,16 @@ void profileMerge(){
 		
 	xml = ezxml_parse_str(strxml, xmllength);
 
+	//bug#26893: check status for any error.
+	///server returns <status>ERR_CODE</status> for error.
+	if (xmlstatus = ezxml_child(xml, "status"))
+	{
+		if (strlen(xmlstatus->txt))
+			errorCode = atoi(xmlstatus->txt);
+	}
+
 	//Tasvir Rohila - 10-04-2009 - bug#19095
 	//For upgrades or any other notification server sends <alert href="">Some msg</alert> in down.xml
-
 	if (xmlalert = ezxml_child(xml, "client"))
 	{
 		phref = NULL;
@@ -1602,31 +1609,38 @@ void profileMerge(){
 	if (did)
 		strcpy(myDID, did->txt);
 
-	redirector = ezxml_child(xml, "rd");
-	if (redirector)
+	//check status for any error code.
+	//eg.: server returns <status>402</status> for error that Call forward number is already in use.
+	if (xmlstatus = ezxml_child(xml, "status"))
+		errorCode = atoi(xmlstatus->txt);
+
+	//Success
+	if (!errorCode)
 	{
-		if (!strcmp(redirector->txt, "1"))
+		redirector = ezxml_child(xml, "rd");
+		if (redirector)
 		{
-			settingType = REDIRECT2PSTN;
-			oldSetting = settingType;
+			if (!strcmp(redirector->txt, "1"))
+			{
+				settingType = REDIRECT2PSTN;
+				oldSetting = settingType;
+			}
+			else if (!strcmp(redirector->txt, "3"))
+			{
+				settingType = REDIRECTBOTH;
+				oldSetting = settingType;
+			}
+			else if(!strcmp(redirector->txt, "2"))
+			{
+				settingType = REDIRECT2ONLINE;
+				oldSetting = settingType;
+			}
+			else
+			{
+				settingType = REDIRECT2ONLINE;
+				oldSetting =-1;
+			}
 		}
-		else if (!strcmp(redirector->txt, "3"))
-		{
-			settingType = REDIRECTBOTH;
-			oldSetting = settingType;
-		}
-		else if(!strcmp(redirector->txt, "2"))
-		{
-			settingType = REDIRECT2ONLINE;
-			oldSetting = settingType;
-		}
-		else
-		{
-			settingType = REDIRECT2ONLINE;
-			oldSetting =-1;
-		}
-
-
 	}
 	credit = ezxml_child(xml, "cr");
 	if (credit)
@@ -1749,19 +1763,23 @@ void profileMerge(){
 	free(strxml);
 	fclose(pf);
 
-	//TBD detect new voicemails and alert the user
-	if (newMails)
-	{
-		alert(-1, ALERT_NEWVMAIL, NULL);
-	}
 	vmsSort();
 	relistVMails();	
 		
-
 	//relist contacts if any contacts have changed or are added
 	if (nContacts){
 		sortContacts();
 		relistContacts();
+	}
+
+	//Alert the user that some error has occured
+	if (errorCode)
+		alert(errorCode, ALERT_ERROR, NULL);
+
+	//TBD detect new voicemails and alert the user
+	if (newMails)
+	{
+		alert(-1, ALERT_NEWVMAIL, NULL);
 	}
 
 	if (palert)
@@ -1867,9 +1885,7 @@ THREAD_PROC profileDownload(void *extras)
 	" <since>%u</since> \n", 
 	pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
 
-	/*if (extras){
-		int	param = (int)extras;*/
-	if((settingType != -1) && (settingType != oldSetting))
+	if((oldSetting != -1) /*&& (settingType != oldSetting)*/)
 	{
 		fprintf(pfOut, " <rd>%d</rd>\n", settingType);
 		switch(settingType)
@@ -1886,8 +1902,7 @@ THREAD_PROC profileDownload(void *extras)
 			break;
 		}
 	}
-
-	/*}*/
+	settingType = -1; //TASVIR: unset it now, we'll get new setting after server's approval in profileMerge();
 
 	//check for new contacts
 	ndirty = 0;
@@ -2056,7 +2071,7 @@ void profileResync()
 
 void profileSetRedirection(int redirectTo)
 {
-	CreateThread(NULL, 0, profileDownload, (LPVOID)redirectTo, 0, NULL);
+	START_THREAD(profileDownload);
 }
 
 THREAD_PROC profileReloadEverything(void *nothing)

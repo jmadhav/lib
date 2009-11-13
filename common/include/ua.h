@@ -160,7 +160,7 @@ profile related definitions
 
 void uaInit();
 extern int redirect, creditBalance, bandwidth, settingType, oldSetting;
-extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[],client_name[],client_ver[],client_os[],client_osver[],client_model[],client_uid[];
+extern char fwdnumber[], oldForward[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[],client_name[],client_ver[],client_os[],client_osver[],client_model[],client_uid[];
 void profileResync();
 void profileClear();
 void profileSave();
