@@ -332,7 +332,7 @@ int speex_encode_int(void *state, spx_int16_t *in, SpeexBits *bits);
  * @return 0 if no error, -1 if request in unknown, -2 for invalid parameter
  */
 int speex_encoder_ctl(void *state, int request, void *ptr);
-
+int testspeex_encoder_ctl(void *state, int request, void *ptr);
 
 /** Returns a handle to a newly created decoder state structure. For now, 
  * the mode argument can be &nb_mode or &wb_mode . In the future, more modes

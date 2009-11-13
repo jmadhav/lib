@@ -1,7 +1,7 @@
 // !$*UTF8*$!
 {
 	0867D690FE84028FC02AAC07 /* Project object */ = {
-		activeBuildConfigurationName = Debug;
+		activeBuildConfigurationName = Release;
 		activeSDKPreference = iphoneos3.0;
 		activeTarget = D2AAC07D0554694100DB518D /* speexlib */;
 		addToTargets = (
@@ -133,24 +133,51 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 277203543;
-			PBXWorkspaceStateSaveDate = 277203543;
+			PBXPerProjectTemplateStateSaveDate = 279471629;
+			PBXWorkspaceStateSaveDate = 279471629;
 		};
 		perUserProjectItems = {
-			8BBC798E105FBA460022DD0C /* PBXTextBookmark */ = 8BBC798E105FBA460022DD0C /* PBXTextBookmark */;
-			8BCC786210158EA200022C05 /* PBXTextBookmark */ = 8BCC786210158EA200022C05 /* PBXTextBookmark */;
-			8BF6EA340FF4CF8300E153DC /* PBXTextBookmark */ = 8BF6EA340FF4CF8300E153DC /* PBXTextBookmark */;
-			8BF6EA3E0FF4CF8300E153DC /* PBXTextBookmark */ = 8BF6EA3E0FF4CF8300E153DC /* PBXTextBookmark */;
-			8BF6EA480FF4CF8300E153DC /* PBXTextBookmark */ = 8BF6EA480FF4CF8300E153DC /* PBXTextBookmark */;
-			8BF7939E1085CAE600DBFC51 /* PBXTextBookmark */ = 8BF7939E1085CAE600DBFC51 /* PBXTextBookmark */;
+			8B20AAC410A85CE6009E546A /* PBXTextBookmark */ = 8B20AAC410A85CE6009E546A /* PBXTextBookmark */;
+			8B20AAC610A85CE6009E546A /* PBXTextBookmark */ = 8B20AAC610A85CE6009E546A /* PBXTextBookmark */;
+			8B20AAC710A85CE6009E546A /* PBXTextBookmark */ = 8B20AAC710A85CE6009E546A /* PBXTextBookmark */;
+			8B20AB7F10A86A47009E546A /* PBXTextBookmark */ = 8B20AB7F10A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8010A86A47009E546A /* PBXTextBookmark */ = 8B20AB8010A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8110A86A47009E546A /* PBXTextBookmark */ = 8B20AB8110A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8210A86A47009E546A /* PBXTextBookmark */ = 8B20AB8210A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8310A86A47009E546A /* PBXTextBookmark */ = 8B20AB8310A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8510A86A47009E546A /* PBXTextBookmark */ = 8B20AB8510A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8610A86A47009E546A /* PBXTextBookmark */ = 8B20AB8610A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8710A86A47009E546A /* PBXTextBookmark */ = 8B20AB8710A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8810A86A47009E546A /* PBXTextBookmark */ = 8B20AB8810A86A47009E546A /* PBXTextBookmark */;
+			8B20AB8910A86A47009E546A /* PBXTextBookmark */ = 8B20AB8910A86A47009E546A /* PBXTextBookmark */;
 		};
 		sourceControlManager = 8BCF1D520FF49D0E006149DF /* Source Control */;
 		userBuildSettings = {
 		};
 	};
-	8BBC798E105FBA460022DD0C /* PBXTextBookmark */ = {
+	8B20AAC410A85CE6009E546A /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
-		fRef = 8BBC798F105FBA460022DD0C /* OSByteOrder.h */;
+		fRef = 8BF6E9AC0FF4C63400E153DC /* nb_celp.c */;
+		name = "nb_celp.c: 491";
+		rLen = 17;
+		rLoc = 16255;
+		rType = 0;
+		vrLen = 1048;
+		vrLoc = 15852;
+	};
+	8B20AAC610A85CE6009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF6E9B00FF4C63400E153DC /* speex_callbacks.c */;
+		name = "speex_callbacks.c: 79";
+		rLen = 17;
+		rLoc = 2612;
+		rType = 0;
+		vrLen = 806;
+		vrLoc = 2086;
+	};
+	8B20AAC710A85CE6009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BFC3A0610A8446C00043818 /* OSByteOrder.h */;
 		name = "OSByteOrder.h: 8";
 		rLen = 20;
 		rLoc = 126;
@@ -158,22 +185,120 @@
 		vrLen = 636;
 		vrLoc = 0;
 	};
-	8BBC798F105FBA460022DD0C /* OSByteOrder.h */ = {
-		isa = PBXFileReference;
-		lastKnownFileType = sourcecode.c.h;
-		name = OSByteOrder.h;
-		path = /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS2.2.1.sdk/usr/include/libkern/arm/OSByteOrder.h;
-		sourceTree = "<absolute>";
+	8B20AB7F10A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF6EA3F0FF4CF8300E153DC /* config.h */;
+		name = "config.h: 14";
+		rLen = 0;
+		rLoc = 384;
+		rType = 0;
+		vrLen = 487;
+		vrLoc = 0;
 	};
-	8BCC786210158EA200022C05 /* PBXTextBookmark */ = {
+	8B20AB8010A86A47009E546A /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = AA747D9E0F9514B9006C5449 /* speexlib_Prefix.pch */;
-		name = "speexlib_Prefix.pch: 10";
+		name = "speexlib_Prefix.pch: 1";
 		rLen = 0;
-		rLoc = 223;
+		rLoc = 0;
 		rType = 0;
 		vrLen = 223;
 		vrLoc = 0;
+	};
+	8B20AB8110A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF6EA050FF4C7C900E153DC /* speex.h */;
+		name = "speex.h: 267";
+		rLen = 31;
+		rLoc = 8225;
+		rType = 0;
+		vrLen = 967;
+		vrLoc = 7617;
+	};
+	8B20AB8210A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF6E9AF0FF4C63400E153DC /* speex.c */;
+		name = "speex.c: 51";
+		rLen = 9;
+		rLoc = 1806;
+		rType = 0;
+		vrLen = 659;
+		vrLoc = 1702;
+	};
+	8B20AB8310A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8B20AB8410A86A47009E546A /* speex_codec.c */;
+		rLen = 0;
+		rLoc = 2147483603;
+		rType = 0;
+	};
+	8B20AB8410A86A47009E546A /* speex_codec.c */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.c;
+		name = speex_codec.c;
+		path = "/Users/mukesh/mygit/pjproject/pjmedia/src/pjmedia-codec/speex_codec.c";
+		sourceTree = "<absolute>";
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1095, 14862}}";
+			sepNavSelRange = "{5480, 0}";
+			sepNavVisRange = "{5032, 919}";
+		};
+	};
+	8B20AB8510A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF6EA3F0FF4CF8300E153DC /* config.h */;
+		name = "config.h: 14";
+		rLen = 0;
+		rLoc = 384;
+		rType = 0;
+		vrLen = 487;
+		vrLoc = 0;
+	};
+	8B20AB8610A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = AA747D9E0F9514B9006C5449 /* speexlib_Prefix.pch */;
+		name = "speexlib_Prefix.pch: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 223;
+		vrLoc = 0;
+	};
+	8B20AB8710A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF6EA050FF4C7C900E153DC /* speex.h */;
+		name = "speex.h: 380";
+		rLen = 17;
+		rLoc = 12635;
+		rType = 0;
+		vrLen = 1307;
+		vrLoc = 11566;
+	};
+	8B20AB8810A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8BF6E9AF0FF4C63400E153DC /* speex.c */;
+		name = "speex.c: 51";
+		rLen = 9;
+		rLoc = 1806;
+		rType = 0;
+		vrLen = 659;
+		vrLoc = 1702;
+	};
+	8B20AB8910A86A47009E546A /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 8B20AB8A10A86A47009E546A /* speex_codec.c */;
+		name = "speex_codec.c: 168";
+		rLen = 0;
+		rLoc = 5480;
+		rType = 0;
+		vrLen = 919;
+		vrLoc = 5032;
+	};
+	8B20AB8A10A86A47009E546A /* speex_codec.c */ = {
+		isa = PBXFileReference;
+		name = speex_codec.c;
+		path = "/Users/mukesh/mygit/pjproject/pjmedia/src/pjmedia-codec/speex_codec.c";
+		sourceTree = "<absolute>";
 	};
 	8BCF1D520FF49D0E006149DF /* Source Control */ = {
 		isa = PBXSourceControlManager;
@@ -198,6 +323,27 @@
 			sepNavIntBoundsRect = "{{0, 0}, {1095, 736}}";
 			sepNavSelRange = "{0, 0}";
 			sepNavVisRange = "{0, 1666}";
+		};
+	};
+	8BF6E9AC0FF4C63400E153DC /* nb_celp.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1379, 28130}}";
+			sepNavSelRange = "{16255, 17}";
+			sepNavVisRange = "{15852, 967}";
+		};
+	};
+	8BF6E9AF0FF4C63400E153DC /* speex.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1095, 3800}}";
+			sepNavSelRange = "{1806, 9}";
+			sepNavVisRange = "{1702, 659}";
+		};
+	};
+	8BF6E9B00FF4C63400E153DC /* speex_callbacks.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1095, 2135}}";
+			sepNavSelRange = "{2612, 17}";
+			sepNavVisRange = "{2086, 806}";
 		};
 	};
 	8BF6E9B50FF4C63400E153DC /* window.c */ = {
@@ -244,9 +390,9 @@
 	};
 	8BF6EA050FF4C7C900E153DC /* speex.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1095, 6611}}";
-			sepNavSelRange = "{5907, 0}";
-			sepNavVisRange = "{1952, 981}";
+			sepNavIntBoundsRect = "{{0, 0}, {1379, 6559}}";
+			sepNavSelRange = "{7099, 16}";
+			sepNavVisRange = "{6638, 1054}";
 		};
 	};
 	8BF6EA060FF4C7C900E153DC /* speex_bits.h */ = {
@@ -277,70 +423,34 @@
 			sepNavVisRange = "{0, 469}";
 		};
 	};
-	8BF6EA340FF4CF8300E153DC /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8BF6EA350FF4CF8300E153DC /* config.h */;
-		name = "config.h: 14";
-		rLen = 0;
-		rLoc = 384;
-		rType = 0;
-		vrLen = 487;
-		vrLoc = 0;
-	};
-	8BF6EA350FF4CF8300E153DC /* config.h */ = {
-		isa = PBXFileReference;
-		lastKnownFileType = sourcecode.c.h;
-		name = config.h;
-		path = /Users/mukesh/iphone/spoknwindow/speex/win32/config.h;
-		sourceTree = "<absolute>";
-	};
-	8BF6EA3E0FF4CF8300E153DC /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8BF6EA3F0FF4CF8300E153DC /* config.h */;
-		name = "config.h: 14";
-		rLen = 0;
-		rLoc = 384;
-		rType = 0;
-		vrLen = 487;
-		vrLoc = 0;
-	};
 	8BF6EA3F0FF4CF8300E153DC /* config.h */ = {
 		isa = PBXFileReference;
 		lastKnownFileType = sourcecode.c.h;
 		name = config.h;
 		path = /Users/mukesh/iphone/spoknwindow/speex/win32/config.h;
 		sourceTree = "<absolute>";
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1095, 521}}";
+			sepNavSelRange = "{384, 0}";
+			sepNavVisRange = "{0, 487}";
+		};
 	};
-	8BF6EA480FF4CF8300E153DC /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = AA747D9E0F9514B9006C5449 /* speexlib_Prefix.pch */;
-		name = "speexlib_Prefix.pch: 1";
-		rLen = 0;
-		rLoc = 0;
-		rType = 0;
-		vrLen = 188;
-		vrLoc = 0;
-	};
-	8BF7939E1085CAE600DBFC51 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8BF7939F1085CAE600DBFC51 /* OSByteOrder.h */;
-		name = "OSByteOrder.h: 8";
-		rLen = 20;
-		rLoc = 126;
-		rType = 0;
-		vrLen = 636;
-		vrLoc = 0;
-	};
-	8BF7939F1085CAE600DBFC51 /* OSByteOrder.h */ = {
+	8BFC3A0610A8446C00043818 /* OSByteOrder.h */ = {
 		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.c.h;
 		name = OSByteOrder.h;
 		path = /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS2.2.1.sdk/usr/include/libkern/arm/OSByteOrder.h;
 		sourceTree = "<absolute>";
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {1095, 2375}}";
+			sepNavSelRange = "{126, 20}";
+			sepNavVisRange = "{0, 636}";
+		};
 	};
 	AA747D9E0F9514B9006C5449 /* speexlib_Prefix.pch */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1095, 400}}";
-			sepNavSelRange = "{223, 0}";
+			sepNavIntBoundsRect = "{{0, 0}, {1095, 521}}";
+			sepNavSelRange = "{0, 0}";
 			sepNavVisRange = "{0, 223}";
 			sepNavWindowFrame = "{{15, 315}, {750, 558}}";
 		};

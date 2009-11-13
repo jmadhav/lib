@@ -369,9 +369,21 @@ static void cdrSave(){
 		return;
 	
 	for (q = listCDRs; q; q = q->next){
+	#ifdef _MACOS_
+///		int addressUId;
+	//	int propertyID;	
+
+		
+		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid></cdr>\r\n",
+				(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid,q->addressUId,q->recordID);
+
+	#else
 		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
 				(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid);
-		fwrite(line, strlen(line), 1, pf);
+
+	#endif	
+		
+				fwrite(line, strlen(line), 1, pf);
 	}
 	fclose(pf);
 }
@@ -406,7 +418,7 @@ static void cdrCompact() {
 	cdrSave();
 }
 
-void cdrAdd(char *userid, time_t time, int duration, int direction)
+void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid)
 {
 	//write to the disk
 	char	pathname[MAX_PATH];
@@ -438,6 +450,8 @@ void cdrAdd(char *userid, time_t time, int duration, int direction)
 	p->date = (time_t)time;
 	p->duration = duration;
 	p->direction = direction;
+	p->addressUId=abid;
+	p->recordID=recordid;
 	getTitleOf(p->userid, p->title);
 	
 	//add to the linked list
@@ -451,10 +465,22 @@ void cdrAdd(char *userid, time_t time, int duration, int direction)
 
 	
 #endif	
+#ifdef _MACOS_
+	///		int addressUId;
+	//	int propertyID;	
 	
-		sprintf(line, "<cdr><date>%ul</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
+	
+	sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid></cdr>\r\n",
+			(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid,p->addressUId,p->recordID);
+	
+#else
+	sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
 			(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid);
 	
+#endif	
+		
+	
+		
 	pf = fopen(pathname, "a");
 	fwrite(line, strlen(line), 1, pf);
 	fclose(pf);
@@ -489,7 +515,7 @@ void cdrLoad() {
 	struct CDR *p;
 	int		index;
 	char	line[1000];
-	ezxml_t	cdr, duration, date, userid, type;
+	ezxml_t	cdr, duration, date, userid, type, abidP,recordidP;
 #ifdef _MACOS_
 	sprintf(pathname, "%s/calls.txt", myFolder);
 	
@@ -514,6 +540,8 @@ void cdrLoad() {
 		duration = ezxml_child(cdr, "duration");
 		type = ezxml_child(cdr, "type");
 		userid = ezxml_child(cdr, "userid");
+		abidP = ezxml_child(cdr, "abid");
+		recordidP = ezxml_child(cdr, "recordid");
 		
 		
 		p = (struct CDR *) malloc(sizeof(struct CDR));
@@ -524,6 +552,10 @@ void cdrLoad() {
 			return;
 		}
 		memset(p, 0, sizeof(struct CDR));
+		if (abidP)
+			p->addressUId = (unsigned long)atol(abidP->txt);
+		if (recordidP)
+			p->recordID = (unsigned long)atol(recordidP->txt);
 		if (date)
 			p->date = (unsigned long)atol(date->txt);
 		if (duration)
@@ -1493,9 +1525,12 @@ void profileLoad()
 
 	strcpy(pstack->ltpServerName, IDS_LTP_SERVERIP);
 	sprintf(pathname, "%s\\profile.xml", myFolder);
-
-
+	
+#ifdef _LTP_
 	strcpy(pstack->ltpServerName, "64.49.244.225");
+#else
+	strcpy(pstack->ltpServerName, "www.spokn.com");
+#endif	
 	#ifdef _MACOS_
 		sprintf(pathname, "%s/profile.xml", myFolder);
 
@@ -1524,7 +1559,7 @@ void profileLoad()
 		
 		listContacts->id = TEST_CALL_ID;
 		
-		strcpy(listContacts->title, "TestCall");
+		strcpy(listContacts->title, "Test Call");
 		strcpy(listContacts->mobile, "");
 		strcpy(listContacts->home, "");
 		strcpy(listContacts->business, "");
@@ -1704,7 +1739,7 @@ void profileMerge(){
 		
 		listContacts->id = TEST_CALL_ID;
 		
-		strcpy(listContacts->title, "TestCall");
+		strcpy(listContacts->title, "Test Call");
 		strcpy(listContacts->mobile, "");
 		strcpy(listContacts->home, "");
 		strcpy(listContacts->business, "");
@@ -2365,6 +2400,7 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 	char buff[100];
 	char vmsid[50]={0};
 	unsigned  length;
+	char *resultCharP = 0;
 	fp = fopen(vmsfileNameP,"rb");
 	if(fp==0)
 	{
@@ -2402,7 +2438,9 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 			terminateCharP++;
 			
 		}
-		vmsP = vmsUpdate(comaSepCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
+		resultCharP = NormalizeNumber(comaSepCharP);
+		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
+		free(resultCharP);
 		comaSepCharP = terminateCharP;
 	}
 		//vmsUpload(vmsP);
@@ -2750,7 +2788,13 @@ char *getAccountPage()
 	char *returnCharP;
 	httpCookie(cookieCharP);
 	returnCharP = malloc(500);
-	sprintf(returnCharP,"http://64.49.244.225/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+#ifdef _LTP_
+	
+	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+#else
+	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+#endif	
+	printf("\ngetAccountPage =  %s",returnCharP);
 	return returnCharP;
 }
 char *getCreditsPage()
@@ -2758,9 +2802,17 @@ char *getCreditsPage()
 	//http://64.49.244.225/cgi-bin/accounts.cgi?userid=7865432&session=FfIpPeDhCcHkNoNkEaIeNkFaFiJdIpFn
 	char cookieCharP[200];
 	char *returnCharP;
+	//profileGetKey();
 	httpCookie(cookieCharP);
 	returnCharP = malloc(500);
-	sprintf(returnCharP,"http://64.49.244.225/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	#ifdef _LTP_
+		
+		sprintf(returnCharP,"http://64.49.236.88/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	#else
+		sprintf(returnCharP,"http://www.spokn.com/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	#endif	
+	
+	printf("\ngetCreditsPage =  %s",returnCharP);
 	return returnCharP;
 }
 void vmailDeleteAll()
@@ -2777,6 +2829,34 @@ void vmailDeleteAll()
 		p = p->next;
 	}
 
+}
+char *NormalizeNumber(char *lnoCharP)
+{
+	char *resultCharP = 0;
+	if(lnoCharP)
+	{
+		char *tmpCharP;
+		
+		int i = 0;
+		tmpCharP = lnoCharP;
+		resultCharP = malloc(strlen(tmpCharP)+2);
+		while(*tmpCharP)
+		{
+			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == '.')
+			{
+				tmpCharP++;
+				continue;
+			}
+			resultCharP[i++]=	*tmpCharP;
+			tmpCharP++;
+		}
+		resultCharP[i++] = 0;
+		printf("\n %s",resultCharP);
+	}
+	
+	return resultCharP;
+	
+	
 }
 
 #endif

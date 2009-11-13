@@ -696,6 +696,9 @@ void ltpSortContacts(struct ltpStack *ps, int byGroups);
 */
 void ltpUpdatePresence(struct ltpStack *ps, unsigned short16 state, char *label);
 
+	
+	void setMute(int enableB);	
+	void setHold(struct ltpStack *ps,int enableB);	
 /* we use a slighlty modified md5 algorithm that can use a runtime flag to determine if it is
 being used on a big endian system */
 typedef unsigned long uint32;
@@ -708,6 +711,7 @@ struct MD5Context {
 void MD5Init(struct MD5Context *ctx);
 void MD5Update(struct MD5Context *ctx, unsigned char const  *buf, unsigned len, int isBigEndian);
 void MD5Final(unsigned char *digest, struct MD5Context *ctx);
+int spokn_pj_init(char *errorstring);
 
 
 #ifdef __cplusplus

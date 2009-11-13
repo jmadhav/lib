@@ -64,12 +64,18 @@ extern "C" {
 		time_t	date;
 		int		duration;
 		int		direction;
+	
+
 		struct CDR *next;
+#ifdef _MACOS_
+		int addressUId;
+		int recordID;	
+#endif	
 	};
 	extern struct CDR *listCDRs;
 	
 	void cdrLoad();
-	void cdrAdd(char *userid, time_t time, int duration, int direction);
+	void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid);
 	void cdrRemove(struct CDR *p);
 	void cdrRemoveAll();
 	/**
@@ -103,6 +109,7 @@ extern "C" {
 		int		dirty;
 		int		isDeleted;
 		struct AddressBook *next;
+
 	};
 	
 	extern struct ltpStack *pstack;
@@ -153,6 +160,11 @@ struct VMail {
 	short	isNew; //not to be saved
 	struct VMail *next;
 	int dirty; 
+#ifdef _MACOS_
+	int addressUId;
+	int recordID;	
+#endif	
+	
 };
 extern struct VMail *listVMails;
 
@@ -279,6 +291,7 @@ profile related definitions
 	char *getTitle();
 	int vmsDeleteByID(char *idCharP);
 	char *getAccountPage();
+	char *getCreditsPage();
 	void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP);
 
 #endif		
@@ -291,6 +304,7 @@ extern void createFolders();
 extern void cdrRemoveAll();
 extern unsigned long ticks();
 void cdrEmpty();
+	char *NormalizeNumber(char *lnoCharP);
 //for voip quality
 void setBandwidth(unsigned long timeTaken,int byteCount);
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
