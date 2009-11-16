@@ -28,6 +28,7 @@ int bandwidth;
 //variable to set the type for incoming call termination setting
 int settingType = -1;  //not assigned state yet
 int oldSetting = -1;
+int bkupsettingType = -1; //backup of last known settingType;
 
 //add by mukesh 20359
 ThreadStatusEnum threadStatus;
@@ -1885,7 +1886,7 @@ THREAD_PROC profileDownload(void *extras)
 	" <since>%u</since> \n", 
 	pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
 
-	if((oldSetting != -1) /*&& (settingType != oldSetting)*/)
+	if((settingType != -1) && (settingType != oldSetting))
 	{
 		fprintf(pfOut, " <rd>%d</rd>\n", settingType);
 		switch(settingType)
@@ -1902,7 +1903,6 @@ THREAD_PROC profileDownload(void *extras)
 			break;
 		}
 	}
-	settingType = -1; //TASVIR: unset it now, we'll get new setting after server's approval in profileMerge();
 
 	//check for new contacts
 	ndirty = 0;
