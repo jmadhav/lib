@@ -14,6 +14,7 @@
 #include <ltpmobile.h>
 #include <ezxml.h>
 #include <ua.h>
+#include "ltpandsip.h"
 //struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
 // this is the single object that is the instance of the ltp stack for the user agent
 struct ltpStack *pstack;
@@ -24,7 +25,7 @@ struct VMail *listVMails=NULL;
 static unsigned long	lastUpdate = 0;
 static int busy = 0;
 char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
-char mailServer[100], myTitle[200], fwdnumber[32], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[32];
+char mailServer[100], myTitle[200], fwdnumber[32], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[200];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
@@ -426,6 +427,10 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 	struct	CDR	*p;
 	FILE	*pf;
 	int i;
+	if(time==0)
+	{
+		//printf("\nua  time error");
+	}
 	if (listCDRs){
 		// compare the last call with this 
 		if (!strcmp(listCDRs->userid, userid) && listCDRs->direction == direction
@@ -531,7 +536,7 @@ void cdrLoad() {
 	
 	index = 0;
 	while (fgets(line, 999, pf)){
-		printf("\ncreates");
+		//printf("\ncreates");
 		cdr = ezxml_parse_str(line, strlen(line));
 		if (!cdr)
 			continue;
@@ -547,7 +552,7 @@ void cdrLoad() {
 		p = (struct CDR *) malloc(sizeof(struct CDR));
 		if (!p){
 			fclose(pf);
-			printf("\ndestroy 1");
+			//printf("\ndestroy 1");
 			ezxml_free(cdr);
 			return;
 		}
@@ -572,7 +577,7 @@ void cdrLoad() {
 		//add to the linked list
 		p->next = listCDRs;
 		listCDRs = p;
-		printf("\ndestroy 2");
+		//printf("\ndestroy 2");
 		ezxml_free(cdr);
 		
 	}
@@ -1276,7 +1281,7 @@ static void vmsUploadAll()
 	for (p = listVMails; p; p = p->next){
 		if (p->direction == VMAIL_OUT && p->status == VMAIL_NEW && !p->deleted && !p->toDelete)
 		{	
-			//printf("\nvmail sent to %s",p->userid);
+			////printf("\nvmail sent to %s",p->userid);
 			vmsUpload(p);
 		}	
 	}
@@ -1706,6 +1711,7 @@ void profileClear()
 	myTitle[0] = 0;
 	myDID[0] = 0;
 	fwdnumber[0] = 0;
+	creditBalance = 0;
 	resetContacts();
 	vmsEmpty();
 	relistContacts();
@@ -1970,8 +1976,15 @@ static void profileGetKey()
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
 
+#ifdef _MACOS_
+	sprintf(requestfile, "%s/keyreq.txt", myFolder);
+	sprintf(responsefile, "%s/keyresp.txt", myFolder);
+	
+#else
 	sprintf(requestfile, "%s\\keyreq.txt", myFolder);
 	sprintf(responsefile, "%s\\keyresp.txt", myFolder);
+	
+#endif	
 
 	pfOut = fopen(requestfile, "wb");
 	if (!pfOut){
@@ -1986,7 +1999,7 @@ static void profileGetKey()
 	byteCount = restCall(requestfile, responsefile, "www.spokn.com", "/cgi-bin/userxml.cgi");
 	if (!byteCount)
 		return;
-
+	
 	pfIn = fopen(responsefile, "rb");
 	if (!pfIn){
 		fclose(pfOut);
@@ -2713,7 +2726,7 @@ void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 		if(forwardNoCharP)
 		{	
 			strncpy(fwdnumber,forwardNoCharP,sizeof(fwdnumber)-2);
-			printf("forward no %s",fwdnumber);
+			//printf("forward no %s",fwdnumber);
 			oldSetting = -1;
 			settingType = 3;
 		}	
@@ -2793,26 +2806,28 @@ char *getAccountPage()
 	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 #else
 	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	//printf("\ngetAccountPage =  %s",returnCharP);
 #endif	
-	printf("\ngetAccountPage =  %s",returnCharP);
+	
 	return returnCharP;
 }
 char *getCreditsPage()
 {
-	//http://64.49.244.225/cgi-bin/accounts.cgi?userid=7865432&session=FfIpPeDhCcHkNoNkEaIeNkFaFiJdIpFn
+	//http://64.49.244.225/cgi-bin/rechargeaccount.cgi?userid=7865432&session=FfIpPeDhCcHkNoNkEaIeNkFaFiJdIpFn
 	char cookieCharP[200];
 	char *returnCharP;
-	//profileGetKey();
+	profileGetKey();
 	httpCookie(cookieCharP);
 	returnCharP = malloc(500);
-	#ifdef _LTP_
-		
-		sprintf(returnCharP,"http://64.49.236.88/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
-	#else
-		sprintf(returnCharP,"http://www.spokn.com/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
-	#endif	
+#ifdef _LTP_ 
 	
-	printf("\ngetCreditsPage =  %s",returnCharP);
+	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+#else
+	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/rechargeaccount.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	
+#endif	
+	
+	//printf("\ngetCreditsPage =  %s",returnCharP);
 	return returnCharP;
 }
 void vmailDeleteAll()
@@ -2851,7 +2866,7 @@ char *NormalizeNumber(char *lnoCharP)
 			tmpCharP++;
 		}
 		resultCharP[i++] = 0;
-		printf("\n %s",resultCharP);
+		//printf("\n %s",resultCharP);
 	}
 	
 	return resultCharP;
