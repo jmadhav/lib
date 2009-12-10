@@ -1573,7 +1573,7 @@ void profileLoad()
 		
 			strcpy(listContacts->email, "");
 		
-			strcpy(listContacts->spoknid, "1234567");
+			strcpy(listContacts->spoknid, "12345678");
 		listContacts->dirty = 0;
 		//insert in at the head and sort
 		listContacts->next = 0;
@@ -1754,7 +1754,7 @@ void profileMerge(){
 		
 		strcpy(listContacts->email, "");
 		
-		strcpy(listContacts->spoknid, "1234567");
+		strcpy(listContacts->spoknid, "12345678");
 		listContacts->dirty = 0;
 		//insert in at the head and sort
 		listContacts->next = 0;
@@ -2451,7 +2451,7 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 			terminateCharP++;
 			
 		}
-		resultCharP = NormalizeNumber(comaSepCharP);
+		resultCharP = NormalizeBoth(comaSepCharP);
 		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
 		free(resultCharP);
 		comaSepCharP = terminateCharP;
@@ -2858,6 +2858,34 @@ char *NormalizeNumber(char *lnoCharP)
 		while(*tmpCharP)
 		{
 			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == '.')
+			{
+				tmpCharP++;
+				continue;
+			}
+			resultCharP[i++]=	*tmpCharP;
+			tmpCharP++;
+		}
+		resultCharP[i++] = 0;
+		//printf("\n %s",resultCharP);
+	}
+	
+	return resultCharP;
+	
+	
+}
+char *NormalizeBoth(char *lnoCharP)
+{
+	char *resultCharP = 0;
+	if(lnoCharP)
+	{
+		char *tmpCharP;
+		
+		int i = 0;
+		tmpCharP = lnoCharP;
+		resultCharP = malloc(strlen(tmpCharP)+2);
+		while(*tmpCharP)
+		{
+			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' )
 			{
 				tmpCharP++;
 				continue;
