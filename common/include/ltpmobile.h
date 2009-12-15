@@ -47,6 +47,7 @@ void queueInit(struct Queue *p);
 void queueEnque(struct Queue *p, short16 w);
 short16 queueDeque(struct Queue *p);
 
+extern char strPJError[256];
 
 
 
