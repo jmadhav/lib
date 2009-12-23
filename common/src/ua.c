@@ -2467,7 +2467,7 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 			terminateCharP++;
 			
 		}
-		resultCharP = NormalizeBoth(comaSepCharP);
+		resultCharP = NormalizeNumber(comaSepCharP,2);
 		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
 		free(resultCharP);
 		comaSepCharP = terminateCharP;
@@ -2745,7 +2745,11 @@ void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 		if(forwardNoCharP)
 		{	
 			
-			strncpy(fwdnumber,forwardNoCharP,sizeof(fwdnumber)-2);
+			char *newNoP;
+			newNoP = NormalizeNumber(forwardNoCharP,1);
+			printf("\n %s",newNoP);
+			strncpy(fwdnumber,newNoP,sizeof(fwdnumber)-2);
+			free(newNoP);
 			//printf("forward no %s",fwdnumber);
 			oldSetting = -1;
 			settingType = 3;
@@ -2872,7 +2876,7 @@ void vmailDeleteAll()
 	}
 	
 }
-char *NormalizeNumber(char *lnoCharP)
+char *NormalizeNumber(char *lnoCharP,int type)
 {
 	char *resultCharP = 0;
 	if(lnoCharP)
@@ -2884,39 +2888,28 @@ char *NormalizeNumber(char *lnoCharP)
 		resultCharP = malloc(strlen(tmpCharP)+2);
 		while(*tmpCharP)
 		{
-			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == '.')
+			
+			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' )
 			{
 				tmpCharP++;
 				continue;
 			}
-			resultCharP[i++]=	*tmpCharP;
-			tmpCharP++;
-		}
-		resultCharP[i++] = 0;
-		//printf("\n %s",resultCharP);
-	}
-	
-	return resultCharP;
-	
-	
-}
-char *NormalizeBoth(char *lnoCharP)
-{
-	char *resultCharP = 0;
-	if(lnoCharP)
-	{
-		char *tmpCharP;
-		
-		int i = 0;
-		tmpCharP = lnoCharP;
-		resultCharP = malloc(strlen(tmpCharP)+2);
-		while(*tmpCharP)
-		{
-			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == '+')
-
+			if(type==1)//number for forword
 			{
-				tmpCharP++;
-				continue;
+				if ( *tmpCharP == '+'|| *tmpCharP == '.' || *tmpCharP == '*'|| *tmpCharP == '#')
+				{
+					tmpCharP++;
+					continue;
+				}
+			}
+			if(type==0)//number for call
+			{
+				if(*tmpCharP == '.')
+				{
+					tmpCharP++;
+					continue;
+				
+				}
 			}
 			resultCharP[i++]=	*tmpCharP;
 			tmpCharP++;

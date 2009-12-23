@@ -305,7 +305,7 @@ extern "C" {
 	extern void cdrRemoveAll();
 	extern unsigned long ticks();
 	void cdrEmpty();
-	char *NormalizeNumber(char *lnoCharP);
+	char *NormalizeNumber(char *lnoCharP,int type);
 	char *NormalizeBoth(char *lnoCharP);
 	
 
