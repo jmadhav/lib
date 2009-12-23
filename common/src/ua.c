@@ -25,7 +25,7 @@ struct VMail *listVMails=NULL;
 static unsigned long	lastUpdate = 0;
 static int busy = 0;
 char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
-char mailServer[100], myTitle[200], fwdnumber[32], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[200];
+char mailServer[100], myTitle[200], fwdnumber[32], oldForward[33], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[200];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
@@ -359,32 +359,32 @@ static void cdrSave(){
 	FILE	*pf;
 #ifdef _MACOS_
 	sprintf(pathname, "%s/calls.txt", myFolder);
-
+	
 #else
 	sprintf(pathname, "%s\\calls.txt", myFolder);
-
+	
 #endif	
 	
-		pf = fopen(pathname, "w");
+	pf = fopen(pathname, "w");
 	if (!pf)
 		return;
 	
 	for (q = listCDRs; q; q = q->next){
-	#ifdef _MACOS_
-///		int addressUId;
-	//	int propertyID;	
-
+#ifdef _MACOS_
+		///		int addressUId;
+		//	int propertyID;	
+		
 		
 		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid></cdr>\r\n",
 				(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid,q->addressUId,q->recordID);
-
-	#else
+		
+#else
 		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
 				(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid);
-
-	#endif	
 		
-				fwrite(line, strlen(line), 1, pf);
+#endif	
+		
+		fwrite(line, strlen(line), 1, pf);
 	}
 	fclose(pf);
 }
@@ -467,7 +467,7 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 	
 #else
 	sprintf(pathname, "%s\\calls.txt", myFolder);
-
+	
 	
 #endif	
 #ifdef _MACOS_
@@ -483,9 +483,9 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 			(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid);
 	
 #endif	
-		
 	
-		
+	
+	
 	pf = fopen(pathname, "a");
 	fwrite(line, strlen(line), 1, pf);
 	fclose(pf);
@@ -883,12 +883,12 @@ struct AddressBook *getContactOf(char *userid)
 		
 		if (p->isDeleted)
 			continue;
-
-
+		
+		
 		if (!strcmp(p->spoknid, userid))
 			return p;
-
-
+		
+		
 		if (!strcmp(p->mobile, userid))
 			return p;
 		
@@ -1101,15 +1101,15 @@ static void vmsCompact(){
 	p->next = NULL;
 	
 	while (q){
-	#ifdef _MACOS_
+#ifdef _MACOS_
 		sprintf(path, "%s/%s.gsm", vmFolder, p->hashid);
-	#else
+#else
 		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
-	#endif
+#endif
 		
 		
 		
-			unlink(path);
+		unlink(path);
 		p = q->next;
 		free(q);
 		q = p;
@@ -1124,11 +1124,11 @@ void vmsDelete(struct VMail *p)
 	
 	//keep the vmail in the log file
 	p->toDelete = 1;
-	#ifdef _MACOS_
-		sprintf(path, "%s/%s.gsm", vmFolder, p->hashid);
-	#else
-		sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
-	#endif
+#ifdef _MACOS_
+	sprintf(path, "%s/%s.gsm", vmFolder, p->hashid);
+#else
+	sprintf(path, "%s\\%s.gsm", vmFolder, p->hashid);
+#endif
 	
 	
 	unlink(path);
@@ -1186,11 +1186,11 @@ static void vmsUpload(struct VMail *v)
 	
 	if (v->direction != VMAIL_OUT || v->status != VMAIL_NEW)
 		return;
-	#ifdef _MACOS_
-		sprintf(path, "%s/%s.gsm", vmFolder, v->hashid);
-	#else
-		sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
-	#endif
+#ifdef _MACOS_
+	sprintf(path, "%s/%s.gsm", vmFolder, v->hashid);
+#else
+	sprintf(path, "%s\\%s.gsm", vmFolder, v->hashid);
+#endif
 	
 	
 	pfIn = fopen(path, "rb");
@@ -1201,14 +1201,14 @@ static void vmsUpload(struct VMail *v)
 #ifdef _MACOS_
 	sprintf(requestfile, "%s/vmaireq.txt", myFolder);
 	sprintf(responsefile, "%s/vmailresp.txt", myFolder);
-
+	
 #else
 	sprintf(requestfile, "%s\\vmaireq.txt", myFolder);
 	sprintf(responsefile, "%s\\vmailresp.txt", myFolder);
-
+	
 #endif
 	
-		
+	
 	pfOut = fopen(requestfile, "wb");
 	if (!pfOut){
 		fclose(pfIn);
@@ -1311,11 +1311,11 @@ static void vmsDownload()
 			continue;
 		
 		//if the file is already downloaded, move on
-	#ifdef _MACOS_
+#ifdef _MACOS_
 		sprintf(pathname, "%s/%s.gsm", vmFolder, p->hashid);
-	#else
+#else
 		sprintf(pathname, "%s\\%s.gsm", vmFolder, p->hashid);
-	#endif
+#endif
 		pfIn = fopen(pathname, "r");
 		if (pfIn){
 			fclose(pfIn);
@@ -1428,11 +1428,11 @@ void profileSave(){
 	unsigned char szData[33], szEncPass[64], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 33
 	BLOWFISH_CTX ctx;
 	int i, len;
-	#ifdef _MACOS_
-		sprintf(pathname, "%s/profile.xml", myFolder);
-	#else
-		sprintf(pathname, "%s\\profile.xml", myFolder);
-	#endif
+#ifdef _MACOS_
+	sprintf(pathname, "%s/profile.xml", myFolder);
+#else
+	sprintf(pathname, "%s\\profile.xml", myFolder);
+#endif
 	
 	pf = fopen(pathname, "w");
 	if (!pf)
@@ -1444,13 +1444,13 @@ void profileSave(){
 	strcpy(szData,pstack->ltpPassword);
 	
 	Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
-
-
+	
+	
 	for (i = 0; i < sizeof(szData)-1; i+=8)
-		   Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
+		Blowfish_Encrypt(&ctx, (unsigned long *) (szData+i), (unsigned long*)(szData + i + 4));
 	szData[32] = '\0'; //important to NULL terminate;
-
-
+	
+	
 	//Output of Blowfish_Encrypt() is binary, which needs to be stored in plain-text in profile.xml for ezxml to understand and parse.
 	//Hence base64 encode the cyphertext.
 	memset(szEncPass, 0, sizeof(szEncPass));
@@ -1478,12 +1478,12 @@ void profileSave(){
 	
 	//the contacts
 	for (p = getContactsList(); p; p = p->next){
-	#ifdef TEST_CALL_ID
+#ifdef TEST_CALL_ID
 		if(p->id==TEST_CALL_ID)
 		{
 			continue;
 		}
-	#endif		
+#endif		
 		fprintf(pf, " <vc><id>%u</id><t>%s</t>", p->id, p->title);
 		if (p->mobile[0])
 			fprintf(pf, "<m>%s</m>", p->mobile);
@@ -1526,8 +1526,8 @@ void profileLoad()
 	unsigned char v, szData[33], szBuffIn[10], szBuffOut[10]; //bug 17212 - increased szData to 45
     BLOWFISH_CTX ctx;
 	int i, j, len;
-
-
+	
+	
 	strcpy(pstack->ltpServerName, IDS_LTP_SERVERIP);
 	sprintf(pathname, "%s\\profile.xml", myFolder);
 	
@@ -1536,14 +1536,14 @@ void profileLoad()
 #else
 	strcpy(pstack->ltpServerName, "www.spokn.com");
 #endif	
-	#ifdef _MACOS_
-		sprintf(pathname, "%s/profile.xml", myFolder);
-
-	#else
-		sprintf(pathname, "%s\\profile.xml", myFolder);
-
-	#endif
-		
+#ifdef _MACOS_
+	sprintf(pathname, "%s/profile.xml", myFolder);
+	
+#else
+	sprintf(pathname, "%s\\profile.xml", myFolder);
+	
+#endif
+	
 	pf = fopen(pathname, "r");
 	if (!pf)
 		return;
@@ -1556,7 +1556,7 @@ void profileLoad()
 	}
 	
 	resetContacts();
-	#ifdef TEST_CALL_ID
+#ifdef TEST_CALL_ID
 	if(listContacts==0)
 	{
 		listContacts = (struct AddressBook *)malloc(sizeof(struct AddressBook));
@@ -1569,11 +1569,12 @@ void profileLoad()
 		strcpy(listContacts->home, "");
 		strcpy(listContacts->business, "");
 		
-			strcpy(listContacts->other, "");
+		strcpy(listContacts->other, "");
 		
-			strcpy(listContacts->email, "");
+		strcpy(listContacts->email, "");
 		
-			strcpy(listContacts->spoknid, "12345678");
+		strcpy(listContacts->spoknid, "12345678");
+
 		listContacts->dirty = 0;
 		//insert in at the head and sort
 		listContacts->next = 0;
@@ -1623,8 +1624,8 @@ void profileLoad()
 			
 			Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
 			for (i = 0; i < 32; i+=8)
-				   Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
-
+				Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
+			
 			strcpy(pstack->ltpPassword, szData); 
 		}
 	}
@@ -1641,8 +1642,11 @@ void profileLoad()
 	
 	fwd = ezxml_child(xml, "fwd");
 	if (fwd)
+	{
+		printf("\n test 12345");
 		strcpy(fwdnumber, fwd->txt);
-	
+		strcpy(oldForward,fwdnumber);
+	}
 	
 	//read all the contacts
 	for (contact = ezxml_child(xml, "vc"); contact; contact = contact->next) {
@@ -1700,11 +1704,11 @@ void profileLoad()
 void profileClear()
 {
 	char	pathname[MAX_PATH];
-	#ifdef _MACOS_
-		sprintf(pathname, "%s/profile.xml", myFolder);	
-	#else
-		sprintf(pathname, "%s\\profile.xml", myFolder);	
-	#endif
+#ifdef _MACOS_
+	sprintf(pathname, "%s/profile.xml", myFolder);	
+#else
+	sprintf(pathname, "%s\\profile.xml", myFolder);	
+#endif
 	
 	unlink(pathname);
 	lastUpdate = 0;
@@ -1725,19 +1729,19 @@ void profileMerge(){
 	FILE	*pf;
 	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref,*palert;
 	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid;
-	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert;
+	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert,xmlstatus;
 	struct AddressBook *pc;
-	int		nContacts = 0, xmllength, newMails;
+	int		nContacts = 0, xmllength, newMails,errorCode=0;
 	
 	char empty[] = "";
-	#ifdef _MACOS_
+#ifdef _MACOS_
 	sprintf(pathname, "%s/down.xml", myFolder);
-
-	#else
-		sprintf(pathname, "%s\\down.xml", myFolder);
-
-	#endif
-	#ifdef TEST_CALL_ID
+	
+#else
+	sprintf(pathname, "%s\\down.xml", myFolder);
+	
+#endif
+#ifdef TEST_CALL_ID
 	if(listContacts==0)
 	{
 		listContacts = (struct AddressBook *)malloc(sizeof(struct AddressBook));
@@ -1802,33 +1806,36 @@ void profileMerge(){
 	if (did)
 		strcpy(myDID, did->txt);
 	
-	redirector = ezxml_child(xml, "rd");
-	if (redirector)
+	if (xmlstatus = ezxml_child(xml, "status"))
+		errorCode = atoi(xmlstatus->txt);
+	//Success
+	if (!errorCode)
 	{
-		if (!strcmp(redirector->txt, "1"))
+		redirector = ezxml_child(xml, "rd");
+		if (redirector)
 		{
-			settingType = REDIRECT2PSTN;
-			oldSetting = settingType;
+			if (!strcmp(redirector->txt, "1"))
+			{
+				settingType = REDIRECT2PSTN;
+				oldSetting = settingType;
+			}
+			else if (!strcmp(redirector->txt, "3"))
+			{
+				settingType = REDIRECTBOTH;
+				oldSetting = settingType;
+			}
+			else if(!strcmp(redirector->txt, "2"))
+			{
+				settingType = REDIRECT2ONLINE;
+				oldSetting = settingType;
+			}
+			else
+			{
+				settingType = REDIRECT2ONLINE;
+				oldSetting =-1;
+			}
 		}
-		else if (!strcmp(redirector->txt, "3"))
-		{
-			settingType = REDIRECTBOTH;
-			oldSetting = settingType;
-		}
-		else if(!strcmp(redirector->txt, "2"))
-		{
-			settingType = REDIRECT2ONLINE;
-			oldSetting = settingType;
-		}
-		else
-		{
-			settingType = REDIRECT2ONLINE;
-			oldSetting =-1;
-		}
-		
-		
-	}
-	credit = ezxml_child(xml, "cr");
+	}	credit = ezxml_child(xml, "cr");
 	if (credit)
 		creditBalance = atoi(credit->txt);
 	
@@ -1838,8 +1845,13 @@ void profileMerge(){
 	
 	fwd = ezxml_child(xml, "fwd");
 	if (fwd)
+	{	
+	//	strcpy(fwdnumber, fwd->txt);
+		printf("\n test111 12345");
 		strcpy(fwdnumber, fwd->txt);
-	
+		strcpy(oldForward,fwdnumber);
+		
+	}
 	if (mailserverip = ezxml_child(xml, "mailserver"))
 		strcpy(mailServer, mailserverip->txt);
 	
@@ -1949,6 +1961,9 @@ void profileMerge(){
 	free(strxml);
 	fclose(pf);
 	gnewMails = newMails;
+	
+	if(errorCode)
+		alert(errorCode, ALERT_ERROR, NULL);
 	//TBD detect new voicemails and alert the user
 	if (newMails)
 	{
@@ -1975,7 +1990,7 @@ static void profileGetKey()
 	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
-
+	
 #ifdef _MACOS_
 	sprintf(requestfile, "%s/keyreq.txt", myFolder);
 	sprintf(responsefile, "%s/keyresp.txt", myFolder);
@@ -1985,17 +2000,17 @@ static void profileGetKey()
 	sprintf(responsefile, "%s\\keyresp.txt", myFolder);
 	
 #endif	
-
+	
 	pfOut = fopen(requestfile, "wb");
 	if (!pfOut){
 		return;
 	}
-
+	
 	httpCookie(key);
 	fprintf(pfOut, "<?xml version=\"1.0\"?><profile>\n <u>%s</u> </profile>", 
-		pstack->ltpUserid);
+			pstack->ltpUserid);
 	fclose(pfOut);
-
+	
 	byteCount = restCall(requestfile, responsefile, "www.spokn.com", "/cgi-bin/userxml.cgi");
 	if (!byteCount)
 		return;
@@ -2005,16 +2020,16 @@ static void profileGetKey()
 		fclose(pfOut);
 		return;
 	}
-
+	
 	length = fread(buffer, 1, sizeof(buffer), pfIn);
 	fclose(pfIn);
 	buffer[length] = 0;
-
+	
 	strxml = strstr(buffer, "<?xml");
-
+	
 	if (strxml){
 		ezxml_t xml, status, key;
-
+		
 		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
 			if (key = ezxml_child(xml, "challenge")){
 				strcpy(pstack->ltpNonce, key->txt);
@@ -2046,19 +2061,19 @@ THREAD_PROC profileDownload(void *extras)
 		return 0;
 	else 
 		busy = 1;
-
+	
 	profileGetKey();
-
+	
 	//add by mukesh for bug id 20359
 	threadStatus = ThreadStart ;
 	httpCookie(key);
 	
 	//prepare the xml upload
-	#ifdef _MACOS_
-		sprintf(pathUpload, "%s/upload.xml", myFolder);
-	#else
-		sprintf(pathUpload, "%s\\upload.xml", myFolder);
-	#endif
+#ifdef _MACOS_
+	sprintf(pathUpload, "%s/upload.xml", myFolder);
+#else
+	sprintf(pathUpload, "%s\\upload.xml", myFolder);
+#endif
 	
 	pfOut = fopen(pathUpload, "wb");
 	if (!pfOut){
@@ -2229,11 +2244,11 @@ THREAD_PROC profileDownload(void *extras)
 	fclose(pfOut);
 	
     timeStart = ticks();
-	#ifdef _MACOS_
-		sprintf(pathDown, "%s/down.xml", myFolder);
-	#else
-		sprintf(pathDown, "%s\\down.xml", myFolder);
-	#endif
+#ifdef _MACOS_
+	sprintf(pathDown, "%s/down.xml", myFolder);
+#else
+	sprintf(pathDown, "%s\\down.xml", myFolder);
+#endif
 	
 	
 	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
@@ -2260,6 +2275,7 @@ THREAD_PROC profileDownload(void *extras)
 
 void profileResync()
 {
+	printf("\n profile resync called");
 	if((strcmp(uaUserid ,pstack->ltpUserid)!=0))
 	{
 		strcpy(uaUserid ,pstack->ltpUserid);
@@ -2372,7 +2388,7 @@ void relistContacts()
 void relistCDRs()
 {
 	uaCallBackObject.alertNotifyP(UA_ALERT,0,REFRESH_CALLLOG,(unsigned long)uaCallBackObject.uData,0);	
-
+	
 }
 void refreshDisplay()
 {
@@ -2456,7 +2472,7 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 		free(resultCharP);
 		comaSepCharP = terminateCharP;
 	}
-		//vmsUpload(vmsP);
+	//vmsUpload(vmsP);
 	//profileResyncMain();
 	profileResync();
 	//relistVMails();
@@ -2536,11 +2552,11 @@ int GetTotalCount(UAObjectType uaObj)
 					if((p->direction & CALLTYPE_IN) && (p->direction & CALLTYPE_MISSED))
 					{
 						
-							i++;
+						i++;
 						
 						
 					}
-										
+					
 				}
 				else
 				{
@@ -2695,10 +2711,13 @@ char *getForwardNo( int *forwardP)
 		}
 	}
 	
-		
+	
 	return fwdnumber;
 }
-
+char *getOldForwardNo()
+{
+	return oldForward;
+}
 char *getDidNo()
 {
 	return myDID;
@@ -2725,6 +2744,7 @@ void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 	{	
 		if(forwardNoCharP)
 		{	
+			
 			strncpy(fwdnumber,forwardNoCharP,sizeof(fwdnumber)-2);
 			//printf("forward no %s",fwdnumber);
 			oldSetting = -1;
@@ -2775,6 +2795,13 @@ struct AddressBook * getContactAndTypeCall(char *objStrP,/*out*/char *ltypeCharP
 		
 		
 		
+	}
+	else
+	{
+		if(strstr(objStrP,"@"))
+		{
+				typeCallP = "email";
+		}
 	}
 	if(ltypeCharP)
 	{
@@ -2834,7 +2861,7 @@ void vmailDeleteAll()
 {
 	
 	struct VMail *p;
-		
+	
 	p = listVMails;
 	while (p)
 	{
@@ -2843,7 +2870,7 @@ void vmailDeleteAll()
 		
 		p = p->next;
 	}
-
+	
 }
 char *NormalizeNumber(char *lnoCharP)
 {
@@ -2885,7 +2912,8 @@ char *NormalizeBoth(char *lnoCharP)
 		resultCharP = malloc(strlen(tmpCharP)+2);
 		while(*tmpCharP)
 		{
-			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' )
+			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == '+')
+
 			{
 				tmpCharP++;
 				continue;

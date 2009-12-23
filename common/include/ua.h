@@ -64,8 +64,8 @@ extern "C" {
 		time_t	date;
 		int		duration;
 		int		direction;
-	
-
+		
+		
 		struct CDR *next;
 #ifdef _MACOS_
 		int addressUId;
@@ -109,7 +109,7 @@ extern "C" {
 		int		dirty;
 		int		isDeleted;
 		struct AddressBook *next;
-
+		
 	};
 	
 	extern struct ltpStack *pstack;
@@ -147,37 +147,37 @@ extern "C" {
 #define VMAIL_FAILED 3
 	
 #define VMAIL_MAXCOUNT 100 //no more than VMAIL_MAXCOUNT mails to be stored on the user agent
-
-struct VMail {
-	char	userid[128]; //bug#26028, increased size to match AddressBook->email;
-	time_t	date;
-	char	vmsid[100];
-	char	hashid[33];
-	short	status;
-	short	direction;
-	short	deleted; //those deleted at the server
-	short	toDelete; //those marked by the user to be deleted from the client as well as the server
-	short	isNew; //not to be saved
-	struct VMail *next;
-	int dirty; 
-#ifdef _MACOS_
-	int addressUId;
-	int recordID;	
-#endif	
 	
-};
-extern struct VMail *listVMails;
-
-
-void vmsLoad();
-struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
-void vmsDelete(struct VMail *p);
-void vmsSave();
-void vmsEmpty();
-/*
-profile related definitions
-*/
-
+	struct VMail {
+		char	userid[128]; //bug#26028, increased size to match AddressBook->email;
+		time_t	date;
+		char	vmsid[100];
+		char	hashid[33];
+		short	status;
+		short	direction;
+		short	deleted; //those deleted at the server
+		short	toDelete; //those marked by the user to be deleted from the client as well as the server
+		short	isNew; //not to be saved
+		struct VMail *next;
+		int dirty; 
+#ifdef _MACOS_
+		int addressUId;
+		int recordID;	
+#endif	
+		
+	};
+	extern struct VMail *listVMails;
+	
+	
+	void vmsLoad();
+	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
+	void vmsDelete(struct VMail *p);
+	void vmsSave();
+	void vmsEmpty();
+	/*
+	 profile related definitions
+	 */
+	
 #define REDIRECT2ONLINE 2
 #define REDIRECT2VMS 0
 #define REDIRECT2PSTN 1
@@ -293,22 +293,25 @@ profile related definitions
 	char *getAccountPage();
 	char *getCreditsPage();
 	void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP);
-
+	char *getOldForwardNo();
+	
 #endif		
-
-extern void relistVMails();
-extern void relistContacts();
-extern void relistCDRs();
-extern void refreshDisplay();
-extern void createFolders();
-extern void cdrRemoveAll();
-extern unsigned long ticks();
-void cdrEmpty();
+	
+	extern void relistVMails();
+	extern void relistContacts();
+	extern void relistCDRs();
+	extern void refreshDisplay();
+	extern void createFolders();
+	extern void cdrRemoveAll();
+	extern unsigned long ticks();
+	void cdrEmpty();
 	char *NormalizeNumber(char *lnoCharP);
 	char *NormalizeBoth(char *lnoCharP);
 	
-//for voip quality
-void setBandwidth(unsigned long timeTaken,int byteCount);
+
+	//for voip quality
+	void setBandwidth(unsigned long timeTaken,int byteCount);
+
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus
