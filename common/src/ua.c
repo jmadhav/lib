@@ -2894,6 +2894,16 @@ char *NormalizeNumber(char *lnoCharP,int type)
 				tmpCharP++;
 				continue;
 			}
+			if(type==2)//vmail
+			{
+				if(*tmpCharP == '+')
+				{
+					tmpCharP++;
+					continue;
+					
+				}
+			
+			}
 			if(type==1)//number for forword
 			{
 				if ( *tmpCharP == '+'|| *tmpCharP == '.' || *tmpCharP == '*'|| *tmpCharP == '#')
