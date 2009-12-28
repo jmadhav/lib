@@ -2889,7 +2889,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 		while(*tmpCharP)
 		{
 			
-			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' )
+			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == ',' )
 			{
 				tmpCharP++;
 				continue;
