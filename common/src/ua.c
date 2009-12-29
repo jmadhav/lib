@@ -2889,14 +2889,14 @@ char *NormalizeNumber(char *lnoCharP,int type)
 		while(*tmpCharP)
 		{
 			
-			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == ',' )
-			{
-				tmpCharP++;
-				continue;
-			}
+			//if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == ',' )
+			//{
+			//	tmpCharP++;
+			//	continue;
+			//}
 			if(type==2)//vmail
 			{
-				if(*tmpCharP == '+')
+				if(*tmpCharP == '+' || *tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == ',' )
 				{
 					tmpCharP++;
 					continue;
@@ -2906,7 +2906,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 			}
 			if(type==1)//number for forword
 			{
-				if ( *tmpCharP == '+'|| *tmpCharP == '.' || *tmpCharP == '*'|| *tmpCharP == '#')
+				if ( *tmpCharP == '+'|| *tmpCharP == '.' || *tmpCharP == '*'|| *tmpCharP == '#' || *tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == ',')
 				{
 					tmpCharP++;
 					continue;
@@ -2914,7 +2914,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 			}
 			if(type==0)//number for call
 			{
-				if(*tmpCharP == '.')
+				if(*tmpCharP == '.' || *tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == ',')
 				{
 					tmpCharP++;
 					continue;
