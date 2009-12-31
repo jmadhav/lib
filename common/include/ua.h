@@ -307,7 +307,7 @@ extern "C" {
 	void cdrEmpty();
 	char *NormalizeNumber(char *lnoCharP,int type);
 	char *NormalizeBoth(char *lnoCharP);
-	
+	int validateNo(char *numberP);
 
 	//for voip quality
 	void setBandwidth(unsigned long timeTaken,int byteCount);

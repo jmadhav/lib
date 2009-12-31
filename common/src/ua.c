@@ -2728,7 +2728,20 @@ char *getTitle()
 }
 int newVMailCount()
 {
-	return gnewMails;
+	struct VMail *pv;
+	int	newMails = 0;
+	for ( pv = listVMails;pv;  pv = pv->next)
+	{	
+	
+	
+		if ( pv->direction==VMAIL_IN && !pv->deleted && pv->status==VMAIL_ACTIVE)
+		{
+			newMails++;
+		}
+	}	
+	
+	return newMails;
+	//return gnewMails;
 }
 
 void newVMailCountdecrease()
@@ -2876,6 +2889,42 @@ void vmailDeleteAll()
 	}
 	
 }
+int validateNo(char *numberP)
+{
+	char *tmpCharP;
+	int checkB=0;
+	tmpCharP = numberP;
+	if(tmpCharP==0)
+	{
+		return 1;
+	}
+	while(*tmpCharP)
+	{
+		if(checkB==0)
+		{	
+			if(*tmpCharP>='0' &&*tmpCharP<='9')
+			{
+				checkB = 1;
+			}
+		}
+		if(checkB)
+		{	
+			if(*tmpCharP=='+' || *tmpCharP=='*' || *tmpCharP=='#' )
+			{
+				tmpCharP++;
+				if(*tmpCharP)
+				{
+					checkB = 0;
+				}
+				
+				break;
+			}
+		}
+		tmpCharP++;
+	}
+	return !checkB;//if 1 mean number is valid
+
+}
 char *NormalizeNumber(char *lnoCharP,int type)
 {
 	char *resultCharP = 0;
@@ -2889,37 +2938,38 @@ char *NormalizeNumber(char *lnoCharP,int type)
 		while(*tmpCharP)
 		{
 			
-			if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' )
-			{
-				tmpCharP++;
-				continue;
-			}
+			
 			if(type==2)//vmail
 			{
-				if(*tmpCharP == '+')
+				if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '+'|| *tmpCharP == ',' )
 				{
 					tmpCharP++;
 					continue;
-					
 				}
+				
+				
 			
 			}
 			if(type==1)//number for forword
 			{
-				if ( *tmpCharP == '+'|| *tmpCharP == '.' || *tmpCharP == '*'|| *tmpCharP == '#')
+				if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '-' || *tmpCharP == '+'|| *tmpCharP == '.' || *tmpCharP == '*'|| *tmpCharP == '#'|| *tmpCharP == ',' )
 				{
 					tmpCharP++;
 					continue;
 				}
+				
+				
 			}
 			if(type==0)//number for call
 			{
-				if(*tmpCharP == '.')
+				if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '.' || *tmpCharP == ',' )
 				{
 					tmpCharP++;
 					continue;
-				
 				}
+				
+				
+				
 			}
 			resultCharP[i++]=	*tmpCharP;
 			tmpCharP++;
