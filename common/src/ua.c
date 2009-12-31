@@ -2938,6 +2938,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 		while(*tmpCharP)
 		{
 			
+
 			
 			if(type==2)//vmail
 			{
@@ -2962,6 +2963,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 			}
 			if(type==0)//number for call
 			{
+
 				if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '.' || *tmpCharP == ',' )
 				{
 					tmpCharP++;
