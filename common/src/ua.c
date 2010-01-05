@@ -2379,7 +2379,8 @@ void  createFolders()
 }
 void relistVMails()
 {
-	uaCallBackObject.alertNotifyP(UA_ALERT,0,REFRESH_VMAIL,(unsigned long)uaCallBackObject.uData,0);	
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,REFRESH_VMAIL,(unsigned long)uaCallBackObject.uData,0);
+	
 }
 void relistContacts()
 {
