@@ -1233,6 +1233,7 @@ static void vmsUpload(struct VMail *v)
 	pfIn = fopen(responsefile, "rb");
 	if (!pfIn){
 		alert(-1, ALERT_VMAILERROR, "Failed to upload.");
+		printf("failed to upload");
 		return;
 	}
 	
@@ -1248,7 +1249,7 @@ static void vmsUpload(struct VMail *v)
 	
 	//todo check that the response is not 'o' and store the returned value as the vmsid
 	if (strxml){
-		ezxml_t xml, status, vmsid;
+		ezxml_t xml, status, vmsid, code;
 		
 		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
 			if (status = ezxml_child(xml, "status")){
@@ -1263,7 +1264,8 @@ static void vmsUpload(struct VMail *v)
 					v->status = VMAIL_ACTIVE;
 				else if(!strcmp(status->txt, "failed"))
 				{
-					alert(-1, ALERT_VMAILERROR, "Voicemail upload failed");
+					code = ezxml_child(xml, "code");
+					alert(code ? atoi(code->txt) : -1, ALERT_ERROR, "Voicemail upload failed");
 					v->status=VMAIL_FAILED;
 				}
 			}
@@ -2252,7 +2254,7 @@ THREAD_PROC profileDownload(void *extras)
 	
 	
 	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
-    
+    printf("%s",pathUpload);
 	timeFinished = ticks();
 	timeTaken = (timeFinished - timeStart);
 	setBandwidth(timeTaken,byteCount);
