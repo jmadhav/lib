@@ -15,6 +15,7 @@
 #include <ezxml.h>
 #include <ua.h>
 #include "ltpandsip.h"
+#define MAX_READ_SIZE 10000
 //struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
 // this is the single object that is the instance of the ltp stack for the user agent
 struct ltpStack *pstack;
@@ -222,7 +223,9 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 {
 	FILE	*pf;
 	SOCKET	sock;
-	char	data[10000], header[1000];
+	char	*data=0;
+	//char	data[10000], header[1000];
+	char header[1000];
 	struct	sockaddr_in	addr;
 	int	byteCount = 0, isChunked = 1, contentLength = 0, ret, length;
 	
@@ -261,7 +264,9 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	if (!pf)
 		return 0;
 	
-	while((ret = fread(data, 1, sizeof(data), pf)) > 0){
+	data = malloc(MAX_READ_SIZE);
+	
+	while((ret = fread(data, 1, MAX_READ_SIZE, pf)) > 0){
 		send(sock, data, ret, 0);
 		byteCount += ret;
 	}
@@ -272,7 +277,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	//Add/Delete contact to work.
 	isChunked = 0;
 	while (1){
-		int length = readNetLine(sock, data, sizeof(data));
+		int length = readNetLine(sock, data, MAX_READ_SIZE);
 		byteCount += length;
 		if (length <= 0)
 			break;
@@ -303,7 +308,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 			
 			//read the chunk in multiple calls to read
 			while(count){
-				length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
+				length = recv(sock, data, count > MAX_READ_SIZE ? MAX_READ_SIZE : count, 0);
 				if (length <= 0) //crap!! the socket closed
 					goto end;
 				byteCount += length;
@@ -320,7 +325,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 		}
 		else{ // read it in fixed blocks of data
 			while (1){
-				length = recv(sock, data, sizeof(data), 0);
+				length = recv(sock, data, MAX_READ_SIZE, 0);
 				if (length > 0)
 					fwrite(data, length, 1, pf);
 				else 
@@ -330,6 +335,10 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 		}
 	}
 end:
+	if(data)
+	{	
+		free(data);
+	}
 	fclose(pf); // close the download.xml handle
 	return byteCount;
 }
@@ -1179,7 +1188,8 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 static void vmsUpload(struct VMail *v)
 {
 	char	key[100], *strxml;
-	unsigned char g[10], b64[10], buffer[10000];
+	char *buffer=0;
+	unsigned char g[10], b64[10];
 	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
@@ -1236,11 +1246,12 @@ static void vmsUpload(struct VMail *v)
 		printf("failed to upload");
 		return;
 	}
-	
-	length = fread(buffer, 1, sizeof(buffer), pfIn);
+	buffer = malloc(MAX_READ_SIZE);
+	length = fread(buffer, 1, MAX_READ_SIZE, pfIn);
 	fclose(pfIn);
 	if (length < 40){
 		alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
+		free(buffer);
 		return;
 	}
 	buffer[length] = 0;
@@ -1272,6 +1283,8 @@ static void vmsUpload(struct VMail *v)
 			ezxml_free(xml);
 		}
 	}
+	if(buffer)
+		free(buffer);
 	unlink(requestfile);
 	unlink(responsefile);
 }
@@ -1576,7 +1589,7 @@ void profileLoad()
 		strcpy(listContacts->email, "");
 		
 		strcpy(listContacts->spoknid, "12345678");
-
+		
 		listContacts->dirty = 0;
 		//insert in at the head and sort
 		listContacts->next = 0;
@@ -1848,7 +1861,7 @@ void profileMerge(){
 	fwd = ezxml_child(xml, "fwd");
 	if (fwd)
 	{	
-	//	strcpy(fwdnumber, fwd->txt);
+		//	strcpy(fwdnumber, fwd->txt);
 		printf("\n test111 12345");
 		strcpy(fwdnumber, fwd->txt);
 		strcpy(oldForward,fwdnumber);
@@ -1988,7 +2001,7 @@ void profileMerge(){
 static void profileGetKey()
 {
 	char	key[100], *strxml;
-	unsigned char buffer[10000];
+	unsigned char *buffer=0;
 	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
@@ -2023,7 +2036,8 @@ static void profileGetKey()
 		return;
 	}
 	
-	length = fread(buffer, 1, sizeof(buffer), pfIn);
+	buffer = malloc(MAX_READ_SIZE);
+	length = fread(buffer, 1, MAX_READ_SIZE, pfIn);
 	fclose(pfIn);
 	buffer[length] = 0;
 	
@@ -2041,6 +2055,8 @@ static void profileGetKey()
 			ezxml_free(xml);
 		}
 	}
+	if(buffer)
+		free(buffer);
 	unlink(requestfile);
 	unlink(responsefile);
 }
@@ -2735,8 +2751,8 @@ int newVMailCount()
 	int	newMails = 0;
 	for ( pv = listVMails;pv;  pv = pv->next)
 	{	
-	
-	
+		
+		
 		if ( pv->direction==VMAIL_IN && !pv->deleted && pv->status==VMAIL_ACTIVE)
 		{
 			newMails++;
@@ -2820,7 +2836,7 @@ struct AddressBook * getContactAndTypeCall(char *objStrP,/*out*/char *ltypeCharP
 	{
 		if(strstr(objStrP,"@"))
 		{
-				typeCallP = "email";
+			typeCallP = "email";
 		}
 	}
 	if(ltypeCharP)
@@ -2926,7 +2942,7 @@ int validateNo(char *numberP)
 		tmpCharP++;
 	}
 	return !checkB;//if 1 mean number is valid
-
+	
 }
 char *NormalizeNumber(char *lnoCharP,int type)
 {
@@ -2941,7 +2957,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 		while(*tmpCharP)
 		{
 			
-
+			
 			
 			if(type==2)//vmail
 			{
@@ -2952,7 +2968,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 				}
 				
 				
-			
+				
 			}
 			if(type==1)//number for forword
 			{
@@ -2966,7 +2982,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 			}
 			if(type==0)//number for call
 			{
-
+				
 				if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '.' || *tmpCharP == ',' )
 				{
 					tmpCharP++;
