@@ -1,3 +1,24 @@
+/**
+ Copyright 2009,2010 Geodesic, <http://www.geodesic.com/>
+ 
+ Spokn SIP-VoIP for iPhone and iPod Touch.
+ 
+ This file is part of Spokn iphone.
+ 
+ Spokn iphone is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ Spokn iphone is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with Spokn iphone.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef UAREST_DEFINED
 #define UAREST_DEFINED
 #ifdef __cplusplus
@@ -170,7 +191,7 @@ extern "C" {
 	
 	
 	void vmsLoad();
-	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
+	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID);
 	void vmsDelete(struct VMail *p);
 	void vmsSave();
 	void vmsEmpty();
@@ -280,7 +301,7 @@ extern "C" {
 	void * GetObjectAtIndex(UAObjectType uaObj,int index);
 	int GetVmsFileName(struct VMail *vmailP,char **fnameWithPathP);
 	int makeVmsFileName(char *fnameP,char **fnameWithPathP);
-	int sendVms(char *remoteParty,char *vmsfileNameP);
+	int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID);
 	int getBalance();
 	void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lclientOsVer,char *lclientModel,char *clientUId);
 	char *getForwardNo(int *forwarddP);

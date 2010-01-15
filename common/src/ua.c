@@ -1,4 +1,25 @@
 
+/**
+ Copyright 2009,2010 Geodesic, <http://www.geodesic.com/>
+ 
+ Spokn SIP-VoIP for iPhone and iPod Touch.
+ 
+ This file is part of Spokn iphone.
+ 
+ Spokn iphone is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ Spokn iphone is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with Spokn iphone.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 // profile.cpp : Defines the entry point for the application.
 //
 #ifndef _MACOS_
@@ -984,7 +1005,7 @@ static void vmsSort()
 static struct VMail *vmsRead(ezxml_t vmail)
 {
 	struct VMail *p;
-	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete;
+	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete,abidP,recordidP;
 	
 	date = ezxml_child(vmail, "dt");
 	vmsid = ezxml_child(vmail, "id");
@@ -994,6 +1015,8 @@ static struct VMail *vmsRead(ezxml_t vmail)
 	hashid = ezxml_child(vmail, "hashid");
 	deleted = ezxml_child(vmail, "deleted");
 	toDelete = ezxml_child(vmail, "todelete");
+	abidP = ezxml_child(vmail, "abid");
+	recordidP = ezxml_child(vmail, "recordid");
 	
 	//check for all the required tags within <vm>
 	if (!status || !date || !vmsid || !userid || !direction 
@@ -1010,6 +1033,10 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		memset(p, 0, sizeof(struct VMail));
 		strcpy(p->hashid, hashid->txt);
 		strcpy(p->vmsid, vmsid->txt);
+		if (abidP)
+			p->addressUId = (unsigned long)atol(abidP->txt);
+		if (recordidP)
+			p->recordID = (unsigned long)atol(recordidP->txt);
 		//make this 'starred', this is fresh mail
 		
 		if(listVMails)
@@ -1059,8 +1086,13 @@ static int vmsWrite(FILE *pf, struct VMail *p)
 	if (p->deleted)
 		return 0;
 	
+#ifdef _MACOS_
+	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
+			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->addressUId,p->recordID);
+#else	
 	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir>",
 			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in");
+#endif	
 	
 	if (p->deleted)
 		fprintf(pf, "<deleted>1</deleted>");
@@ -1136,7 +1168,7 @@ void vmsDelete(struct VMail *p)
 	//profileResync();
 }
 
-struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
+struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID)
 {
 	struct	VMail	*p=NULL;
 	int		isNew=1;
@@ -1163,7 +1195,8 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	p->date = (time_t)time;
 	p->direction = direction;
 	p->status = status;
-	
+	p->addressUId = laddressUId;
+	p->recordID = lrecordID;
 	//add to the head of the list
 	if (!listVMails)
 		listVMails = p;
@@ -2426,7 +2459,7 @@ static void md5ToHex(unsigned char *digest, char *string)
 	*string = 0;
 }
 
-int sendVms(char *remoteParty,char *vmsfileNameP)
+int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID)
 {
 	FILE *fp;
 	char buff[100];
@@ -2471,7 +2504,7 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 			
 		}
 		resultCharP = NormalizeNumber(comaSepCharP,2);
-		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
+		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT,laddressUId,lrecordID);
 		free(resultCharP);
 		comaSepCharP = terminateCharP;
 	}
