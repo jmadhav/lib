@@ -208,6 +208,8 @@ extern "C" {
 #define ALERT_VMAILERROR 101
 	//Handler for server-sent messages
 #define ALERT_SERVERMSG	102
+#define ALERT_HOSTNOTFOUND 110	
+	
 	//Seperator for href & message, sent by server.
 #define SEPARATOR '|'
 	/**

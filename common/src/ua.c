@@ -2303,7 +2303,12 @@ THREAD_PROC profileDownload(void *extras)
 	
 	
 	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
-    printf("%s",pathUpload);
+	if (!byteCount)
+	{
+		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
+		//return;
+	}
+	//printf("%s",pathUpload);
 	timeFinished = ticks();
 	timeTaken = (timeFinished - timeStart);
 	setBandwidth(timeTaken,byteCount);
