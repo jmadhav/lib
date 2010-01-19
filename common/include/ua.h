@@ -191,7 +191,8 @@ extern "C" {
 	
 	
 	void vmsLoad();
-	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID);
+//	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID);
+	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
 	void vmsDelete(struct VMail *p);
 	void vmsSave();
 	void vmsEmpty();
@@ -303,7 +304,8 @@ extern "C" {
 	void * GetObjectAtIndex(UAObjectType uaObj,int index);
 	int GetVmsFileName(struct VMail *vmailP,char **fnameWithPathP);
 	int makeVmsFileName(char *fnameP,char **fnameWithPathP);
-	int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID);
+	//int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID);
+	int sendVms(char *remoteParty,char *vmsfileNameP);
 	int getBalance();
 	void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lclientOsVer,char *lclientModel,char *clientUId);
 	char *getForwardNo(int *forwarddP);

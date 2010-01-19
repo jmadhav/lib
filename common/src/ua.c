@@ -587,10 +587,10 @@ void cdrLoad() {
 			return;
 		}
 		memset(p, 0, sizeof(struct CDR));
-		if (abidP)
+/*		if (abidP)
 			p->addressUId = (unsigned long)atol(abidP->txt);
 		if (recordidP)
-			p->recordID = (unsigned long)atol(recordidP->txt);
+			p->recordID = (unsigned long)atol(recordidP->txt);  */
 		if (date)
 			p->date = (unsigned long)atol(date->txt);
 		if (duration)
@@ -1024,8 +1024,8 @@ static struct VMail *vmsRead(ezxml_t vmail)
 	hashid = ezxml_child(vmail, "hashid");
 	deleted = ezxml_child(vmail, "deleted");
 	toDelete = ezxml_child(vmail, "todelete");
-	abidP = ezxml_child(vmail, "abid");
-	recordidP = ezxml_child(vmail, "recordid");
+//	abidP = ezxml_child(vmail, "abid");
+//	recordidP = ezxml_child(vmail, "recordid");
 	
 	//check for all the required tags within <vm>
 	if (!status || !date || !vmsid || !userid || !direction 
@@ -1042,10 +1042,10 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		memset(p, 0, sizeof(struct VMail));
 		strcpy(p->hashid, hashid->txt);
 		strcpy(p->vmsid, vmsid->txt);
-		if (abidP)
+/*		if (abidP)
 			p->addressUId = (unsigned long)atol(abidP->txt);
 		if (recordidP)
-			p->recordID = (unsigned long)atol(recordidP->txt);
+			p->recordID = (unsigned long)atol(recordidP->txt); */
 		//make this 'starred', this is fresh mail
 		
 		if(listVMails)
@@ -1095,13 +1095,13 @@ static int vmsWrite(FILE *pf, struct VMail *p)
 	if (p->deleted)
 		return 0;
 	
-#ifdef _MACOS_
-	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
-			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->addressUId,p->recordID);
-#else	
+
+/*	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
+			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->addressUId,p->recordID); */
+	
 	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir>",
 			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in");
-#endif	
+	
 	
 	if (p->deleted)
 		fprintf(pf, "<deleted>1</deleted>");
@@ -1177,7 +1177,8 @@ void vmsDelete(struct VMail *p)
 	//profileResync();
 }
 
-struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID)
+//struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID)
+struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
 {
 	struct	VMail	*p=NULL;
 	int		isNew=1;
@@ -1204,8 +1205,8 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	p->date = (time_t)time;
 	p->direction = direction;
 	p->status = status;
-	p->addressUId = laddressUId;
-	p->recordID = lrecordID;
+//	p->addressUId = laddressUId;
+//	p->recordID = lrecordID;
 	//add to the head of the list
 	if (!listVMails)
 		listVMails = p;
@@ -2480,7 +2481,8 @@ static void md5ToHex(unsigned char *digest, char *string)
 	*string = 0;
 }
 
-int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID)
+//int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID)
+int sendVms(char *remoteParty,char *vmsfileNameP)
 {
 	FILE *fp;
 	char buff[100];
@@ -2525,7 +2527,8 @@ int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID)
 			
 		}
 		resultCharP = NormalizeNumber(comaSepCharP,2);
-		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT,laddressUId,lrecordID);
+		//vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT,laddressUId,lrecordID);
+		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
 		free(resultCharP);
 		comaSepCharP = terminateCharP;
 	}
