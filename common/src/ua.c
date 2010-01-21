@@ -1,25 +1,4 @@
 
-/**
- Copyright 2009,2010 Geodesic, <http://www.geodesic.com/>
- 
- Spokn SIP-VoIP for iPhone and iPod Touch.
- 
- This file is part of Spokn iphone.
- 
- Spokn iphone is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- Spokn iphone is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with Spokn iphone.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 // profile.cpp : Defines the entry point for the application.
 //
 #ifndef _MACOS_
@@ -36,7 +15,6 @@
 #include <ezxml.h>
 #include <ua.h>
 #include "ltpandsip.h"
-#define MAX_READ_SIZE 10000
 //struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
 // this is the single object that is the instance of the ltp stack for the user agent
 struct ltpStack *pstack;
@@ -244,9 +222,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 {
 	FILE	*pf;
 	SOCKET	sock;
-	char	*data=0;
-	//char	data[10000], header[1000];
-	char header[1000];
+	char	data[10000], header[1000];
 	struct	sockaddr_in	addr;
 	int	byteCount = 0, isChunked = 1, contentLength = 0, ret, length;
 	
@@ -285,9 +261,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	if (!pf)
 		return 0;
 	
-	data = malloc(MAX_READ_SIZE);
-	
-	while((ret = fread(data, 1, MAX_READ_SIZE, pf)) > 0){
+	while((ret = fread(data, 1, sizeof(data), pf)) > 0){
 		send(sock, data, ret, 0);
 		byteCount += ret;
 	}
@@ -298,7 +272,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	//Add/Delete contact to work.
 	isChunked = 0;
 	while (1){
-		int length = readNetLine(sock, data, MAX_READ_SIZE);
+		int length = readNetLine(sock, data, sizeof(data));
 		byteCount += length;
 		if (length <= 0)
 			break;
@@ -329,7 +303,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 			
 			//read the chunk in multiple calls to read
 			while(count){
-				length = recv(sock, data, count > MAX_READ_SIZE ? MAX_READ_SIZE : count, 0);
+				length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
 				if (length <= 0) //crap!! the socket closed
 					goto end;
 				byteCount += length;
@@ -346,7 +320,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 		}
 		else{ // read it in fixed blocks of data
 			while (1){
-				length = recv(sock, data, MAX_READ_SIZE, 0);
+				length = recv(sock, data, sizeof(data), 0);
 				if (length > 0)
 					fwrite(data, length, 1, pf);
 				else 
@@ -356,10 +330,6 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 		}
 	}
 end:
-	if(data)
-	{	
-		free(data);
-	}
 	fclose(pf); // close the download.xml handle
 	return byteCount;
 }
@@ -587,10 +557,10 @@ void cdrLoad() {
 			return;
 		}
 		memset(p, 0, sizeof(struct CDR));
-/*		if (abidP)
+		if (abidP)
 			p->addressUId = (unsigned long)atol(abidP->txt);
 		if (recordidP)
-			p->recordID = (unsigned long)atol(recordidP->txt);  */
+			p->recordID = (unsigned long)atol(recordidP->txt);
 		if (date)
 			p->date = (unsigned long)atol(date->txt);
 		if (duration)
@@ -1024,8 +994,8 @@ static struct VMail *vmsRead(ezxml_t vmail)
 	hashid = ezxml_child(vmail, "hashid");
 	deleted = ezxml_child(vmail, "deleted");
 	toDelete = ezxml_child(vmail, "todelete");
-//	abidP = ezxml_child(vmail, "abid");
-//	recordidP = ezxml_child(vmail, "recordid");
+	//	abidP = ezxml_child(vmail, "abid");
+	//	recordidP = ezxml_child(vmail, "recordid");
 	
 	//check for all the required tags within <vm>
 	if (!status || !date || !vmsid || !userid || !direction 
@@ -1042,10 +1012,10 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		memset(p, 0, sizeof(struct VMail));
 		strcpy(p->hashid, hashid->txt);
 		strcpy(p->vmsid, vmsid->txt);
-/*		if (abidP)
-			p->addressUId = (unsigned long)atol(abidP->txt);
-		if (recordidP)
-			p->recordID = (unsigned long)atol(recordidP->txt); */
+		/*		if (abidP)
+		 p->addressUId = (unsigned long)atol(abidP->txt);
+		 if (recordidP)
+		 p->recordID = (unsigned long)atol(recordidP->txt); */
 		//make this 'starred', this is fresh mail
 		
 		if(listVMails)
@@ -1095,13 +1065,11 @@ static int vmsWrite(FILE *pf, struct VMail *p)
 	if (p->deleted)
 		return 0;
 	
-
-/*	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
-			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->addressUId,p->recordID); */
+	/*	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
+	 (unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->addressUId,p->recordID); */
 	
 	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir>",
 			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in");
-	
 	
 	if (p->deleted)
 		fprintf(pf, "<deleted>1</deleted>");
@@ -1205,8 +1173,8 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	p->date = (time_t)time;
 	p->direction = direction;
 	p->status = status;
-//	p->addressUId = laddressUId;
-//	p->recordID = lrecordID;
+	//	p->addressUId = laddressUId;
+	//	p->recordID = lrecordID;
 	//add to the head of the list
 	if (!listVMails)
 		listVMails = p;
@@ -1222,8 +1190,7 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 static void vmsUpload(struct VMail *v)
 {
 	char	key[100], *strxml;
-	char *buffer=0;
-	unsigned char g[10], b64[10];
+	unsigned char g[10], b64[10], buffer[10000];
 	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
@@ -1280,12 +1247,11 @@ static void vmsUpload(struct VMail *v)
 		printf("failed to upload");
 		return;
 	}
-	buffer = malloc(MAX_READ_SIZE);
-	length = fread(buffer, 1, MAX_READ_SIZE, pfIn);
+	
+	length = fread(buffer, 1, sizeof(buffer), pfIn);
 	fclose(pfIn);
 	if (length < 40){
 		alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
-		free(buffer);
 		return;
 	}
 	buffer[length] = 0;
@@ -1317,8 +1283,6 @@ static void vmsUpload(struct VMail *v)
 			ezxml_free(xml);
 		}
 	}
-	if(buffer)
-		free(buffer);
 	unlink(requestfile);
 	unlink(responsefile);
 }
@@ -2035,7 +1999,7 @@ void profileMerge(){
 static void profileGetKey()
 {
 	char	key[100], *strxml;
-	unsigned char *buffer=0;
+	unsigned char buffer[10000];
 	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
@@ -2070,8 +2034,7 @@ static void profileGetKey()
 		return;
 	}
 	
-	buffer = malloc(MAX_READ_SIZE);
-	length = fread(buffer, 1, MAX_READ_SIZE, pfIn);
+	length = fread(buffer, 1, sizeof(buffer), pfIn);
 	fclose(pfIn);
 	buffer[length] = 0;
 	
@@ -2089,8 +2052,6 @@ static void profileGetKey()
 			ezxml_free(xml);
 		}
 	}
-	if(buffer)
-		free(buffer);
 	unlink(requestfile);
 	unlink(responsefile);
 }
@@ -2309,7 +2270,7 @@ THREAD_PROC profileDownload(void *extras)
 		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
 		//return;
 	}
-	//printf("%s",pathUpload);
+	//    printf("%s",pathUpload);
 	timeFinished = ticks();
 	timeTaken = (timeFinished - timeStart);
 	setBandwidth(timeTaken,byteCount);
@@ -2527,7 +2488,7 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 			
 		}
 		resultCharP = NormalizeNumber(comaSepCharP,2);
-		//vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT,laddressUId,lrecordID);
+	    //vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT,laddressUId,lrecordID);
 		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
 		free(resultCharP);
 		comaSepCharP = terminateCharP;

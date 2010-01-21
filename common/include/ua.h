@@ -1,24 +1,3 @@
-/**
- Copyright 2009,2010 Geodesic, <http://www.geodesic.com/>
- 
- Spokn SIP-VoIP for iPhone and iPod Touch.
- 
- This file is part of Spokn iphone.
- 
- Spokn iphone is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- Spokn iphone is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
- 
- You should have received a copy of the GNU General Public License
- along with Spokn iphone.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #ifndef UAREST_DEFINED
 #define UAREST_DEFINED
 #ifdef __cplusplus
@@ -191,7 +170,7 @@ extern "C" {
 	
 	
 	void vmsLoad();
-//	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID);
+	//	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID);
 	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
 	void vmsDelete(struct VMail *p);
 	void vmsSave();
@@ -209,7 +188,7 @@ extern "C" {
 #define ALERT_VMAILERROR 101
 	//Handler for server-sent messages
 #define ALERT_SERVERMSG	102
-#define ALERT_HOSTNOTFOUND 110	
+#define ALERT_HOSTNOTFOUND 110
 	
 	//Seperator for href & message, sent by server.
 #define SEPARATOR '|'
@@ -333,10 +312,10 @@ extern "C" {
 	char *NormalizeNumber(char *lnoCharP,int type);
 	char *NormalizeBoth(char *lnoCharP);
 	int validateNo(char *numberP);
-
+	
 	//for voip quality
 	void setBandwidth(unsigned long timeTaken,int byteCount);
-
+	
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus
