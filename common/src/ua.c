@@ -15,6 +15,7 @@
 #include <ezxml.h>
 #include <ua.h>
 #include "ltpandsip.h"
+#define MAX_SIZE_DATA 10000
 //struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
 // this is the single object that is the instance of the ltp stack for the user agent
 struct ltpStack *pstack;
@@ -222,9 +223,17 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 {
 	FILE	*pf;
 	SOCKET	sock;
-	char	data[10000], header[1000];
+	
 	struct	sockaddr_in	addr;
 	int	byteCount = 0, isChunked = 1, contentLength = 0, ret, length;
+#ifdef MAX_SIZE_DATA
+	char	*data=0, header[1000];
+	
+#else
+	char	data[10000], header[1000];
+#endif
+	
+	
 	
 	pf = fopen(requestfile, "rb");
 	if (!pf)
@@ -260,11 +269,21 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	pf = fopen(requestfile, "rb");
 	if (!pf)
 		return 0;
+#ifdef MAX_SIZE_DATA
+	data = malloc(MAX_SIZE_DATA+10);
+	memset(data,0,MAX_SIZE_DATA+10);
+	while((ret = fread(data, 1, MAX_SIZE_DATA, pf)) > 0){
+		send(sock, data, ret, 0);
+		byteCount += ret;
+	}
 	
+
+	#else
 	while((ret = fread(data, 1, sizeof(data), pf)) > 0){
 		send(sock, data, ret, 0);
 		byteCount += ret;
 	}
+	#endif
 	fclose(pf);
 	
 	//read the headers
@@ -272,7 +291,13 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	//Add/Delete contact to work.
 	isChunked = 0;
 	while (1){
+		#ifdef MAX_SIZE_DATA
+		int length = readNetLine(sock, data, MAX_SIZE_DATA);
+
+		#else
 		int length = readNetLine(sock, data, sizeof(data));
+
+		#endif
 		byteCount += length;
 		if (length <= 0)
 			break;
@@ -286,14 +311,26 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	pf = fopen(responsefile, "w");
 	
 	if (!pf)
+	{	
+		#ifdef MAX_SIZE_DATA
+			if(data)
+				free(data);
+		#endif	
 		return 0;
-	
+	}
 	//read the body 
 	while (1) {
 		if (isChunked){
 			int count;
 			
-			length = readNetLine(sock, data, sizeof(data));
+		#ifdef MAX_SIZE_DATA
+					 length = readNetLine(sock, data, MAX_SIZE_DATA);
+					
+		#else
+					 length = readNetLine(sock, data, sizeof(data));
+					
+		#endif
+			
 			if (length <= 0)
 				break;
 			byteCount += length;
@@ -303,7 +340,11 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 			
 			//read the chunk in multiple calls to read
 			while(count){
+			#ifdef MAX_SIZE_DATA 
+				length = recv(sock, data, (count > MAX_SIZE_DATA) ? MAX_SIZE_DATA : count, 0);
+			#else
 				length = recv(sock, data, count > sizeof(data) ? sizeof(data) : count, 0);
+			#endif	
 				if (length <= 0) //crap!! the socket closed
 					goto end;
 				byteCount += length;
@@ -320,7 +361,12 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 		}
 		else{ // read it in fixed blocks of data
 			while (1){
+				#ifdef MAX_SIZE_DATA 
+				length = recv(sock, data, MAX_SIZE_DATA, 0);
+				#else
 				length = recv(sock, data, sizeof(data), 0);
+
+				#endif	
 				if (length > 0)
 					fwrite(data, length, 1, pf);
 				else 
@@ -331,6 +377,10 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	}
 end:
 	fclose(pf); // close the download.xml handle
+#ifdef MAX_SIZE_DATA
+	if(data)
+		free(data);
+#endif	
 	return byteCount;
 }
 
@@ -1190,7 +1240,12 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 static void vmsUpload(struct VMail *v)
 {
 	char	key[100], *strxml;
+#ifdef MAX_SIZE_DATA
+	unsigned char g[10], b64[10], *buffer=0;
+#else
 	unsigned char g[10], b64[10], buffer[10000];
+#endif
+	
 	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
@@ -1247,8 +1302,14 @@ static void vmsUpload(struct VMail *v)
 		printf("failed to upload");
 		return;
 	}
-	
-	length = fread(buffer, 1, sizeof(buffer), pfIn);
+	#ifdef MAX_SIZE_DATA
+	buffer = malloc(MAX_SIZE_DATA+10);
+	memset(buffer,0,MAX_SIZE_DATA+10);
+		length = fread(buffer, 1, MAX_SIZE_DATA, pfIn);
+	#else
+		length = fread(buffer, 1, sizeof(buffer), pfIn);
+	#endif
+
 	fclose(pfIn);
 	if (length < 40){
 		alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
@@ -1285,6 +1346,13 @@ static void vmsUpload(struct VMail *v)
 	}
 	unlink(requestfile);
 	unlink(responsefile);
+#ifdef MAX_SIZE_DATA
+
+	if(buffer)
+	{
+		free(buffer);
+	}
+#endif
 }
 
 static void vmsUploadAll()
@@ -1999,7 +2067,12 @@ void profileMerge(){
 static void profileGetKey()
 {
 	char	key[100], *strxml;
+#ifdef MAX_SIZE_DATA
+	unsigned  char *buffer=0;
+#else
 	unsigned char buffer[10000];
+
+#endif
 	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
@@ -2034,7 +2107,14 @@ static void profileGetKey()
 		return;
 	}
 	
+	#ifdef MAX_SIZE_DATA
+		buffer = malloc(MAX_SIZE_DATA+10);
+		memset(buffer,0,MAX_SIZE_DATA);
+		length = fread(buffer, 1,MAX_SIZE_DATA , pfIn);
+	#else
 	length = fread(buffer, 1, sizeof(buffer), pfIn);
+	#endif
+	
 	fclose(pfIn);
 	buffer[length] = 0;
 	
@@ -2054,6 +2134,10 @@ static void profileGetKey()
 	}
 	unlink(requestfile);
 	unlink(responsefile);
+#ifdef MAX_SIZE_DATA	
+	if(buffer)
+		free(buffer);
+#endif
 }
 
 //the extras are char* snippets of xml has to be sent to the server in addition to 
