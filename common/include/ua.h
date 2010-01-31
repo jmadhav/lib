@@ -315,7 +315,8 @@ extern "C" {
 	
 	//for voip quality
 	void setBandwidth(unsigned long timeTaken,int byteCount);
-	
+	int validName(char*inP);
+
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus

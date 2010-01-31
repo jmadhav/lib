@@ -2158,7 +2158,7 @@ THREAD_PROC profileDownload(void *extras)
 		return 0;
 	else 
 		busy = 1;
-	
+	printf("\n actual sync start");
 	profileGetKey();
 	
 	//add by mukesh for bug id 20359
@@ -3089,5 +3089,26 @@ char *NormalizeNumber(char *lnoCharP,int type)
 	
 	
 }
+int validName(char*inP)
+{
+	int validB = 0;
+	if(inP==0)
+	{
+		return 0;
+	}
+	while(*inP)
+	{
+		if(*inP!=32 && *inP!='\t')
+		{
+			
+			validB = 1;
+		}
+		inP++;
+	}
+	return validB;
+	
+	
 
+
+}
 #endif
