@@ -298,6 +298,11 @@ extern "C" {
 	char *getCreditsPage();
 	void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP);
 	char *getOldForwardNo();
+	int resetMissCallCount();
+	void saveMissCall();
+	void loadMissCall();
+	int getMissCount();
+	int incriseMissCallCount();
 	
 #endif		
 	

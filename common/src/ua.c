@@ -2858,7 +2858,7 @@ void newVMailCountdecrease()
 }
 void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 {
-	if(forwardB)
+	if(forwardB==1)
 	{	
 		if(forwardNoCharP)
 		{	
@@ -2875,7 +2875,8 @@ void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 	}
 	else
 	{
-		//fwdnumber[0]=0;
+		if(forwardB==2)//mean delete previous forward no
+		fwdnumber[0]=0;
 		settingType = 2;
 	}
 }
@@ -3039,6 +3040,13 @@ char *NormalizeNumber(char *lnoCharP,int type)
 		
 		int i = 0;
 		tmpCharP = lnoCharP;
+		if(type==2)
+		{
+			if(strstr(lnoCharP,"@")==0)//if not email
+			{
+				type = 0;
+			}
+		}
 		resultCharP = malloc(strlen(tmpCharP)+2);
 		while(*tmpCharP)
 		{
@@ -3069,7 +3077,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 			if(type==0)//number for call
 			{
 				
-				if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '.' || *tmpCharP == ',' )
+				if (*tmpCharP == ' ' || *tmpCharP == '(' || *tmpCharP == ')' || *tmpCharP == '/' || *tmpCharP == '.' || *tmpCharP == ',' || *tmpCharP == '-'  )
 				{
 					tmpCharP++;
 					continue;
@@ -3111,4 +3119,68 @@ int validName(char*inP)
 
 
 }
+long missCallCount;
+int resetMissCallCount()
+{
+	if(missCallCount==0)
+	{
+		return 1;
+	}
+		
+	missCallCount = 0;
+	return 0;
+
+}
+int getMissCount()
+{
+	return missCallCount;
+}
+int incriseMissCallCount()
+{
+	
+	missCallCount++;
+	return missCallCount;
+
+}
+void loadMissCall()
+{
+	char pathname[MAX_PATH];
+	FILE *fp;
+#ifdef _MACOS_
+	sprintf(pathname, "%s/misscallcount.txt", myFolder);
+	
+#else
+	sprintf(pathname, "%s\\misscallcount.txt", myFolder);
+	
+#endif
+	missCallCount = 0;
+	fp = fopen(pathname,"rb");
+	if(fp)
+	{
+		fread(&missCallCount,1,sizeof(long),fp);
+		fclose(fp);
+	}
+	
+}
+void saveMissCall()
+{
+	char pathname[MAX_PATH];
+	FILE *fp;
+#ifdef _MACOS_
+	sprintf(pathname, "%s/misscallcount.txt", myFolder);
+	
+#else
+	sprintf(pathname, "%s\\misscallcount.txt", myFolder);
+	
+#endif
+	
+	fp = fopen(pathname,"wb");
+	if(fp)
+	{
+		fwrite(&missCallCount,1,sizeof(long),fp);
+		fclose(fp);
+	}
+	
+}
+
 #endif
