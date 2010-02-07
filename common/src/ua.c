@@ -477,10 +477,7 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 	struct	CDR	*p;
 	FILE	*pf;
 	int i;
-	if(time==0)
-	{
-		//printf("\nua  time error");
-	}
+	
 	if (listCDRs){
 		// compare the last call with this 
 		if (!strcmp(listCDRs->userid, userid) && listCDRs->direction == direction
@@ -586,7 +583,7 @@ void cdrLoad() {
 	
 	index = 0;
 	while (fgets(line, 999, pf)){
-		//printf("\ncreates");
+		
 		cdr = ezxml_parse_str(line, strlen(line));
 		if (!cdr)
 			continue;
@@ -602,7 +599,7 @@ void cdrLoad() {
 		p = (struct CDR *) malloc(sizeof(struct CDR));
 		if (!p){
 			fclose(pf);
-			//printf("\ndestroy 1");
+			
 			ezxml_free(cdr);
 			return;
 		}
@@ -627,7 +624,7 @@ void cdrLoad() {
 		//add to the linked list
 		p->next = listCDRs;
 		listCDRs = p;
-		//printf("\ndestroy 2");
+		
 		ezxml_free(cdr);
 		
 	}
@@ -1299,8 +1296,7 @@ static void vmsUpload(struct VMail *v)
 	pfIn = fopen(responsefile, "rb");
 	if (!pfIn){
 		alert(-1, ALERT_VMAILERROR, "Failed to upload.");
-		printf("failed to upload");
-		return;
+				return;
 	}
 	#ifdef MAX_SIZE_DATA
 	buffer = malloc(MAX_SIZE_DATA+10);
@@ -1362,7 +1358,7 @@ static void vmsUploadAll()
 	for (p = listVMails; p; p = p->next){
 		if (p->direction == VMAIL_OUT && p->status == VMAIL_NEW && !p->deleted && !p->toDelete)
 		{	
-			////printf("\nvmail sent to %s",p->userid);
+			
 			vmsUpload(p);
 		}	
 	}
@@ -1724,7 +1720,6 @@ void profileLoad()
 	fwd = ezxml_child(xml, "fwd");
 	if (fwd)
 	{
-		printf("\n test 12345");
 		strcpy(fwdnumber, fwd->txt);
 		strcpy(oldForward,fwdnumber);
 	}
@@ -1928,7 +1923,6 @@ void profileMerge(){
 	if (fwd)
 	{	
 		//	strcpy(fwdnumber, fwd->txt);
-		printf("\n test111 12345");
 		strcpy(fwdnumber, fwd->txt);
 		strcpy(oldForward,fwdnumber);
 		
@@ -2158,7 +2152,7 @@ THREAD_PROC profileDownload(void *extras)
 		return 0;
 	else 
 		busy = 1;
-	printf("\n actual sync start");
+	
 	profileGetKey();
 	
 	//add by mukesh for bug id 20359
@@ -2354,7 +2348,6 @@ THREAD_PROC profileDownload(void *extras)
 		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
 		//return;
 	}
-	//    printf("%s",pathUpload);
 	timeFinished = ticks();
 	timeTaken = (timeFinished - timeStart);
 	setBandwidth(timeTaken,byteCount);
@@ -2377,7 +2370,7 @@ THREAD_PROC profileDownload(void *extras)
 
 void profileResync()
 {
-	printf("\n profile resync called");
+	
 	if((strcmp(uaUserid ,pstack->ltpUserid)!=0))
 	{
 		strcpy(uaUserid ,pstack->ltpUserid);
@@ -2865,10 +2858,8 @@ void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 			
 			char *newNoP;
 			newNoP = NormalizeNumber(forwardNoCharP,1);
-			printf("\n %s",newNoP);
 			strncpy(fwdnumber,newNoP,sizeof(fwdnumber)-2);
 			free(newNoP);
-			//printf("forward no %s",fwdnumber);
 			oldSetting = -1;
 			settingType = 3;
 		}	
@@ -2956,7 +2947,7 @@ char *getAccountPage()
 	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 #else
 	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
-	//printf("\ngetAccountPage =  %s",returnCharP);
+	
 #endif	
 	
 	return returnCharP;
@@ -2977,7 +2968,7 @@ char *getCreditsPage()
 	
 #endif	
 	
-	//printf("\ngetCreditsPage =  %s",returnCharP);
+	
 	return returnCharP;
 }
 void vmailDeleteAll()
@@ -3090,7 +3081,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 			tmpCharP++;
 		}
 		resultCharP[i++] = 0;
-		//printf("\n %s",resultCharP);
+		
 	}
 	
 	return resultCharP;
