@@ -4,7 +4,7 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 #include "windows.h"
-static char     ident[] = "$Header: /home/kbs/jutta/src/gsm/gsm-1.0/src/RCS/gsm_create.c,v 1.1 1992/10/28 00:15:50 jutta Exp $";
+//static char     ident[] = "$Header: /home/kbs/jutta/src/gsm/gsm-1.0/src/RCS/gsm_create.c,v 1.1 1992/10/28 00:15:50 jutta Exp $";
 
 #include        "config.h"
 

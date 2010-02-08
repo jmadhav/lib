@@ -121,7 +121,7 @@ void httpCookie(char *cookie)
 
 //encode a url to escape certain characters
 void urlencode(char *s, char *t) {
-	char *p;
+	unsigned char *p;
 	char *tp;
 	
 	if(t == NULL) {
@@ -131,7 +131,7 @@ void urlencode(char *s, char *t) {
 	
 	tp=t;
 	
-	for(p=s; *p; p++) {
+	for(p=(unsigned char*)s; *p; p++) {
 		
 		if((*p > 0x00 && *p < ',') ||
 		   (*p > '9' && *p < 'A') ||
@@ -1031,7 +1031,7 @@ static void vmsSort()
 static struct VMail *vmsRead(ezxml_t vmail)
 {
 	struct VMail *p;
-	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete,abidP,recordidP;
+	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete;
 	
 	date = ezxml_child(vmail, "dt");
 	vmsid = ezxml_child(vmail, "id");
@@ -1196,8 +1196,7 @@ void vmsDelete(struct VMail *p)
 struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
 {
 	struct	VMail	*p=NULL;
-	int		isNew=1;
-#ifndef _FORWARD_VMS_
+	#ifndef _FORWARD_VMS_
 	if (vmsid)
 		p = vmsById(vmsid);
 	
@@ -1313,7 +1312,7 @@ static void vmsUpload(struct VMail *v)
 	}
 	buffer[length] = 0;
 	
-	strxml = strstr(buffer, "<?xml");
+	strxml = strstr((char*)buffer, "<?xml");
 	
 	//todo check that the response is not 'o' and store the returned value as the vmsid
 	if (strxml){
@@ -1367,7 +1366,7 @@ static void vmsUploadAll()
 static void vmsDownload()
 {
 	char	data[1000], key[64], header[2000];
-	int		nMails = 0;
+	
 	char	pathname[MAX_PATH];
 	struct VMail	*q;
 	struct VMail	*p;
@@ -1518,7 +1517,7 @@ void profileSave(){
 	//Tasvir Rohila - 25/02/2009 - bug#17212.
 	//Encrypt the password before saving to profile.xml
 	memset(szData, '\0', sizeof(szData));
-	strcpy(szData,pstack->ltpPassword);
+	strcpy((char*)szData,pstack->ltpPassword);
 	
 	Blowfish_Init (&ctx, (unsigned char*)HASHKEY, HASHKEY_LENGTH);
 	
@@ -1540,7 +1539,7 @@ void profileSave(){
 		szBuffIn[1]=szData[i+1];
 		szBuffIn[2]=szData[i+2];
 		encodeblock(szBuffIn, szBuffOut, 3);
-		strcat(szEncPass, szBuffOut);
+		strcat((char*)szEncPass, (char*)szBuffOut);
 	}
 	
 	fputs("<?xml version=\"1.0\"?>\n", pf);
@@ -1682,7 +1681,7 @@ void profileLoad()
 		len = strlen(password->txt);
 		if(len)
 		{
-			char *p = szData;
+			char *p = (char*)szData;
 			for (i=0; i<len; i+=4)
 			{
 				for (j=0;j<4;j++)
@@ -1703,7 +1702,7 @@ void profileLoad()
 			for (i = 0; i < 32; i+=8)
 				Blowfish_Decrypt(&ctx, (unsigned long *) (szData+i), (unsigned long *)(szData + i + 4));
 			
-			strcpy(pstack->ltpPassword, szData); 
+			strcpy(pstack->ltpPassword, (char*)szData); 
 		}
 	}
 	
@@ -1867,9 +1866,9 @@ void profileMerge(){
 	{
 		phref = NULL;
 		palert = NULL;
-		if(palert = ezxml_attr(xmlalert, "alert"))
+		if(palert =(char*) ezxml_attr(xmlalert, "alert"))
 		{
-			phref = ezxml_attr(xmlalert, "href");
+			phref = (char*)ezxml_attr(xmlalert, "href");
 			sprintf(stralert, "%s%c%s", phref ? phref : "", SEPARATOR, palert );
 		}
 	}
@@ -2067,7 +2066,7 @@ static void profileGetKey()
 	unsigned char buffer[10000];
 
 #endif
-	char	requestfile[MAX_PATH], responsefile[MAX_PATH], path[MAX_PATH];
+	char	requestfile[MAX_PATH], responsefile[MAX_PATH];
 	FILE	*pfIn, *pfOut;
 	int		length, byteCount;
 	
@@ -2112,10 +2111,10 @@ static void profileGetKey()
 	fclose(pfIn);
 	buffer[length] = 0;
 	
-	strxml = strstr(buffer, "<?xml");
+	strxml = strstr((char*)buffer, "<?xml");
 	
 	if (strxml){
-		ezxml_t xml, status, key;
+		ezxml_t xml,  key;
 		
 		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
 			if (key = ezxml_child(xml, "challenge")){
@@ -2541,7 +2540,7 @@ int sendVms(char *remoteParty,char *vmsfileNameP)
 	do
 	{	
 		length = fread(buff,1,100,fp);
-		MD5Update(&md5, buff, length, pstack->bigEndian);
+		MD5Update(&md5, (unsigned char const  *)buff, length, pstack->bigEndian);
 	}while(length==100);
 	MD5Final(digest, &md5);
 	md5ToHex(digest, vmsid);
