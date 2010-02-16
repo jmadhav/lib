@@ -16,6 +16,7 @@
 #include <ua.h>
 #include "ltpandsip.h"
 #define MAX_SIZE_DATA 10000
+int forwardStartB;
 //struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
 // this is the single object that is the instance of the ltp stack for the user agent
 struct ltpStack *pstack;
@@ -2146,221 +2147,228 @@ THREAD_PROC profileDownload(void *extras)
 	struct VMail *vm;
 	int	byteCount = 0;
 	unsigned long timeStart, timeFinished, timeTaken;
-    
-	if (busy > 0|| !strlen(pstack->ltpUserid))
+    	if (busy > 0|| !strlen(pstack->ltpUserid))
 		return 0;
 	else 
 		busy = 1;
+	while(1)
+	{	
+		forwardStartB = 0;
+		profileGetKey();
 	
-	profileGetKey();
-	
-	//add by mukesh for bug id 20359
-	threadStatus = ThreadStart ;
-	httpCookie(key);
-	
-	//prepare the xml upload
-#ifdef _MACOS_
-	sprintf(pathUpload, "%s/upload.xml", myFolder);
-#else
-	sprintf(pathUpload, "%s\\upload.xml", myFolder);
-#endif
-	
-	pfOut = fopen(pathUpload, "wb");
-	if (!pfOut){
-		threadStatus = ThreadNotStart ;
-		busy = 0;
-		return 0;
-	}
-	//Tasvir Rohila - 10-04-2009 - bug#19095
-	//To check for upgrades or any other notification from the server, send <useragent> to userxml.cgi
-	fprintf(pfOut,  
-			"<?xml version=\"1.0\"?>\n"
-			"<profile>\n"
-			" <u>%s</u>\n"
-			" <key>%s</key> \n"
-			" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
-			" <query>contacts</query> \n"
-			" <query>vms</query> \n"
-			" <since>%u</since> \n", 
-			pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
-	
-	/*if (extras){
-	 int	param = (int)extras;*/
-	if((settingType != -1) && (settingType != oldSetting))
-	{
-		fprintf(pfOut, " <rd>%d</rd>\n", settingType);
-		switch(settingType)
-		{
-			case REDIRECT2VMS:
-				break;
-			case REDIRECT2PSTN:
-				fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
-				break;
-			case REDIRECT2ONLINE:
-				break;
-			case REDIRECTBOTH:
-				fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
-				break;
-		}
-	}
-	
-	/*}*/
-	
-	//check for new contacts
-	ndirty = 0;
-	pc=getContactsList();
-	while(pc)
-	{
-		if(pc->dirty && !pc->id)
-		{
-			ndirty=TRUE;
-			pc=NULL;
-		}
-		else
-			pc=pc->next;
-	}
-	
-	if (ndirty){
-		fprintf(pfOut, "<add>\n");
-		for (pc = getContactsList(); pc; pc = pc->next)
-			if (pc->dirty && !pc->id)
-				fprintf(pfOut, 		
-						"<vc><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp><token>%x</token></vc>\n", 
-						pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid,(unsigned int)pc);
-		fprintf(pfOut, "</add>\n");
-	}
-	
-	
-	//check for updated contacts
-	//existing contacts have an id and isDeleted is 0
-	ndirty = 0;
-	pc=getContactsList();
-	while(pc)
-	{
-		if(pc->dirty && pc->id && !pc->isDeleted)
-		{
-			ndirty=TRUE;
-			pc=NULL;
-		}
-		else
-			pc=pc->next;
-	}
-	/*for (pc = getContactsList(); pc; pc = pc->next)
-	 if (pc->dirty && pc->id && !pc->isDeleted)
-	 ndirty++;*/
-	for (vm = listVMails; vm; vm = vm->next)
-		if (vm->dirty)
-			ndirty++;
-	if (ndirty){
-		fprintf(pfOut, "<mod>\n");
-		for (pc = getContactsList(); pc; pc = pc->next)
-			if (pc->dirty && pc->id && !pc->isDeleted)
-				fprintf(pfOut,
-						"<vc><id>%u</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp></vc>\n",
-						(unsigned long)pc->id, pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid);
+		//add by mukesh for bug id 20359
+		threadStatus = ThreadStart ;
+		httpCookie(key);
 		
-		//Kaustubh 19 June 09. Change for Sending the vmail status to Server: vmail Read Unread issue
+		//prepare the xml upload
+	#ifdef _MACOS_
+		sprintf(pathUpload, "%s/upload.xml", myFolder);
+	#else
+		sprintf(pathUpload, "%s\\upload.xml", myFolder);
+	#endif
+		
+		pfOut = fopen(pathUpload, "wb");
+		if (!pfOut){
+			threadStatus = ThreadNotStart ;
+			busy = 0;
+			return 0;
+		}
+		//Tasvir Rohila - 10-04-2009 - bug#19095
+		//To check for upgrades or any other notification from the server, send <useragent> to userxml.cgi
+		fprintf(pfOut,  
+				"<?xml version=\"1.0\"?>\n"
+				"<profile>\n"
+				" <u>%s</u>\n"
+				" <key>%s</key> \n"
+				" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
+				" <query>contacts</query> \n"
+				" <query>vms</query> \n"
+				" <since>%u</since> \n", 
+				pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
+		
+		/*if (extras){
+		 int	param = (int)extras;*/
+		if((settingType != -1) && (settingType != oldSetting))
+		{
+			fprintf(pfOut, " <rd>%d</rd>\n", settingType);
+			switch(settingType)
+			{
+				case REDIRECT2VMS:
+					break;
+				case REDIRECT2PSTN:
+					fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
+					break;
+				case REDIRECT2ONLINE:
+					break;
+				case REDIRECTBOTH:
+					fprintf(pfOut, " <fwd>%s</fwd>\n", fwdnumber);
+					break;
+			}
+		}
+		
+		/*}*/
+		
+		//check for new contacts
+		ndirty = 0;
+		pc=getContactsList();
+		while(pc)
+		{
+			if(pc->dirty && !pc->id)
+			{
+				ndirty=TRUE;
+				pc=NULL;
+			}
+			else
+				pc=pc->next;
+		}
+		
+		if (ndirty){
+			fprintf(pfOut, "<add>\n");
+			for (pc = getContactsList(); pc; pc = pc->next)
+				if (pc->dirty && !pc->id)
+					fprintf(pfOut, 		
+							"<vc><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp><token>%x</token></vc>\n", 
+							pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid,(unsigned int)pc);
+			fprintf(pfOut, "</add>\n");
+		}
+		
+		
+		//check for updated contacts
+		//existing contacts have an id and isDeleted is 0
+		ndirty = 0;
+		pc=getContactsList();
+		while(pc)
+		{
+			if(pc->dirty && pc->id && !pc->isDeleted)
+			{
+				ndirty=TRUE;
+				pc=NULL;
+			}
+			else
+				pc=pc->next;
+		}
+		/*for (pc = getContactsList(); pc; pc = pc->next)
+		 if (pc->dirty && pc->id && !pc->isDeleted)
+		 ndirty++;*/
 		for (vm = listVMails; vm; vm = vm->next)
 			if (vm->dirty)
-			{
-				switch(vm->status)
+				ndirty++;
+		if (ndirty){
+			fprintf(pfOut, "<mod>\n");
+			for (pc = getContactsList(); pc; pc = pc->next)
+				if (pc->dirty && pc->id && !pc->isDeleted)
+					fprintf(pfOut,
+							"<vc><id>%u</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp></vc>\n",
+							(unsigned long)pc->id, pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid);
+			
+			//Kaustubh 19 June 09. Change for Sending the vmail status to Server: vmail Read Unread issue
+			for (vm = listVMails; vm; vm = vm->next)
+				if (vm->dirty)
 				{
-					case VMAIL_ACTIVE:	
-						fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"active");
-						break;
-					case VMAIL_DELIVERED:
-						fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"delivered");
-						break;
-					case VMAIL_FAILED:
-						fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"failed");
-						break;
+					switch(vm->status)
+					{
+						case VMAIL_ACTIVE:	
+							fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"active");
+							break;
+						case VMAIL_DELIVERED:
+							fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"delivered");
+							break;
+						case VMAIL_FAILED:
+							fprintf(pfOut,"<vm><id>%s</id><status>%s</status></vm>\n",vm->vmsid,"failed");
+							break;
+					}
 				}
-			}
-		fprintf(pfOut, "</mod>\n");
-	}
-	
-	//check for deleted contacts
-	//these contacts have an id and isDeleted is 1
-	ndirty = 0;
-	pc=getContactsList();
-	while(pc)
-	{
-		if(pc->dirty && pc->id && pc->isDeleted)
-		{
-			ndirty=TRUE;
-			pc=NULL;
+			fprintf(pfOut, "</mod>\n");
 		}
-		else
-			pc=pc->next;
-	}
-	
-	/*for (pc = getContactsList(); pc; pc = pc->next)
-	 if (pc->dirty && pc->id && pc->isDeleted)
-	 ndirty++;*/
-	
-	vm=listVMails;
-	/*while(vm)
-	 {
-	 if(vm->toDelete)
-	 {
-	 ndirty=TRUE;
-	 pc=NULL;
-	 }
-	 else
-	 {
-	 vm==vm->next;
-	 }
-	 }*/
-	
-	for (vm = listVMails; vm; vm = vm->next)
-		if (vm->toDelete)
-			ndirty++;
-	
-	if (ndirty){
-		fprintf(pfOut, "<del>\n");
-		for (pc = getContactsList(); pc; pc = pc->next)
-			if (pc->dirty && pc->id && pc->isDeleted)
-				fprintf(pfOut,
-						" <vc><id>%u</id></vc>\n",
-						(unsigned long)pc->id);
+		
+		//check for deleted contacts
+		//these contacts have an id and isDeleted is 1
+		ndirty = 0;
+		pc=getContactsList();
+		while(pc)
+		{
+			if(pc->dirty && pc->id && pc->isDeleted)
+			{
+				ndirty=TRUE;
+				pc=NULL;
+			}
+			else
+				pc=pc->next;
+		}
+		
+		/*for (pc = getContactsList(); pc; pc = pc->next)
+		 if (pc->dirty && pc->id && pc->isDeleted)
+		 ndirty++;*/
+		
+		vm=listVMails;
+		/*while(vm)
+		 {
+		 if(vm->toDelete)
+		 {
+		 ndirty=TRUE;
+		 pc=NULL;
+		 }
+		 else
+		 {
+		 vm==vm->next;
+		 }
+		 }*/
 		
 		for (vm = listVMails; vm; vm = vm->next)
 			if (vm->toDelete)
-				fprintf(pfOut, " <vm><id>%s</id></vm>\n", vm->vmsid);
-		fprintf(pfOut, "</del>\n");
+				ndirty++;
+		
+		if (ndirty){
+			fprintf(pfOut, "<del>\n");
+			for (pc = getContactsList(); pc; pc = pc->next)
+				if (pc->dirty && pc->id && pc->isDeleted)
+					fprintf(pfOut,
+							" <vc><id>%u</id></vc>\n",
+							(unsigned long)pc->id);
+			
+			for (vm = listVMails; vm; vm = vm->next)
+				if (vm->toDelete)
+					fprintf(pfOut, " <vm><id>%s</id></vm>\n", vm->vmsid);
+			fprintf(pfOut, "</del>\n");
+		}
+		
+		fprintf(pfOut, "</profile>\n");
+		fclose(pfOut);
+		
+		timeStart = ticks();
+	#ifdef _MACOS_
+		sprintf(pathDown, "%s/down.xml", myFolder);
+	#else
+		sprintf(pathDown, "%s\\down.xml", myFolder);
+	#endif
+		
+		
+		byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
+		if (!byteCount)
+		{
+			alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
+			//return;
+		}
+		timeFinished = ticks();
+		timeTaken = (timeFinished - timeStart);
+		setBandwidth(timeTaken,byteCount);
+		
+		profileMerge();
+		profileSave();
+		relistContacts();
+		refreshDisplay();
+		vmsUploadAll();
+		
+		vmsDownload();
+		vmsSort();
+		relistVMails();
+	
+		if(forwardStartB==0)//if forward no set after sync start
+		{
+			break;
+		}	
+		printf("\n forward on");
 	}
-	
-	fprintf(pfOut, "</profile>\n");
-	fclose(pfOut);
-	
-    timeStart = ticks();
-#ifdef _MACOS_
-	sprintf(pathDown, "%s/down.xml", myFolder);
-#else
-	sprintf(pathDown, "%s\\down.xml", myFolder);
-#endif
-	
-	
-	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
-	if (!byteCount)
-	{
-		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
-		//return;
-	}
-	timeFinished = ticks();
-	timeTaken = (timeFinished - timeStart);
-	setBandwidth(timeTaken,byteCount);
-	
-	profileMerge();
-	profileSave();
-	relistContacts();
-	refreshDisplay();
-	vmsUploadAll();
-	
-	vmsDownload();
-	vmsSort();
-	relistVMails();
-	
 	busy = 0;
 	//add by mukesh for bug id 20359
 	threadStatus = ThreadNotStart ;
@@ -2850,6 +2858,7 @@ void newVMailCountdecrease()
 }
 void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP)
 {
+	forwardStartB = 1;
 	if(forwardB==1)
 	{	
 		if(forwardNoCharP)
