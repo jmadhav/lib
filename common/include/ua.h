@@ -233,6 +233,7 @@ extern "C" {
 #define REFRESH_CONTACT 1	
 #define REFRESH_VMAIL   2	
 #define REFRESH_CALLLOG    3	
+#define REFRESH_ALL       4	
 #define USERNAME_RANGE  30
 #define PASSWORD_RANGE  30	
 	
@@ -321,7 +322,8 @@ extern "C" {
 	//for voip quality
 	void setBandwidth(unsigned long timeTaken,int byteCount);
 	int validName(char*inP);
-
+	int terminateThread();
+	void relistAll();
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus

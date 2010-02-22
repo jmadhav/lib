@@ -26,6 +26,7 @@ struct VMail *listVMails=NULL;
 
 static unsigned long	lastUpdate = 0;
 static int busy = 0;
+int terminateB;
 char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
 char mailServer[100], myTitle[200], fwdnumber[32], oldForward[33], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[200];
 int	redirect = REDIRECT2ONLINE;
@@ -2042,6 +2043,7 @@ void profileMerge(){
 	//TBD detect new voicemails and alert the user
 	if (newMails)
 	{
+		
 		alert(-1, ALERT_NEWVMAIL, NULL);
 	}
 	vmsSort();
@@ -2147,10 +2149,14 @@ THREAD_PROC profileDownload(void *extras)
 	struct VMail *vm;
 	int	byteCount = 0;
 	unsigned long timeStart, timeFinished, timeTaken;
-    	if (busy > 0|| !strlen(pstack->ltpUserid))
+   	if (busy > 0|| !strlen(pstack->ltpUserid))
+	{	
 		return 0;
+	}	
 	else 
+	{	
 		busy = 1;
+	}	
 	while(1)
 	{	
 		forwardStartB = 0;
@@ -2171,6 +2177,7 @@ THREAD_PROC profileDownload(void *extras)
 		if (!pfOut){
 			threadStatus = ThreadNotStart ;
 			busy = 0;
+			
 			return 0;
 		}
 		//Tasvir Rohila - 10-04-2009 - bug#19095
@@ -2335,7 +2342,8 @@ THREAD_PROC profileDownload(void *extras)
 		fprintf(pfOut, "</profile>\n");
 		fclose(pfOut);
 		
-		timeStart = ticks();
+	
+	timeStart = ticks();
 	#ifdef _MACOS_
 		sprintf(pathDown, "%s/down.xml", myFolder);
 	#else
@@ -2352,26 +2360,37 @@ THREAD_PROC profileDownload(void *extras)
 		timeFinished = ticks();
 		timeTaken = (timeFinished - timeStart);
 		setBandwidth(timeTaken,byteCount);
+		if(terminateB==0)
+		{	
+			profileMerge();
+			profileSave();
+			relistContacts();
+			refreshDisplay();
+			vmsUploadAll();
 		
-		profileMerge();
-		profileSave();
-		relistContacts();
-		refreshDisplay();
-		vmsUploadAll();
+			vmsDownload();
+			vmsSort();
+			relistVMails();
+			relistAll();
+			if(forwardStartB==0)//if forward no set after sync start
+			{
+				break;
+			}	
 		
-		vmsDownload();
-		vmsSort();
-		relistVMails();
-	
-		if(forwardStartB==0)//if forward no set after sync start
-		{
-			break;
-		}	
-		printf("\n forward on");
+		}
+		break;
 	}
 	busy = 0;
+	
 	//add by mukesh for bug id 20359
 	threadStatus = ThreadNotStart ;
+	if(terminateB)
+	{
+		free(pstack);
+		pstack = 0;
+	}
+
+
 	return 0;
 }
 
@@ -2478,6 +2497,11 @@ void  createFolders()
 	uaCallBackObject.creatorDirectoryFunPtr(uaCallBackObject.uData,newFolder);
 	free(newFolder);
 	free(myPath);
+}
+void relistAll()
+{
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,REFRESH_ALL,(unsigned long)uaCallBackObject.uData,0);
+
 }
 void relistVMails()
 {
@@ -2954,8 +2978,7 @@ char *getAccountPage()
 	
 	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 #else
-	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
-	
+	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/rechargeaccount.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 #endif	
 	
 	return returnCharP;
@@ -3181,5 +3204,9 @@ void saveMissCall()
 	}
 	
 }
-
+int terminateThread()
+{
+	terminateB = 1;
+	return busy;
+}
 #endif
