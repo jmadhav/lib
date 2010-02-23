@@ -2501,6 +2501,8 @@ void  createFolders()
 void relistAll()
 {
 	uaCallBackObject.alertNotifyP(UA_ALERT,0,REFRESH_ALL,(unsigned long)uaCallBackObject.uData,0);
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,LOAD_ADDRESS_BOOK,(unsigned long)uaCallBackObject.uData,0);
+	
 
 }
 void relistVMails()

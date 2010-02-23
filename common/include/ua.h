@@ -234,6 +234,7 @@ extern "C" {
 #define REFRESH_VMAIL   2	
 #define REFRESH_CALLLOG    3	
 #define REFRESH_ALL       4	
+#define LOAD_ADDRESS_BOOK 5	
 #define USERNAME_RANGE  30
 #define PASSWORD_RANGE  30	
 	
