@@ -37,6 +37,9 @@ int gnewMails;
 //variable to set the type for incoming call termination setting
 int settingType = -1;  //not assigned state yet
 int oldSetting = -1;
+#ifdef _MACOS_
+int uniqueIDContact,uniqueIDVmail,uniqueIDCalllog;
+#endif
 
 //add by mukesh 20359
 ThreadStatusEnum threadStatus;
@@ -492,6 +495,7 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 		return;
 	
 	memset(p, 0, sizeof(struct CDR));
+	p->uniqueID = ++uniqueIDCalllog;
 	//Kaustubh Deshpande 21114 fixed-Junk characters are displayed in call list on calling a long number.
 	//the userid has limit of 32, and we were not checking the limit earlier. Now a check is added for that.
 	for (i=0;i<31;i++)
@@ -610,6 +614,7 @@ void cdrLoad() {
 			return;
 		}
 		memset(p, 0, sizeof(struct CDR));
+		p->uniqueID = ++uniqueIDCalllog;
 		if (abidP)
 			p->recordUId = (unsigned long)atol(abidP->txt);
 		if (recordidP)
@@ -832,8 +837,9 @@ struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, c
 		}
 	
 	q = (struct AddressBook *)malloc(sizeof(struct AddressBook));
-	memset(q, 0, sizeof(struct AddressBook));
 	
+	memset(q, 0, sizeof(struct AddressBook));
+	q->uniqueID = ++uniqueIDContact;
 	q->id = id;
 	
 	strcpy(q->title, title);
@@ -859,6 +865,7 @@ struct AddressBook *addContact(char *title, char *mobile, char *home, char *busi
 	
 	q = (struct AddressBook *)malloc(sizeof(struct AddressBook));
 	memset(q, 0, sizeof(struct AddressBook));
+	q->uniqueID = ++uniqueIDContact;
 	
 	strcpy(q->title, title);
 	strcpy(q->mobile, mobile);
@@ -1063,6 +1070,7 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		if (!p)
 			return NULL;
 		memset(p, 0, sizeof(struct VMail));
+		p->uniqueID = ++uniqueIDVmail;
 		strcpy(p->hashid, hashid->txt);
 		strcpy(p->vmsid, vmsid->txt);
 		if (abidP)
@@ -1221,7 +1229,7 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	if (!p)
 		return NULL;
 	memset(p, 0, sizeof(struct VMail));
-	
+	p->uniqueID = ++uniqueIDVmail;
 	strcpy(p->userid, userid);
 	if (vmsid)
 		strcpy(p->vmsid, vmsid);
@@ -1651,6 +1659,7 @@ void profileLoad()
 	{
 		listContacts = (struct AddressBook *)malloc(sizeof(struct AddressBook));
 		memset(listContacts, 0, sizeof(struct AddressBook));
+		listContacts->uniqueID = ++uniqueIDContact;
 		
 		listContacts->id = TEST_CALL_ID;
 		
@@ -1835,7 +1844,7 @@ void profileMerge(){
 	{
 		listContacts = (struct AddressBook *)malloc(sizeof(struct AddressBook));
 		memset(listContacts, 0, sizeof(struct AddressBook));
-		
+		listContacts->uniqueID = ++uniqueIDContact;
 		listContacts->id = TEST_CALL_ID;
 		
 		strcpy(listContacts->title, "Test Call");
@@ -2163,6 +2172,7 @@ THREAD_PROC profileDownload(void *extras)
 	unsigned long timeStart, timeFinished, timeTaken;
    	if (busy > 0|| !strlen(pstack->ltpUserid))
 	{	
+		stopAnimation();
 		return 0;
 	}	
 	else 
@@ -2509,6 +2519,12 @@ void  createFolders()
 	uaCallBackObject.creatorDirectoryFunPtr(uaCallBackObject.uData,newFolder);
 	free(newFolder);
 	free(myPath);
+}
+void stopAnimation()
+{
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,STOP_ANIMATION,(unsigned long)uaCallBackObject.uData,0);
+			  
+
 }
 void relistAll()
 {
@@ -2991,7 +3007,8 @@ char *getAccountPage()
 	
 	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 #else
-	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/rechargeaccount.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	//sprintf(returnCharP,"http://anurag-patel.geodesic.net/~anurag/jq/jqtouch-example/payment.html#forms");
+	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 #endif	
 	
 	return returnCharP;
@@ -3222,4 +3239,64 @@ int terminateThread()
 	terminateB = 1;
 	return busy;
 }
+void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId)
+{
+	switch(uaObj)
+	{
+			
+		case GETCONTACTLIST://
+		{	
+			struct AddressBook	*p;
+						
+			for (p = listContacts; p; p = p->next)
+			{
+				if(p->uniqueID == luniqueId)
+				{
+					return p;
+				}
+			}	
+			
+		}
+			break;
+			
+		case GETVMAILLIST:
+		case GETVMAILUNDILEVERD:		
+		{
+			struct VMail *p;
+			
+			
+			for (p = listVMails; p; p = p->next)
+			{	
+				if(p->uniqueID==luniqueId)
+				{
+					return p;
+				}
+			}	
+			
+		}
+			break;
+		case GETCALLLOGLIST:
+		case GETCALLLOGMISSEDLIST:	
+		{
+			struct CDR  *p;
+			
+			for (p = listCDRs; p; p = p->next)
+			{	
+				
+				if(p->uniqueID==luniqueId)
+				{
+					return p;
+				}
+			}	
+			
+		}
+			
+			break;	
+			
+			
+	}		
+	return NULL;
+	
+}
+
 #endif

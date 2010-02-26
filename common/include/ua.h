@@ -69,7 +69,8 @@ extern "C" {
 		struct CDR *next;
 #ifdef _MACOS_
 		int recordUId;
-		int isexistRecordID;	
+		int isexistRecordID;
+		int uniqueID;
 #endif	
 	};
 	extern struct CDR *listCDRs;
@@ -109,6 +110,10 @@ extern "C" {
 		int		dirty;
 		int		isDeleted;
 		struct AddressBook *next;
+	#ifdef _MACOS_
+		int uniqueID;
+	#endif	
+		
 		
 	};
 	
@@ -162,7 +167,8 @@ extern "C" {
 		int dirty; 
 #ifdef _MACOS_
 		int recordUId;
-		int isexistRecordID;	
+		int isexistRecordID;
+		int uniqueID;
 #endif	
 		
 	};
@@ -235,6 +241,7 @@ extern "C" {
 #define REFRESH_CALLLOG    3	
 #define REFRESH_ALL       4	
 #define LOAD_ADDRESS_BOOK 5	
+#define STOP_ANIMATION 6
 #define USERNAME_RANGE  30
 #define PASSWORD_RANGE  30	
 	
@@ -325,6 +332,8 @@ extern "C" {
 	int validName(char*inP);
 	int terminateThread();
 	void relistAll();
+	void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId);
+	void stopAnimation();
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus
