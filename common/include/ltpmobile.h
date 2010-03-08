@@ -19,11 +19,6 @@
  along with Spokn iphone.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* This is not just a header, it explains a lot of LTP implementation.
-Read this along with the LTP Protocol Draft 1.0
-- Farhan
-*/
-
 
 /*	the LTPSTACK_DEFINED preprocessor variable will
 	avoid the definitions from being included twice

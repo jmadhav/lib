@@ -334,6 +334,7 @@ extern "C" {
 	void relistAll();
 	void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId);
 	void stopAnimation();
+	char *getSupportPage();
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus

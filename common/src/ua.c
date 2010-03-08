@@ -2998,24 +2998,25 @@ int vmsDeleteByID(char *idCharP)
 }
 char *getAccountPage()
 {
-	//http://64.49.244.225/cgi-bin/accounts.cgi?userid=7865432&session=FfIpPeDhCcHkNoNkEaIeNkFaFiJdIpFn
 	char cookieCharP[200];
 	char *returnCharP;
 	httpCookie(cookieCharP);
 	returnCharP = malloc(500);
 #ifdef _LTP_
 	
-	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/accounts?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+
 #else
-	//sprintf(returnCharP,"http://anurag-patel.geodesic.net/~anurag/jq/jqtouch-example/payment.html#forms");
-	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/accounts.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/accounts?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+
+	
 #endif	
 	
 	return returnCharP;
 }
 char *getCreditsPage()
 {
-	//http://64.49.244.225/cgi-bin/rechargeaccount.cgi?userid=7865432&session=FfIpPeDhCcHkNoNkEaIeNkFaFiJdIpFn
 	char cookieCharP[200];
 	char *returnCharP;
 	profileGetKey();
@@ -3023,9 +3024,29 @@ char *getCreditsPage()
 	returnCharP = malloc(500);
 #ifdef _LTP_ 
 	
-	sprintf(returnCharP,"http://64.49.236.88/cgi-bin/pay.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	
 #else
-	sprintf(returnCharP,"http://www.spokn.com/cgi-bin/rechargeaccount.cgi?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	
+#endif	
+	
+	
+	return returnCharP;
+}
+char *getSupportPage()
+{
+	char cookieCharP[200];
+	char *returnCharP;
+	profileGetKey();
+	httpCookie(cookieCharP);
+	returnCharP = malloc(500);
+#ifdef _LTP_ 
+	
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/support?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+
+#else
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/support?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
 	
 #endif	
 	
@@ -3096,7 +3117,7 @@ char *NormalizeNumber(char *lnoCharP,int type)
 		{
 			if(strstr(lnoCharP,"@")==0)//if not email
 			{
-				type = 0;
+				type = 1;
 			}
 		}
 		resultCharP = malloc(strlen(tmpCharP)+2);
