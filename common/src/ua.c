@@ -1608,10 +1608,10 @@ void profileMerge(){
 
 	//Tasvir Rohila - 10-04-2009 - bug#19095
 	//For upgrades or any other notification server sends <alert href="">Some msg</alert> in down.xml
+	phref = NULL;
+	palert = NULL;
 	if (xmlalert = ezxml_child(xml, "client"))
 	{
-		phref = NULL;
-		palert = NULL;
 		if(palert = ezxml_attr(xmlalert, "alert"))
 		{
 			phref = ezxml_attr(xmlalert, "href");
