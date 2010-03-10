@@ -1,0 +1,6 @@
+Readme file for Spokn/lib repository
+1) This repository contains all the libraries used by Spokn applications across platforms.
+2) The master branch is used by Windows desktop and Windows mobile platforms.
+3) Kindly extract pjproject-1.4.5.zip to ../pjproject-1.4
+4) pjproject-1.4 has SIP implementation by PJSIP (www.pjsip.org). pjproject-1.4 is used by Spokn application for Windows desktop.
+5) Kindly compile SPEEX library for the required platform.
