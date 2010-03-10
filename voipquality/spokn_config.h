@@ -1,5 +1,5 @@
-#ifndef _GIGABOOTH_CONFIG_
-	#define _GIGABOOTH_CONFIG_
+#ifndef _SPOKN_CONFIG_
+	#define _SPOKN_CONFIG_
 	//#define PALM_OS
 	#define WIN_OS
 	#ifdef PALM_OS

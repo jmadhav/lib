@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Spokn for Windows.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "gigabooth_config.h"
+#include "spokn_config.h"
 #ifndef _VOIP_QUALITY_H_
 #define _VOIP_QUALITY_H_
 

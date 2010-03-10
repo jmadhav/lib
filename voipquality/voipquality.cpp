@@ -20,7 +20,7 @@
 #include "VoipQuality.h"
 #include <winsock.h>
 #include "stdio.h"
-#include "gigabooth_config.h"
+#include "spokn_config.h"
 
 #define DEFAULT_BUFLEN 100
 #define TOTALPACKETS 50
