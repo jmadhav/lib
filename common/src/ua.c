@@ -28,7 +28,7 @@ static unsigned long	lastUpdate = 0;
 static int busy = 0;
 int terminateB;
 char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
-char mailServer[100], myTitle[200], fwdnumber[32], oldForward[33], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[32],client_uid[200];
+char mailServer[100], myTitle[200], fwdnumber[32], oldForward[33], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[100],client_uid[200];
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
@@ -238,7 +238,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	char	data[10000], header[1000];
 #endif
 	
-	
+	//host = "anurag.spokn.com";
 	
 	pf = fopen(requestfile, "rb");
 	if (!pf)
@@ -2838,12 +2838,15 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 }
 void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lclientOsVer,char *lclientModel,char *clientUId)
 {
+	
+	
 	strcpy(client_name,lclientName);
 	strcpy(client_ver,clientVer);
 	strcpy(client_os,lclientOs);
 	strcpy(client_osver,lclientOsVer);
 	strcpy(client_model,lclientModel);
 	strcpy(client_uid,clientUId);
+	//printf("\n %s,%s,%s,%s,%s,%s",client_name,client_ver,client_os,client_osver,client_model,client_uid);
 	
 	
 	
