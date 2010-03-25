@@ -641,7 +641,7 @@ struct ltpStack
 	
 		LtpCallBackPtr ltpCallbackPtr;
 	#endif
-	
+	int  sipOnB; 
 };
 
 
