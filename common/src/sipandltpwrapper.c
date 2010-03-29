@@ -806,6 +806,7 @@ void LTP_ltpLogin(struct ltpStack *ps, int command)
 			 abandon login attempt for the time being */
 			ps->loginNextDate = (unsigned int)ps->now + LTP_LOGIN_INTERVAL;
 			ps->loginStatus = LOGIN_STATUS_NO_ACCESS;
+			
 			ps->myPriority = NORMAL_PRIORITY;
 			return;
 		}
@@ -3162,7 +3163,7 @@ static void sip_on_reg_state(pjsua_acc_id acc_id)
 			pstack->loginStatus = LOGIN_STATUS_TIMEDOUT;
 		else
 		{
-			ltpLogin(pstack, CMD_LOGOUT);
+			//ltpLogin(pstack, CMD_LOGOUT);
 			pstack->loginStatus = LOGIN_STATUS_FAILED;
 		}
 		alert(-1, ALERT_OFFLINE, info.status_text.ptr);
@@ -3399,6 +3400,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 	}
 
 	if (command == CMD_LOGOUT) {
+		
 		if(pjsua_acc_get_count() > 0)
 		{	
 			acc_id = pjsua_acc_get_default();
@@ -3700,6 +3702,7 @@ void ltpAnswer(struct ltpStack *ps, int lineid)
 		sip_ltpAnswer(ps,lineid);
 	}
 	else
+		
 	{
 		LTP_ltpAnswer(ps,lineid);
 		//sip_setMute(ps,enableB);
@@ -3719,6 +3722,10 @@ int ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	else
 	{
 		//sip_setMute(ps,enableB);
+		if(*remoteid=='+')//if plus is added
+		{
+			remoteid = remoteid + 1;
+		}
 		return LTP_ltpRing(ps,remoteid,command);
 		
 	}

@@ -2846,7 +2846,6 @@ void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lcl
 	strcpy(client_osver,lclientOsVer);
 	strcpy(client_model,lclientModel);
 	strcpy(client_uid,clientUId);
-	//printf("\n %s,%s,%s,%s,%s,%s",client_name,client_ver,client_os,client_osver,client_model,client_uid);
 	
 	
 	

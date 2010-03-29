@@ -69,6 +69,8 @@ extern "C" {
 		struct CDR *next;
 #ifdef _MACOS_
 		int recordUId;
+		int recordID;
+		int addressUId;
 		int isexistRecordID;
 		int uniqueID;
 #endif	

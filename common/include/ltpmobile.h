@@ -34,7 +34,7 @@ extern "C" {
 
 /* SUPPORT_SPEEX is a preprocessor directive that should be passed from compiler options */
 
-#define SUPPORT_SPEEX 1
+//#define SUPPORT_SPEEX 1
 
 #define short16 short
 #define int32 int
