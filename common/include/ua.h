@@ -307,6 +307,7 @@ extern "C" {
 	int vmsDeleteByID(char *idCharP);
 	char *getAccountPage();
 	char *getCreditsPage();
+	char *getPayPalPage();
 	void SetOrReSetForwardNo(int forwardB, char *forwardNoCharP);
 	char *getOldForwardNo();
 	int resetMissCallCount();

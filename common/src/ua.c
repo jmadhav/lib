@@ -3055,6 +3055,26 @@ char *getSupportPage()
 	
 	return returnCharP;
 }
+
+char *getPayPalPage()
+{
+	char cookieCharP[200];
+	char *returnCharP;
+	profileGetKey();
+	httpCookie(cookieCharP);
+	returnCharP = malloc(500);
+#ifdef _LTP_ 
+	
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment-paypal?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	
+#else
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment-paypal?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	
+#endif	
+	
+	
+	return returnCharP;
+}
 void vmailDeleteAll()
 {
 	
