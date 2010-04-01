@@ -1802,6 +1802,14 @@ void profileLoad()
 void profileClear()
 {
 	char	pathname[MAX_PATH];
+	
+	if(threadStatus != ThreadNotStart)
+	{
+		
+		threadStatus = ThreadTerminate;
+		return;
+	
+	}
 #ifdef _MACOS_
 	sprintf(pathname, "%s/profile.xml", myFolder);	
 #else
@@ -2179,6 +2187,7 @@ THREAD_PROC profileDownload(void *extras)
 	{	
 		busy = 1;
 	}	
+	//printf("\n download start");
 	while(1)
 	{	
 		forwardStartB = 0;
@@ -2403,9 +2412,15 @@ THREAD_PROC profileDownload(void *extras)
 		break;
 	}
 	busy = 0;
-	
+	//printf("\n download end");
 	//add by mukesh for bug id 20359
+	if(threadStatus==ThreadTerminate)
+	{
+		threadStatus = ThreadNotStart ;
+		profileClear();
+	}
 	threadStatus = ThreadNotStart ;
+	
 	if(terminateB)
 	{
 		free(pstack);
