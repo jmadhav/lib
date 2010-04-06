@@ -3041,10 +3041,10 @@ char *getCreditsPage()
 	returnCharP = malloc(500);
 #ifdef _LTP_ 
 	
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s&mode=cc",pstack->ltpUserid,cookieCharP);
 	
 #else
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s&mode=cc",pstack->ltpUserid,cookieCharP);
 	
 #endif	
 	
@@ -3080,10 +3080,10 @@ char *getPayPalPage()
 	returnCharP = malloc(500);
 #ifdef _LTP_ 
 	
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment-paypal?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment-paypal?userid=%s&session=%s&mode=pp",pstack->ltpUserid,cookieCharP);
 	
 #else
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment-paypal?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment-paypal?userid=%s&session=%s&mode=pp",pstack->ltpUserid,cookieCharP);
 	
 #endif	
 	
