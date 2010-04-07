@@ -47,22 +47,7 @@ else\
         ac_pjmedia_snd=pa_iphonedarwinos\
         AC_MSG_RESULT([Checking sound device backend... AudioQueue])\
         ;;\
-   i786-apple-darwin*)\
-        LIBS="$LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -framework AudioToolbox"\
-        if test "`uname -r`" = "6.8"; then\
-                #ac_pa_cflags="$ac_pa_cflags -DPA_OLD_CORE_AUDIO -DMOSX_USE_NON_ATOMIC_FLAG_BITS"\
-                #AC_MSG_RESULT([Setting additional PortAudio CFLAGS.. -DPA_OLD_CORE_AUDIO -DMOSX_USE_NON_ATOMIC_FLAG_BITS])\
-                ac_pjmedia_snd=pa_old_darwinos\
-                AC_MSG_RESULT([Checking sound device backend... old coreaudio])\
-        else\
-                ac_pjmedia_snd=pa_darwinos\
-                AC_MSG_RESULT([Checking sound device backend... coreaudio])\
-        fi
-\fs32 \
-
-\fs26         ;;\
-\
-  i386-apple-darwin*)\
+    i386-apple-darwin*)\
         LIBS="$LIBS -framework CoreAudio -framework CoreFoundation -framework AudioToolbox"\
         ac_pjmedia_snd=pa_iphonesimulatordarwinos\
         AC_MSG_RESULT([Checking sound device backend... AudioQueue])\
