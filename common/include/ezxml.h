@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#ifdef _MACOS_
+#include <string.h>
+#endif
 //#include <fcntl.h>
 
 #ifdef __cplusplus

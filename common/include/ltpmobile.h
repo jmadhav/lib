@@ -37,7 +37,7 @@ extern "C" {
 
 /* SUPPORT_SPEEX is a preprocessor directive that should be passed from compiler options */
 
-#define SUPPORT_SPEEX 1
+//#define SUPPORT_SPEEX 1
 
 #define short16 short
 #define int32 int
@@ -46,7 +46,9 @@ extern "C" {
 #ifdef SUPPORT_SPEEX
 #include <speex/speex.h>
 #endif
-
+#ifdef _MACOS_
+#define uint32 macuint32
+#endif	
 /*	Queue:
 	Before we dip into LTP proper, I have used a very simple queue of words for much of
 	my work. This has a very simple API. Lets get over with it here.
@@ -150,6 +152,32 @@ fixed public IP addresses, MAIL_PRIORITY is a low priority login. */
 #define MAIL_PRIORITY 1
 #define GATEWAY_PRIORITY 3
 
+	//added by mukesh for callback 27/6/09	
+	
+
+#ifdef _CALLBACKLTP_
+	struct ltpStack;
+	struct Call;
+	
+	typedef unsigned int (*LookupDNSCallBackPtr)(void *udata,char*host);
+	typedef void(*AlertCallBackPtr)(void *udata,int lineid, int alertcode, void *data);
+	typedef int(*NetWriteCallBackPtr)(void *udata,void *msg, int length, unsigned int32 address, unsigned short16 port);   
+	typedef void(*OutputSoundCallBackPtr)(void *udata,struct ltpStack *ps, struct Call *pc, short *pcm, int length);
+	typedef int(*OpenSoundCallBackPtr)(void *udata,int isFullDuplex);
+	typedef void(*CloseSoundCallBackPtr)(void *udata);
+	typedef struct LtpCallBackType
+		{
+			void *uData;
+			LookupDNSCallBackPtr   lookDnsCallBackPtr;
+			AlertCallBackPtr	   alertCallBackPtr;
+			NetWriteCallBackPtr    netWriteCallBackPtr;
+			OutputSoundCallBackPtr outputSoundCallBackPtr;
+			OpenSoundCallBackPtr   openSoundCallBackPtr;
+			CloseSoundCallBackPtr  closeSoundCallBackPtr;
+		}LtpCallBackType,*LtpCallBackPtr;
+#endif	
+	
+	
 struct ltp
 {
 	/* always set to 1 in this version of LTP */
@@ -520,7 +548,8 @@ struct Contact{
 #define LOGIN_STATUS_ONLINE 4
 #define LOGIN_STATUS_TRYING_LOGOUT 5
 #define LOGIN_STATUS_BUSY_OTHERDEVICE 6
-#define LOGIN_STATUS_TIMEDOUT	7
+#define LOGIN_STATUS_TIMEDOUT		7
+
 
 #define LTP_MSG_REMOTE 1
 #define LTP_MSG_YOUR 2
@@ -613,6 +642,11 @@ struct ltpStack
 	int		nextMsgID;
 
 	int debugCount;
+	#ifdef _CALLBACKLTP_
+	
+		LtpCallBackPtr ltpCallbackPtr;
+	#endif
+	int  sipOnB; 
 };
 
 
@@ -715,6 +749,7 @@ struct Contact *getContact(struct ltpStack *ps, char *userid);
 void ltpSortContacts(struct ltpStack *ps, int byGroups);
 */
 void ltpUpdatePresence(struct ltpStack *ps, unsigned short16 state, char *label);
+	static int rtpOut(struct ltpStack *ps, struct Call *pc, int nsamples, short *pcm, int isSpeaking);
 
 /* we use a slighlty modified md5 algorithm that can use a runtime flag to determine if it is
 being used on a big endian system */
@@ -728,7 +763,10 @@ struct MD5Context {
 void MD5Init(struct MD5Context *ctx);
 void MD5Update(struct MD5Context *ctx, unsigned char const  *buf, unsigned len, int isBigEndian);
 void MD5Final(unsigned char *digest, struct MD5Context *ctx);
-
+#ifdef _CALLBACKLTP_	
+	void SetLtpCallBack(struct ltpStack *ps,LtpCallBackPtr ltpCallbackPtr);
+	void ResetLtpCallback(struct ltpStack *ps);
+#endif
 
 #ifdef __cplusplus
 }

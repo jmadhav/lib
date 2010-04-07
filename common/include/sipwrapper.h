@@ -1,21 +1,24 @@
 /**
-    Copyright (c) 2009 Geodesic Limited <http://www.geodesic.com>.
+ Copyright 2009,2010 Geodesic, <http://www.geodesic.com/>
+ 
+ Spokn SIP-VoIP for iPhone and iPod Touch.
+ 
+ This file is part of Spokn iphone.
+ 
+ Spokn iphone is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ Spokn iphone is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with Spokn iphone.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-    This file is part of Spokn software for Windows.
-
-    Spokn for Windows is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    Spokn for Windows is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with Spokn for Windows.  If not, see <http://www.gnu.org/licenses/>.
-*/
 
 /*	the LTPSTACK_DEFINED preprocessor variable will
 	avoid the definitions from being included twice
@@ -709,6 +712,9 @@ void ltpSortContacts(struct ltpStack *ps, int byGroups);
 */
 void ltpUpdatePresence(struct ltpStack *ps, unsigned short16 state, char *label);
 
+	
+	void setMute(int enableB);	
+	void setHold(struct ltpStack *ps,int enableB);	
 /* we use a slighlty modified md5 algorithm that can use a runtime flag to determine if it is
 being used on a big endian system */
 typedef unsigned long uint32;
@@ -721,6 +727,7 @@ struct MD5Context {
 void MD5Init(struct MD5Context *ctx);
 void MD5Update(struct MD5Context *ctx, unsigned char const  *buf, unsigned len, int isBigEndian);
 void MD5Final(unsigned char *digest, struct MD5Context *ctx);
+int spokn_pj_init(char *errorstring);
 
 
 #ifdef __cplusplus

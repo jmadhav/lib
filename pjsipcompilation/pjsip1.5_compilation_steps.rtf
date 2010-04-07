@@ -1,0 +1,164 @@
+{\rtf1\ansi\ansicpg1252\cocoartf949\cocoasubrtf540
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;\f1\fmodern\fcharset0 Courier;\f2\fmodern\fcharset0 Courier-Bold;
+}
+{\colortbl;\red255\green255\blue255;\red103\green102\blue0;\red0\green0\blue137;\red0\green102\blue103;
+\red142\green7\blue0;\red104\green101\blue11;}
+\margl1440\margr1440\vieww28300\viewh15500\viewkind0
+\deftab720
+\pard\pardeftab720\ri-12460\sa260\ql\qnatural
+
+\f0\fs28 \cf0 compiling  pjsip 1.5 for iphone/ipod\
+\pard\pardeftab720\ri5140\sa260\ql\qnatural
+
+\b\fs32 \cf0 1 build/
+\i rules.mak
+\i0  
+\b0\fs28 \
+\pard\pardeftab720\ql\qnatural
+
+\f1\fs26 \cf0 \'a0$\cf2 (\cf0 LIB\cf2 ):\cf0  $\cf2 (\cf0 OBJDIRS\cf2 )\cf0  $\cf2 (\cf0 OBJS\cf2 )\cf0  $\cf2 (\cf0 $\cf2 (\cf0 APP\cf2 )\cf0 _EXTRA_DEP\cf2 )\cf0 \
+\'a0 \'a0 \'a0 \'a0 \cf3 if\cf0  test \cf2 !\cf0  \cf2 -\cf0 d $\cf2 (\cf0 LIBDIR\cf2 );\cf0  \cf3 then\cf0  $\cf2 (\cf0 subst \cf4 @@,\cf0 $\cf2 (\cf0 subst \cf2 /,\cf0 $\cf2 (\cf0 HOST_PSEP\cf2 ),\cf0 $\cf2 (\cf0 LIBDIR\cf2 )),\cf0 $\cf2 (\cf0 HOST_MKDIR\cf2 ));\cf0  \cf3 fi\cf0 \
+\cf2 -\cf0  \'a0 \'a0 \'a0 $\cf2 (\cf0 AR\cf2 )\cf0  $\cf2 (\cf0 LIB\cf2 )\cf0  $\cf2 (\cf0 OBJS\cf2 )\cf0 \
+\cf2 -\cf0  \'a0 \'a0 \'a0 $\cf2 (\cf0 RANLIB\cf2 )\cf0  $\cf2 (\cf0 LIB\cf2 )\cf0 \
+\cf2 +\cf0  \'a0 \'a0 \'a0 $\cf2 (\cf0 RANLIB\cf2 )\cf0  \cf2 -\cf3 static\cf0  \cf2 -\cf0 o $\cf2 (\cf0 LIB\cf2 )\cf0  $\cf2 (\cf0 OBJS\cf2 )\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f0\b\fs34 \cf0 2 pjlib/include/pj/compat/os_darwinos.h\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0\fs26 \cf5 /typedef int socklen_t;\
+\
+\
+\pard\pardeftab720\ql\qnatural
+\cf0 \
+\
+\pard\pardeftab720\ri5140\sa260\ql\qnatural
+
+\f0\i\b\fs32 \cf0 3 Modify aconfigure.ac
+\f1\i0\b0\fs26 \
+\pard\pardeftab720\ql\qnatural
+\cf0 if test "$enable_sound" = "no"; then\
+  true;\
+else\
+ case $target in\
+        arm-apple-darwin*)\
+        LIBS="$LIBS -framework CoreAudio -framework CoreFoundation -framework AudioToolbox"\
+        ac_pjmedia_snd=pa_iphonedarwinos\
+        AC_MSG_RESULT([Checking sound device backend... AudioQueue])\
+        ;;\
+   i786-apple-darwin*)\
+        LIBS="$LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -framework AudioToolbox"\
+        if test "`uname -r`" = "6.8"; then\
+                #ac_pa_cflags="$ac_pa_cflags -DPA_OLD_CORE_AUDIO -DMOSX_USE_NON_ATOMIC_FLAG_BITS"\
+                #AC_MSG_RESULT([Setting additional PortAudio CFLAGS.. -DPA_OLD_CORE_AUDIO -DMOSX_USE_NON_ATOMIC_FLAG_BITS])\
+                ac_pjmedia_snd=pa_old_darwinos\
+                AC_MSG_RESULT([Checking sound device backend... old coreaudio])\
+        else\
+                ac_pjmedia_snd=pa_darwinos\
+                AC_MSG_RESULT([Checking sound device backend... coreaudio])\
+        fi
+\fs32 \
+
+\fs26         ;;\
+\
+  i386-apple-darwin*)\
+        LIBS="$LIBS -framework CoreAudio -framework CoreFoundation -framework AudioToolbox"\
+        ac_pjmedia_snd=pa_iphonesimulatordarwinos\
+        AC_MSG_RESULT([Checking sound device backend... AudioQueue])\
+        ;;\
+    *darwin*)\
+        LIBS="$LIBS -framework CoreAudio -framework CoreServices -framework AudioUnit -framework AudioToolbox"\
+        if test "`uname -r`" = "6.8"; then\
+                #ac_pa_cflags="$ac_pa_cflags -DPA_OLD_CORE_AUDIO -DMOSX_USE_NON_ATOMIC_FLAG_BITS"\
+                #AC_MSG_RESULT([Setting additional PortAudio CFLAGS.. -DPA_OLD_CORE_AUDIO -DMOSX_USE_NON_ATOMIC_FLAG_BITS])\
+                ac_pjmedia_snd=pa_old_darwinos\
+                AC_MSG_RESULT([Checking sound device backend... old coreaudio])\
+        else\
+                ac_pjmedia_snd=pa_darwinos\
+                AC_MSG_RESULT([Checking sound device backend... coreaudio])\
+        fi\
+        ;;\
+\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f2\b\fs30 \cf0 4 third_party/build/portaudio/os-auto.mak.in
+\f1\b0\fs26 \
+ifeq ($(AC_PJMEDIA_SND),pa_iphonedarwinos)\
+export PORTAUDIO_OBJS +=pa_mac_hostapis.o \\\
+                        pa_unix_util.o \\\
+                        pa_mac_core_iphone.o\
+exort CFLAGS += -DPA_USE_COREAUDIO=1\
+export CFLAGS += @ac_pa_cflags@\
+endif\
+ifeq ($(AC_PJMEDIA_SND),pa_iphonesimulatordarwinos)\
+export PORTAUDIO_OBJS +=pa_mac_hostapis.o \\\
+                        pa_unix_util.o \\\
+                        pa_mac_core_iphonesimulator.o\
+exort CFLAGS += -DPA_USE_COREAUDIO=1\
+export CFLAGS += @ac_pa_cflags@\
+endif\
+\
+
+\f2\b\fs30 5 comment test target in pjmedia/build/Makefile	
+\f1\b0\fs26 \
+TARGETS := pjmedia pjmedia-audiodev pjmedia-codec pjsdp #pjmedia-test\
+\
+6 
+\f2\b change for iphone/ipod sound library\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0 \cf0 	for iphone and iphone simulator two new file need to create \
+	pa_mac_core_iphone.c and  pa_mac_core_iphonesimulator.c\
+	put this two file in\
+	third_party/portaudio/src/hostapi/coreaudio/ this folder.\
+\
+	also make sure two add this two files with same name in\
+ 	third_party/build/portaudio/src/\
+\
+	This two file will contain only relative path of third_party/portaudio/src/hostapi/coreaudio/ this folder.\
+\
+	example \
+\
+	suppose file name is pa_mac_core_iphone.c\
+	copy this file in coreaudio folder.\
+	now create new file pa_mac_core_iphone.c in folder third_party/build/portaudio/src/\
+	content of this file should be\
+	#include "../../../portaudio/src/hostapi/coreaudio/pa_mac_core_iphone.c"\
+\
+\pard\pardeftab720\ql\qnatural
+
+\f2\b \cf0 7
+\f1\b0  
+\f2\b\fs30 changes for 2g device 
+\f1\b0\fs26 \
+	change play latency to PJMEDIA_SND_DEFAULT_PLAY_LATENCY     580 in pjmedia/include/pjmedia/config.h \
+	\
+
+\f2\b 8 Compile
+\f1\b0 \
+autoconf aconfigure\cf6 .\cf0 ac \cf6 >\cf0  aconfigure\
+chmod 777 aconfigure\
+\
+
+\f2\b  \
+	
+\f1\b0 \
+\
+9 
+\f2\b Make library\
+	
+\f1\b0 run shell script for compilation.\
+	mycompile42.sh\
+    mycompilesimulator.sh 
+\f2\b \
+\
+\pard\pardeftab720\ql\qnatural
+
+\f1\b0 \cf0 \
+\
+\
+\
+}

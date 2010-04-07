@@ -175,16 +175,21 @@ EXPORT int speex_decode_int(void *state, SpeexBits *bits, spx_int16_t *out)
 }
 #endif
 
-
+int testspeex_encoder_ctl(void *state, int request, void *ptr)
+{
+	return speex_encoder_ctl(state,request,ptr);
+}
 
 EXPORT int speex_encoder_ctl(void *state, int request, void *ptr)
 {
    return (*((SpeexMode**)state))->enc_ctl(state, request, ptr);
+	//return 1;
 }
 
 EXPORT int speex_decoder_ctl(void *state, int request, void *ptr)
 {
    return (*((SpeexMode**)state))->dec_ctl(state, request, ptr);
+	//return 1;
 }
 
 
