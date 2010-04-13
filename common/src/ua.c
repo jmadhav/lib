@@ -1643,7 +1643,7 @@ void profileLoad()
 	sprintf(pathname, "%s\\profile.xml", myFolder);
 	
 #ifdef _LTP_
-	strcpy(pstack->ltpServerName, "64.49.244.225");
+	strcpy(pstack->ltpServerName, "www.spokn.com");
 #else
 	strcpy(pstack->ltpServerName, "www.spokn.com");
 #endif	
