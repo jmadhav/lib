@@ -1354,7 +1354,15 @@ static void vmsUpload(struct VMail *v)
 
 	fclose(pfIn);
 	if (length < 40){
-		alert(-1, ALERT_ERROR, "Unable to send the VMS properly.");
+	#ifndef _MACOS_
+			alert(-1, ALERT_ERROR, "Unable to send the VMS properly.");
+			//return;
+	#else
+			alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
+			//	return;
+	#endif
+		
+		
 		return;
 	}
 	buffer[length] = 0;
@@ -1374,10 +1382,10 @@ static void vmsUpload(struct VMail *v)
 				else
 				#ifndef _MACOS_
 									alert(-1, ALERT_ERROR, "Voicemail response incorrect");
-								return;
+								//return;
 				#else
 								alert(-1, ALERT_VMAILERROR, "Voicemail response incorrect");
-								return;
+								//return;
 				#endif
 				if (!strcmp(status->txt, "active"))
 					v->status = VMAIL_ACTIVE;
