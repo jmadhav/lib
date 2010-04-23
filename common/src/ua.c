@@ -2241,7 +2241,9 @@ THREAD_PROC profileDownload(void *extras)
 	unsigned long timeStart, timeFinished, timeTaken;
    	if (busy > 0|| !strlen(pstack->ltpUserid))
 	{	
+#ifdef _MACOS_
 		stopAnimation();
+#endif
 		return 0;
 	}	
 	else 
@@ -2490,6 +2492,43 @@ THREAD_PROC profileDownload(void *extras)
 
 
 	return 0;
+}
+
+void loggedOut()
+{
+	int byteCount;
+	char	key[64];
+	char	pathUpload[MAX_PATH], pathDown[MAX_PATH];
+	FILE	*pfOut;
+	
+	profileGetKey();
+	
+	httpCookie(key);
+
+#ifdef _MACOS_
+	sprintf(pathUpload, "%s/upload.xml", myFolder);
+#else
+	sprintf(pathUpload, "%s\\upload.xml", myFolder);
+#endif
+	
+	pfOut = fopen(pathUpload, "wb");
+	fprintf(pfOut,  
+			"<?xml version=\"1.0\"?>\n"
+			"<profile>\n"
+			" <u>%s</u>\n"
+			" <key>%s</key> \n"
+			" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
+			"<action>logout</action>",		
+			pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid);
+	fprintf(pfOut, "</profile>\n");
+	fclose(pfOut);
+#ifdef _MACOS_
+	sprintf(pathDown, "%s/down.xml", myFolder);
+#else
+	sprintf(pathDown, "%s\\down.xml", myFolder);
+#endif
+	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
+	
 }
 
 void profileResync()
