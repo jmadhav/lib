@@ -564,8 +564,15 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 	
 	
 	pf = fopen(pathname, "a");
-	fwrite(line, strlen(line), 1, pf);
-	fclose(pf);
+	if(pf)
+	{	
+		fwrite(line, strlen(line), 1, pf);
+		fclose(pf);
+	}
+	else
+	{
+		printf("\n%s\n",pathname);
+	}
 }
 
 void cdrRemove(struct CDR *p)

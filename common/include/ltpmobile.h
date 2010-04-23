@@ -692,6 +692,7 @@ struct Message{
 #define ALERT_CONTACT_OFFLINE 15
 #define ALERT_MESSAGE_ERROR 16
 #define ALERT_MESSAGE_DELIVERED 17
+#define ALERT_CALL_NOT_START 18	
 
 /* sub versions by date */
 #define UA_SUBVERSION 010000x

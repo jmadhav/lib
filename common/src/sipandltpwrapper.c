@@ -2938,7 +2938,6 @@ static void sip_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	pc->remoteUserid[i] = 0; //close the string
 	pc->ltpState = CALL_RING_RECEIVED;
 	pc->ltpSession = call_id; //bug#26252 - Set the call_id.
-	printf("\n send ring");
 	pjsua_call_answer(call_id, PJSIP_SC_RINGING /*180*/, NULL, NULL);
 	alert(pc->lineId, ALERT_INCOMING_CALL, "");
 	
@@ -3460,6 +3459,8 @@ void sip_ltpHangup(struct ltpStack *ps, int lineid)
 int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 {
 	int i;
+	int err;
+	err = 0;
 	char	struri[128];
 	pj_str_t uri;
 	struct Call *pc;
@@ -3498,7 +3499,11 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 		pc->ltpSession = (unsigned int) call_id;
 		pc->ltpState = CALL_RING_SENT;
 	}
-
+	else
+	{
+		err = 1;
+	
+	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	#ifdef _MACOS_
 	
@@ -3515,6 +3520,13 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 		if (ps->call[i].lineId != pc->lineId && ps->call[i].ltpState != CALL_IDLE && !ps->call[i].InConference)
 			pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 
+	if(err)
+	{
+		
+		alert(pc->lineId, ALERT_CALL_NOT_START, 0);
+		//return -1;
+	}
+	
 	return pc->lineId;
 }
 
