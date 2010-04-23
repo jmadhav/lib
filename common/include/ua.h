@@ -339,7 +339,7 @@ extern "C" {
 	int incriseMissCallCount();
 	
 #endif		
-	
+	void loggedOut();
 	extern void relistVMails();
 	extern void relistContacts();
 	extern void relistCDRs();
