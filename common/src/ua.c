@@ -2251,8 +2251,9 @@ THREAD_PROC profileDownload(void *extras)
 		busy = 1;
 
 	}	
+	UaThreadBegin();
 	//printf("\n download start");
-	while(1)
+//	while(1)
 	{	
 		forwardStartB = 0;
 		profileGetKey();
@@ -2466,13 +2467,13 @@ THREAD_PROC profileDownload(void *extras)
 			vmsSort();
 			relistVMails();
 			relistAll();
-			if(forwardStartB==0)//if forward no set after sync start
-			{
-				break;
-			}	
+		//	if(forwardStartB==0)//if forward no set after sync start
+		//	{
+		//		break;
+		//	}	
 		
 		}
-		break;
+	//	break;
 	}
 	busy = 0;
 	//printf("\n download end");
@@ -2488,6 +2489,12 @@ THREAD_PROC profileDownload(void *extras)
 	{
 		free(pstack);
 		pstack = 0;
+	}
+	else
+	{
+		UaThreadEnd();
+		//
+	
 	}
 
 
@@ -2635,6 +2642,15 @@ void  createFolders()
 	uaCallBackObject.creatorDirectoryFunPtr(uaCallBackObject.uData,newFolder);
 	free(newFolder);
 	free(myPath);
+}
+void UaThreadBegin()
+{
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,BEGIN_THREAD,(unsigned long)uaCallBackObject.uData,0);
+}
+void UaThreadEnd()
+{
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,END_THREAD,(unsigned long)uaCallBackObject.uData,0);
+
 }
 void stopAnimation()
 {

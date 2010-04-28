@@ -266,6 +266,8 @@ extern "C" {
 #define REFRESH_ALL       4	
 #define LOAD_ADDRESS_BOOK 5	
 #define STOP_ANIMATION 6
+#define BEGIN_THREAD 7	
+#define END_THREAD 8	
 #define USERNAME_RANGE  30
 #define PASSWORD_RANGE  30	
 	
@@ -360,6 +362,8 @@ extern "C" {
 	void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId);
 	void stopAnimation();
 	char *getSupportPage();
+	void UaThreadEnd();
+	void UaThreadBegin();
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus

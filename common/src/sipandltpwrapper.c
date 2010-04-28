@@ -3465,7 +3465,6 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	pj_str_t uri;
 	struct Call *pc;
 	pjsua_call_id call_id;
-
 	pc = sip_callFindIdle(pstack);
 	if (!pc){
 		alert(-1, ALERT_ERROR, "Too many calls");
@@ -3502,6 +3501,10 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	else
 	{
 		err = 1;
+		strcpy(pc->remoteUserid, remoteid);
+		pc->ltpSession = (unsigned int) call_id;
+		pc->ltpState = CALL_RING_SENT;
+		
 	
 	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
