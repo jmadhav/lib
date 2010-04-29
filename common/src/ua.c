@@ -30,7 +30,9 @@
 #include <ltpmobile.h>
 #include <ezxml.h>
 #include <ua.h>
+#ifdef _MACOS_
 #include "ltpandsip.h"
+#endif
 #define MAX_SIZE_DATA 10000
 int forwardStartB;
 //struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
@@ -494,7 +496,11 @@ static void cdrCompact() {
 	cdrSave();
 }
 
-void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid)
+#ifdef _MACOS_
+		void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid)
+	#else
+		void cdrAdd(char *userid, time_t time, int duration, int direction)
+#endif
 {
 	//write to the disk
 	char	pathname[MAX_PATH];
@@ -515,7 +521,9 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 		return;
 	
 	memset(p, 0, sizeof(struct CDR));
-	p->uniqueID = ++uniqueIDCalllog;
+	#ifdef _MACOS_
+		p->uniqueID = ++uniqueIDCalllog;
+	#endif
 	//Kaustubh Deshpande 21114 fixed-Junk characters are displayed in call list on calling a long number.
 	//the userid has limit of 32, and we were not checking the limit earlier. Now a check is added for that.
 	for (i=0;i<31;i++)
@@ -528,12 +536,14 @@ void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int
 	p->date = (time_t)time;
 	p->duration = duration;
 	p->direction = direction;
-	p->recordUId=abid;
-	p->isexistRecordID=0;
-	if(recordid)
-	{	
-		p->isexistRecordID=1;
-	}	
+	#ifdef _MACOS_
+		p->recordUId=abid;
+		p->isexistRecordID=0;
+		if(recordid)
+		{	
+			p->isexistRecordID=1;
+		}	
+	#endif
 	getTitleOf(p->userid, p->title);
 	
 	//add to the linked list
@@ -641,11 +651,13 @@ void cdrLoad() {
 			return;
 		}
 		memset(p, 0, sizeof(struct CDR));
-		p->uniqueID = ++uniqueIDCalllog;
+		#ifdef _MACOS_
+			p->uniqueID = ++uniqueIDCalllog;
 		if (abidP)
 			p->recordUId = (unsigned long)atol(abidP->txt);
 		if (recordidP)
 			p->isexistRecordID = (unsigned long)atol(recordidP->txt);
+		#endif
 		if (date)
 			p->date = (unsigned long)atol(date->txt);
 		if (duration)
@@ -866,7 +878,9 @@ struct AddressBook *updateContact(unsigned long id, char *title, char *mobile, c
 	q = (struct AddressBook *)malloc(sizeof(struct AddressBook));
 	
 	memset(q, 0, sizeof(struct AddressBook));
-	q->uniqueID = ++uniqueIDContact;
+	#ifdef _MACOS_
+		q->uniqueID = ++uniqueIDContact;
+	#endif
 	q->id = id;
 	
 	strcpy(q->title, title);
@@ -892,8 +906,9 @@ struct AddressBook *addContact(char *title, char *mobile, char *home, char *busi
 	
 	q = (struct AddressBook *)malloc(sizeof(struct AddressBook));
 	memset(q, 0, sizeof(struct AddressBook));
-	q->uniqueID = ++uniqueIDContact;
-	
+	#ifdef _MACOS_
+		q->uniqueID = ++uniqueIDContact;
+	#endif
 	strcpy(q->title, title);
 	strcpy(q->mobile, mobile);
 	strcpy(q->home, home);
@@ -1097,17 +1112,21 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		if (!p)
 			return NULL;
 		memset(p, 0, sizeof(struct VMail));
-		p->uniqueID = ++uniqueIDVmail;
+		#ifdef _MACOS_
+			p->uniqueID = ++uniqueIDVmail;
+		#endif
 		strcpy(p->hashid, hashid->txt);
 		strcpy(p->vmsid, vmsid->txt);
-		if (abidP)
-		{
-			p->recordUId = (unsigned long)atol(abidP->txt);
-		} 
-		if (recordidP)
-		{
-			p->isexistRecordID = (unsigned long)atol(recordidP->txt);
-		}
+		#ifdef _MACOS_
+			if (abidP)
+			{
+				p->recordUId = (unsigned long)atol(abidP->txt);
+			} 
+			if (recordidP)
+			{
+				p->isexistRecordID = (unsigned long)atol(recordidP->txt);
+			}
+		#endif
 			//make this 'starred', this is fresh mail
 		
 		if(listVMails)
@@ -1237,7 +1256,11 @@ void vmsDelete(struct VMail *p)
 	//profileResync();
 }
 
-struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID)
+#ifdef _MACOS_
+	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID)
+#else
+	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
+#endif
 //struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
 {
 	struct	VMail	*p=NULL;
@@ -1256,7 +1279,9 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	if (!p)
 		return NULL;
 	memset(p, 0, sizeof(struct VMail));
-	p->uniqueID = ++uniqueIDVmail;
+	#ifdef _MACOS_
+		p->uniqueID = ++uniqueIDVmail;
+	#endif
 	strcpy(p->userid, userid);
 	if (vmsid)
 		strcpy(p->vmsid, vmsid);
@@ -1264,12 +1289,15 @@ struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, in
 	p->date = (time_t)time;
 	p->direction = direction;
 	p->status = status;
-	p->recordUId = laddressUId;
+	#ifdef _MACOS_
+		p->recordUId = laddressUId;
+	
 	p->isexistRecordID = 0;
 	if(lrecordID)
 	{	
 		p->isexistRecordID = 1;
 	}	
+	#endif
 	//add to the head of the list
 	if (!listVMails)
 		listVMails = p;
@@ -2251,8 +2279,10 @@ THREAD_PROC profileDownload(void *extras)
 		busy = 1;
 
 	}	
-	UaThreadBegin();
-	//printf("\n download start");
+	#ifdef _MACOS_
+		UaThreadBegin();
+	#endif
+		//printf("\n download start");
 //	while(1)
 	{	
 		forwardStartB = 0;
@@ -2466,7 +2496,9 @@ THREAD_PROC profileDownload(void *extras)
 			vmsDownload();
 			vmsSort();
 			relistVMails();
-			relistAll();
+			#ifdef _MACOS_
+				relistAll();
+			#endif
 		//	if(forwardStartB==0)//if forward no set after sync start
 		//	{
 		//		break;
@@ -2492,9 +2524,10 @@ THREAD_PROC profileDownload(void *extras)
 	}
 	else
 	{
+	#ifdef _MACOS_
 		UaThreadEnd();
 		//
-	
+	#endif
 	}
 
 

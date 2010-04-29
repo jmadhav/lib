@@ -939,6 +939,7 @@ static void LTP_callTick(struct ltpStack *ps, struct Call *pc)
 	 instead, 
 	 */
 	if (pc->ltpState == CALL_CONNECTED && ps->activeLine != pc->lineId){
+		
 		short silence[160] = {0};
 		LTP_rtpOut(ps, pc, 160, silence, 0);
 	}
@@ -3460,11 +3461,12 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 {
 	int i;
 	int err;
-	err = 0;
+	
 	char	struri[128];
 	pj_str_t uri;
 	struct Call *pc;
 	pjsua_call_id call_id;
+	err = 0;
 	pc = sip_callFindIdle(pstack);
 	if (!pc){
 		alert(-1, ALERT_ERROR, "Too many calls");
@@ -3546,7 +3548,7 @@ void sip_ltpAnswer(struct ltpStack *ps, int lineid)
 		}
 }
 
-void sip_sipSwitchReinvite(struct ltpStack *ps, int lineid)
+void sip_switchReinvite(struct ltpStack *ps, int lineid)
 {
 	int	i, inConf=0;
 	pjsua_call_id call_id;
@@ -3840,6 +3842,51 @@ void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 	{
 		return LTP_ltpMessageDTMF(ps, lineid, msg);
 	}
+}
+void startConference(struct ltpStack *ps)
+{
+	int	i, inConf=0;
+
+	for (i = 0; i < ps->maxSlots; i++)
+		if (ps->call[i].ltpState != CALL_IDLE){
+			if(ps->sipOnB)
+			{
+				pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
+			}
+			ps->call[i].InConference = 1;
+		}
+}
+
+void switchReinvite(struct ltpStack *ps, int lineid)
+{
+	int	i, inConf=0;
+	pjsua_call_id call_id;
+	for (i = 0; i < ps->maxSlots; i++)
+		if (lineid == ps->call[i].lineId && ps->call[i].ltpState == CALL_CONNECTED && ps->call[i].InConference)
+			inConf = 1;
+
+	for (i = 0; i < ps->maxSlots; i++)
+		if (ps->call[i].ltpState != CALL_IDLE){
+			call_id = (pjsua_call_id) ps->call[i].ltpSession;
+			if (lineid == ps->call[i].lineId){
+				if(ps->sipOnB)
+				{
+					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
+				}
+				ps->activeLine = lineid;
+			}
+			else if (!ps->call[i].InConference && ps->call[i].ltpState == CALL_CONNECTED) //hold all the calls not in conference
+			{
+				if(ps->sipOnB)
+				{
+					pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
+				}
+				else
+				{
+					ps->activeLine = lineid; //put on hold
+				}
+			}
+		}
 }
 
 

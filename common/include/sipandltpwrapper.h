@@ -19,6 +19,9 @@
 #ifndef _SIP_AND_LTP_WRAPPER_H
 	#define _SIP_AND_LTP_WRAPPER_H
 #include "ltpmobile.h"
+#ifdef __cplusplus
+extern "C" {
+#endif 
 int sip_spokn_pj_init(char *errorstring);
 void LTP_ltpHangup(struct ltpStack *ps, int lineid);
 void LTP_ltpRefuse(struct ltpStack *ps, int lineid, char *msg);
@@ -34,7 +37,11 @@ void LTP_ltpLogin(struct ltpStack *ps, int command);
 void LTP_ltpTick(struct ltpStack *ps, unsigned int timeNow);
 void LTP_ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg);
 struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int framesPerPacket);
-
+void startConference(struct ltpStack *ps);
+void switchReinvite(struct ltpStack *ps, int lineid);
+#ifdef __cplusplus
+}
+#endif 
 
 
 #endif
