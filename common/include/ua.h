@@ -98,7 +98,11 @@ extern "C" {
 	extern struct CDR *listCDRs;
 	
 	void cdrLoad();
-	void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid);
+	#ifdef _MACOS_
+		void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid);
+	#else
+		void cdrAdd(char *userid, time_t time, int duration, int direction);
+	#endif
 	void cdrRemove(struct CDR *p);
 	void cdrRemoveAll();
 	/**
@@ -199,7 +203,11 @@ extern "C" {
 	
 	
 	void vmsLoad();
+#ifdef _MACOS_
 	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID);
+	#else
+	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
+#endif
 	//struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
 	void vmsDelete(struct VMail *p);
 	void vmsSave();
@@ -227,8 +235,8 @@ extern "C" {
 	 */
 	
 	void uaInit();
-	extern int redirect, creditBalance, bandwidth, settingType, oldSetting;
-	extern char fwdnumber[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[],client_name[],client_ver[],client_os[],client_osver[],client_model[],client_uid[];
+	extern int redirect, creditBalance, bandwidth, settingType, oldSetting, bkupsettingType;
+	extern char fwdnumber[], oldForward[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[],client_name[],client_ver[],client_os[],client_osver[],client_model[],client_uid[];
 	void profileResync();
 	void profileClear();
 	void profileSave();
@@ -339,6 +347,7 @@ extern "C" {
 	void loadMissCall();
 	int getMissCount();
 	int incriseMissCallCount();
+	void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId);
 	
 #endif		
 	void loggedOut();
@@ -359,7 +368,7 @@ extern "C" {
 	int validName(char*inP);
 	int terminateThread();
 	void relistAll();
-	void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId);
+
 	void stopAnimation();
 	char *getSupportPage();
 	void UaThreadEnd();
