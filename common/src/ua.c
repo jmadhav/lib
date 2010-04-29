@@ -2241,17 +2241,19 @@ THREAD_PROC profileDownload(void *extras)
 	unsigned long timeStart, timeFinished, timeTaken;
    	if (busy > 0|| !strlen(pstack->ltpUserid))
 	{	
-#ifdef _MACOS_
-		stopAnimation();
-#endif
+	#ifdef _MACOS_
+			stopAnimation();
+	#endif
 		return 0;
 	}	
 	else 
 	{	
 		busy = 1;
 
-	}	
-	UaThreadBegin();
+	}
+	#ifdef _MACOS_
+		UaThreadBegin();
+	#endif
 	//printf("\n download start");
 //	while(1)
 	{	
@@ -2492,7 +2494,9 @@ THREAD_PROC profileDownload(void *extras)
 	}
 	else
 	{
-		UaThreadEnd();
+		#ifdef _MACOS_
+			UaThreadEnd();
+		#endif
 		//
 	
 	}
