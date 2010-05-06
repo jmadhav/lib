@@ -39,6 +39,7 @@ void LTP_ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg);
 struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int framesPerPacket);
 void startConference(struct ltpStack *ps);
 void switchReinvite(struct ltpStack *ps, int lineid);
+void Unconference(struct ltpStack *pstackP);	
 #ifdef __cplusplus
 }
 #endif 

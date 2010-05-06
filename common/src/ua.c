@@ -1656,7 +1656,7 @@ void profileSave(){
 			continue;
 		}
 #endif		
-		fprintf(pf, " <vc><id>%u</id><t>%s</t>", p->id, p->title);
+		fprintf(pf, " <vc><id>%lu</id><t>%s</t>", p->id, p->title);
 		if (p->mobile[0])
 			fprintf(pf, "<m>%s</m>", p->mobile);
 		if (p->home[0])
@@ -2313,7 +2313,7 @@ THREAD_PROC profileDownload(void *extras)
 			" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
 			" <query>contacts</query> \n"
 			" <query>vms</query> \n"
-			" <since>%u</since> \n", 
+			" <since>%lu</since> \n", 
 			pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
 	
 	/*if (extras){
@@ -2388,7 +2388,7 @@ THREAD_PROC profileDownload(void *extras)
 		for (pc = getContactsList(); pc; pc = pc->next)
 			if (pc->dirty && pc->id && !pc->isDeleted)
 				fprintf(pfOut,
-						"<vc><id>%u</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp></vc>\n",
+						"<vc><id>%lu</id><t>%s</t><m>%s</m><b>%s</b><h>%s</h><e>%s</e><ltp>%s</ltp></vc>\n",
 						(unsigned long)pc->id, pc->title, pc->mobile, pc->business, pc->home, pc->email, pc->spoknid);
 		
 		//Kaustubh 19 June 09. Change for Sending the vmail status to Server: vmail Read Unread issue
@@ -2453,7 +2453,7 @@ THREAD_PROC profileDownload(void *extras)
 		for (pc = getContactsList(); pc; pc = pc->next)
 			if (pc->dirty && pc->id && pc->isDeleted)
 				fprintf(pfOut,
-						" <vc><id>%u</id></vc>\n",
+						" <vc><id>%lu</id></vc>\n",
 						(unsigned long)pc->id);
 		
 		for (vm = listVMails; vm; vm = vm->next)

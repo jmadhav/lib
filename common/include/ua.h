@@ -303,7 +303,7 @@ extern "C" {
 	typedef void (*RefreshDisplayFunPtr)(void *uData);
 	typedef void (*CdrRemoveAllFunPtr)(void *uData);
 	
-	typedef void (*AlertNotificationCallbackUAP)(int type,unsigned int valLong,int valSubLong, unsigned long userData,void *otherInfoP);
+	typedef int (*AlertNotificationCallbackUAP)(int type,unsigned int valLong,int valSubLong, unsigned long userData,void *otherInfoP);
 	
 	
 	typedef struct UACallBackType

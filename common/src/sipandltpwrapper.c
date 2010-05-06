@@ -22,7 +22,7 @@
 #include "sipandltpwrapper.h"
 #include <stdlib.h>
 #include <string.h>
-#define USERAGENT  "desktop-windows-d2-1.0"
+#define USERAGENT "spokn-iphone-1.0.0"
 //#define USERAGENT "ltpmobile"
 #ifdef _WIN32_WCE
 #define stricmp _stricmp
@@ -2972,6 +2972,7 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 				pstack->now = time(NULL);
 				#endif	
 				pstack->call[i].timeStart = pstack->now; /* reset the call timer for the correct duration */
+				alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
 				break;
 			case PJSIP_INV_STATE_DISCONNECTED:   /**< Session is terminated.		    */
 				//bug#26361 - Check if its a missed call (not already reported in ltpHangup()).
@@ -3116,7 +3117,7 @@ static void sip_on_call_media_state(pjsua_call_id call_id)
 				} // end of handling non-conference call
 
 			}
-			alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
+			//alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
 		}
 	}
 }
@@ -3529,7 +3530,7 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	{
 		
 		alert(pc->lineId, ALERT_CALL_NOT_START, 0);
-		//return -1;
+		return -1;
 	}
 	
 	return pc->lineId;
@@ -3856,7 +3857,6 @@ void startConference(struct ltpStack *ps)
 			ps->call[i].InConference = 1;
 		}
 }
-
 void switchReinvite(struct ltpStack *ps, int lineid)
 {
 	int	i, inConf=0;
@@ -3889,5 +3889,11 @@ void switchReinvite(struct ltpStack *ps, int lineid)
 		}
 }
 
+void Unconference(struct ltpStack *pstackP)
+{
+	
+	for (int i=0; i < pstackP->maxSlots; ++i)
+		pstackP->call[i].InConference = 0;
+}	
 
 
