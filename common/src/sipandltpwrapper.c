@@ -2549,7 +2549,7 @@ void LTP_ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#define USERAGENT  "desktop-windows-d2-1.0"
+//#define USERAGENT  "desktop-windows-d2-1.0"
 #include <pjsua-lib/pjsua.h>
 int bMissedCallReported = 0;
 
@@ -3846,7 +3846,7 @@ void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 }
 void startConference(struct ltpStack *ps)
 {
-	int	i, inConf=0;
+	int	i;
 
 	for (i = 0; i < ps->maxSlots; i++)
 		if (ps->call[i].ltpState != CALL_IDLE){
@@ -3856,6 +3856,60 @@ void startConference(struct ltpStack *ps)
 			}
 			ps->call[i].InConference = 1;
 		}
+}
+void shiftToConferenceCall(struct ltpStack *ps)
+{
+	int	i;
+	
+	for (i = 0; i < ps->maxSlots; i++)
+	{	
+		if (ps->call[i].ltpState != CALL_IDLE){
+			if(ps->sipOnB)
+			{
+				if(ps->call[i].InConference)
+				{	
+					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
+				}
+				else {
+						pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
+					//pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
+				}
+				
+			}
+						
+		}
+	}	
+	
+
+}
+void setPrivateCall(struct ltpStack *ps,int lineid)
+{
+	int	i;
+	
+	for (i = 0; i < ps->maxSlots; i++)
+	{	
+		if (ps->call[i].ltpState != CALL_IDLE){
+			if(ps->sipOnB)
+			{
+				if(ps->call[i].lineId !=lineid)
+				{	
+				//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
+					pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
+				}
+				else {
+					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
+				}
+
+			}
+			if(ps->call[i].lineId ==lineid)
+			{	
+				ps->call[i].InConference = 0;
+			}	
+		}
+	}	
+	
+
+
 }
 void switchReinvite(struct ltpStack *ps, int lineid)
 {
