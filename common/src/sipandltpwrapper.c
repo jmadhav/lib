@@ -3860,7 +3860,6 @@ void startConference(struct ltpStack *ps)
 void shiftToConferenceCall(struct ltpStack *ps)
 {
 	int	i;
-	
 	for (i = 0; i < ps->maxSlots; i++)
 	{	
 		if (ps->call[i].ltpState != CALL_IDLE){
@@ -3871,6 +3870,7 @@ void shiftToConferenceCall(struct ltpStack *ps)
 					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
 				}
 				else {
+						
 						pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 					//pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 				}
@@ -3879,6 +3879,8 @@ void shiftToConferenceCall(struct ltpStack *ps)
 						
 		}
 	}	
+	
+
 	
 
 }
@@ -3893,10 +3895,12 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 			{
 				if(ps->call[i].lineId !=lineid)
 				{	
-				//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
+				
+										//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 					pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 				}
 				else {
+				
 					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
 				}
 
@@ -3908,7 +3912,6 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 		}
 	}	
 	
-
 
 }
 void switchReinvite(struct ltpStack *ps, int lineid)

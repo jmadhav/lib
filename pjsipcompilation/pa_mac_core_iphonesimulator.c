@@ -1,5 +1,5 @@
 /*
- devlop by mukesh sharma
+ devloped by mukesh sharma
  
  
  */
@@ -21,7 +21,7 @@
 #include "myaudio.h"
 #define BUFF_SIZE 320
 #define BUFFLOOP 3
-#define NEWSZ 320*BUFFLOOP
+#define NEWSZ BUFF_SIZE*BUFFLOOP
 
 // =====  constants  =====
 
@@ -177,7 +177,14 @@ static PaError conv_err(OSStatus error)
     
     return result;
 }
-
+void * PaUtil_AllocateMemoryLocal(int sizeInt)
+{
+	void * lmemeoryP=0;
+	lmemeoryP = PaUtil_AllocateMemory(sizeInt);
+	memset(lmemeoryP, 0, sizeInt);
+	return lmemeoryP;
+	
+}
 /* This function is unused
  static AudioStreamBasicDescription *InitializeStreamDescription(const PaStreamParameters *parameters, double sampleRate)
  {
@@ -267,7 +274,7 @@ static PaError InitializeDeviceInfo(PaMacCoreDeviceInfo *macCoreDeviceInfo,  Aud
     PaError err = paNoError;
     UInt32 propSize=100;
 	// FIXME: this allocation should be part of the allocations group
-    char *name = PaUtil_AllocateMemory(propSize);
+    char *name = PaUtil_AllocateMemoryLocal(propSize);
 	
 	//sprintf(name,"iphoneipod%d",(int)hostApiIndex);
 	strcpy(name,"spokniphone");
@@ -344,7 +351,7 @@ static PaError InitializeDeviceInfos( PaMacCoreHostApiRepresentation *macCoreHos
 static OSStatus CheckFormat(AudioDeviceID macCoreDeviceId, const PaStreamParameters *parameters, double sampleRate, int isInput)
 {
     UInt32 propSize = sizeof(AudioStreamBasicDescription);
-    AudioStreamBasicDescription *streamDescription = PaUtil_AllocateMemory(propSize);
+    AudioStreamBasicDescription *streamDescription = PaUtil_AllocateMemoryLocal(propSize);
 	
     streamDescription->mSampleRate = sampleRate;
     streamDescription->mFormatID = 0;
@@ -429,6 +436,10 @@ static void playCallback(
 						 AudioQueueRef outQ,
 						 AudioQueueBufferRef outQB)
 {
+	if(outQB)
+	{	
+		memset(outQB->mAudioData,0,NEWSZ);
+	}
 	if(userData)
 	{	
 		int i;
@@ -441,14 +452,15 @@ static void playCallback(
 		//	printf("\nplay");
 		AudioBuffer *outputBuffer = &outOutputData.mBuffers[0];
 		unsigned long frameCount = 160;
+		
 		//added by mukesh for 2g device
 		for(i=0;i<BUFFLOOP;++i)
 		{	
 			outOutputData.mBuffers[0].mNumberChannels = 1;
-			outOutputData.mBuffers[0].mDataByteSize = 320;
-			outOutputData.mBuffers[0].mData = outQB->mAudioData + i*320;
+			outOutputData.mBuffers[0].mDataByteSize = BUFF_SIZE;
+			outOutputData.mBuffers[0].mData = outQB->mAudioData + i*BUFF_SIZE;
 			
-			clientData->callback(NULL, outQB->mAudioData+ i*320, frameCount, 0, paNoFlag, clientData->userData);			
+			clientData->callback(NULL, outQB->mAudioData+ i*BUFF_SIZE, frameCount, 0, paNoFlag, clientData->userData);			
 			
 			
 		}	
@@ -459,14 +471,11 @@ static void playCallback(
 		outputBuffer->mDataByteSize =NEWSZ;
 		
     }
-	else
-	{
-		memset(outQB->mAudioData,0,NEWSZ);
+	if(outQB)
+	{	
+		outQB->mAudioDataByteSize = NEWSZ;
+		AudioQueueEnqueueBuffer(outQ, outQB, 0, NULL);
 	}
-	
-	outQB->mAudioDataByteSize = NEWSZ;
- 	AudioQueueEnqueueBuffer(outQ, outQB, 0, NULL);
-	
 	
 	return ;
 	
@@ -595,8 +604,9 @@ static PaError OpenStream( struct PaUtilHostApiRepresentation *hostApi,
 	
 	
 	PaError err = paNoError;
+	int i=0;
     PaMacCoreHostApiRepresentation *macCoreHostApi = (PaMacCoreHostApiRepresentation *)hostApi;
-    PaMacCoreStream *stream = PaUtil_AllocateMemory(sizeof(PaMacCoreStream));
+    PaMacCoreStream *stream = PaUtil_AllocateMemoryLocal(sizeof(PaMacCoreStream));
     stream->isActive = 0;
     stream->isStopped = 1;
     stream->inputDevice = kAudioDeviceUnknown;
@@ -610,20 +620,20 @@ static PaError OpenStream( struct PaUtilHostApiRepresentation *hostApi,
     PaUtil_InitializeCpuLoadMeasurer( &stream->cpuLoadMeasurer, sampleRate );
 	//  sampleRate = 8000;
     *s = (PaStream*)stream;
-    PaMacClientData *clientData = PaUtil_AllocateMemory(sizeof(PaMacClientData));
+    PaMacClientData *clientData = PaUtil_AllocateMemoryLocal(sizeof(PaMacClientData));
 	stream->clientDataP = clientData;///store client data
     clientData->stream = stream;
     clientData->callback = streamCallback;
     clientData->userData = userData;
     clientData->inputBuffer = 0;
     clientData->outputBuffer = 0;
-    clientData->ditherGenerator = PaUtil_AllocateMemory(sizeof(PaUtilTriangularDitherGenerator));
+    clientData->ditherGenerator = PaUtil_AllocateMemoryLocal(sizeof(PaUtilTriangularDitherGenerator));
     PaUtil_InitializeTriangularDitherState(clientData->ditherGenerator);
     
     if (inputParameters != NULL) {
         stream->inputDevice = macCoreHostApi->macCoreDeviceIds[inputParameters->device];
         clientData->inputConverter = PaUtil_SelectConverter(paFloat32, inputParameters->sampleFormat, streamFlags);
-        clientData->inputBuffer = PaUtil_AllocateMemory(Pa_GetSampleSize(inputParameters->sampleFormat) * framesPerBuffer * inputParameters->channelCount);
+        clientData->inputBuffer = PaUtil_AllocateMemoryLocal(Pa_GetSampleSize(inputParameters->sampleFormat) * framesPerBuffer * inputParameters->channelCount);
         clientData->inputChannelCount = inputParameters->channelCount;
         clientData->inputSampleFormat = inputParameters->sampleFormat;
         err = SetUpUnidirectionalStream(stream->inputDevice, sampleRate, framesPerBuffer, 1);
@@ -644,6 +654,11 @@ static PaError OpenStream( struct PaUtilHostApiRepresentation *hostApi,
 		aqcP->mDataFormat.mFramesPerPacket = 1;
 		aqcP->mDataFormat.mBytesPerFrame = 2;
 		aqcP->queue = 0;
+		for (i=0; i<AUDIO_BUFFERS; i++) 
+        {
+            
+			aqcP->mBuffers[i] = 0;
+		}	
 		
     }
     
@@ -664,10 +679,16 @@ static PaError OpenStream( struct PaUtilHostApiRepresentation *hostApi,
 		aqcP->mDataFormat.mFramesPerPacket = 1;
 		aqcP->mDataFormat.mBytesPerFrame = 2;
 		aqcP->queue = 0;
+		for (i=0; i<AUDIO_BUFFERS; i++) 
+        {
+            
+			aqcP->mBuffers[i] = 0;
+		}	
+		
 		
 		stream->outputDevice = macCoreHostApi->macCoreDeviceIds[outputParameters->device];
         clientData->outputConverter = PaUtil_SelectConverter(outputParameters->sampleFormat, paFloat32, streamFlags);
-        clientData->outputBuffer = PaUtil_AllocateMemory(Pa_GetSampleSize(outputParameters->sampleFormat) * framesPerBuffer * outputParameters->channelCount);
+        clientData->outputBuffer = PaUtil_AllocateMemoryLocal(Pa_GetSampleSize(outputParameters->sampleFormat) * framesPerBuffer * outputParameters->channelCount);
         clientData->outputChannelCount = outputParameters->channelCount;
         clientData->outputSampleFormat = outputParameters->sampleFormat;
         err = SetUpUnidirectionalStream(stream->outputDevice, sampleRate, framesPerBuffer, 0);
@@ -688,11 +709,12 @@ static PaError CloseStream( PaStream* s )
 	int i;
     PaMacCoreStream *stream = (PaMacCoreStream*)s;
 	PaMacClientData *clientP;
+	
 	if(stream==0)
 	{
 		return 1;
 	}
-	
+	//printf("\stop");
     PaUtil_ResetCpuLoadMeasurer( &stream->cpuLoadMeasurer );
 	AudioQueueStructType *aqcP;
 	aqcP = &stream->aqPlay;
@@ -701,7 +723,11 @@ static PaError CloseStream( PaStream* s )
 		AudioQueueStop (aqcP->queue, true);
 		for (i=0; i<AUDIO_BUFFERS; i++) 
 		{
-			AudioQueueFreeBuffer(aqcP->queue,aqcP->mBuffers[i]);
+			if(aqcP->mBuffers[i])
+			{	
+				AudioQueueFreeBuffer(aqcP->queue,aqcP->mBuffers[i]);
+				aqcP->mBuffers[i] = 0;
+			}
 		} 
 		AudioQueueDispose (aqcP->queue, true);
 		aqcP->queue = 0;
@@ -712,7 +738,12 @@ static PaError CloseStream( PaStream* s )
 		AudioQueueStop (aqcP->queue, true);
 		for (i=0; i<AUDIO_BUFFERS; i++) 
 		{
-			AudioQueueFreeBuffer(aqcP->queue,aqcP->mBuffers[i]);
+			if(aqcP->mBuffers[i])
+			{	
+				AudioQueueFreeBuffer(aqcP->queue,aqcP->mBuffers[i]);
+				aqcP->mBuffers[i] = 0;
+			}
+			
 		} 
 		AudioQueueDispose (aqcP->queue, true);
 		aqcP->queue = 0;
@@ -771,9 +802,19 @@ static PaError StartStream( PaStream *s )
 		//stream->bits_per_sample / 8 * aq->mDataFormat.mBytesPerFrame;
         for (i=0; i<AUDIO_BUFFERS; i++) 
         {
-            status = AudioQueueAllocateBuffer(aqcP->queue, bufferBytes, 
+            
+			aqcP->mBuffers[i] = 0;
+			status = AudioQueueAllocateBuffer(aqcP->queue, bufferBytes, 
 											  &(aqcP->mBuffers[i]));
+			if(aqcP->mBuffers[i]==0 ||status)
+			{
+				//AudioQueueDispose (aqcP->queue, true);
+				//printf("\n buff not created out %ld",(long)status);
+				aqcP->mBuffers[i] = 0;
+				return 1; // FIXME
+			}
             playCallback (0, aqcP->queue, aqcP->mBuffers[i]);
+			
         }
         status = AudioQueueStart(aqcP->queue, NULL); 
 		aqcP->startB = true;
@@ -799,14 +840,17 @@ static PaError StartStream( PaStream *s )
 		//	bufferBytes = 640;
 		for (i = 0; i < AUDIO_BUFFERS; ++i) 
         {
-            status = AudioQueueAllocateBuffer (aqcP->queue, bufferBytes,
+            aqcP->mBuffers[i] = 0;
+			status = AudioQueueAllocateBuffer (aqcP->queue, bufferBytes,
 											   &(aqcP->mBuffers[i]));
 			
             if (status)          
             {
                 //PJ_LOG(1, (THIS_FILE, 
 				//	   "AudioQueueAllocateBuffer[%d] err %d\n",i, status));
-                // return PJMEDIA_ERROR; // FIXME return ???             
+                // return PJMEDIA_ERROR; // FIXME return ???     
+				aqcP->mBuffers[i] = 0;
+				return 1;
             }
             AudioQueueEnqueueBuffer (aqcP->queue, aqcP->mBuffers[i], 0, NULL);
         }
@@ -846,6 +890,7 @@ static PaError AbortStream( PaStream *s )
 {
     PaError err = paNoError;
     PaMacCoreStream *stream = (PaMacCoreStream*)s;
+	
 	if(stream)
 	{	
 		if(stream->aqRecord.startB)
@@ -936,7 +981,7 @@ static signed long GetStreamWriteAvailable( PaStream* s )
 PaError PaMacCore_Initialize( PaUtilHostApiRepresentation **hostApi, PaHostApiIndex hostApiIndex )
 {
     PaError result = paNoError;
-    PaMacCoreHostApiRepresentation *macCoreHostApi = (PaMacCoreHostApiRepresentation *)PaUtil_AllocateMemory( sizeof(PaMacCoreHostApiRepresentation) );
+    PaMacCoreHostApiRepresentation *macCoreHostApi = (PaMacCoreHostApiRepresentation *)PaUtil_AllocateMemoryLocal( sizeof(PaMacCoreHostApiRepresentation) );
     if( !macCoreHostApi )
     {
         result = paInsufficientMemory;
