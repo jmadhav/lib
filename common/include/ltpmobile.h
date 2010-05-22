@@ -36,7 +36,7 @@ extern "C" {
 
 /* SUPPORT_SPEEX is a preprocessor directive that should be passed from compiler options */
 
-//#define SUPPORT_SPEEX 1
+#define SUPPORT_SPEEX 1
 
 #define short16 short
 #define int32 int
@@ -646,6 +646,7 @@ struct ltpStack
 		LtpCallBackPtr ltpCallbackPtr;
 	#endif
 	int  sipOnB; 
+	void *pjpool;
 };
 
 
@@ -696,7 +697,7 @@ struct Message{
 
 /* sub versions by date */
 #define UA_SUBVERSION 010000x
-#define LTP_MAX_RETRY 5
+#define LTP_MAX_RETRY 3
 #define LTP_RETRY_INTERVAL 10
 #define LTP_LOGIN_INTERVAL 180
 #define LTP_NOTIFY_INTERVAL 180

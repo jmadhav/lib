@@ -18,11 +18,12 @@
 
 #ifndef _SIP_AND_LTP_WRAPPER_H
 	#define _SIP_AND_LTP_WRAPPER_H
+//#define _SPEEX_CODEC_
 #include "ltpmobile.h"
 #ifdef __cplusplus
 extern "C" {
 #endif 
-int sip_spokn_pj_init(char *errorstring);
+int sip_spokn_pj_init(struct ltpStack *ps,char *errorstring);
 void LTP_ltpHangup(struct ltpStack *ps, int lineid);
 void LTP_ltpRefuse(struct ltpStack *ps, int lineid, char *msg);
 

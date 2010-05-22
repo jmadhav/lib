@@ -53,7 +53,7 @@ extern "C" {
 	//pthread_create(&ltpInterfaceP->pthObj, 0,PollThread,ltpInterfaceP);
 	
 #define THREAD_PROC void * 
-#define START_THREAD(a) {  pthread_t pt; pthread_create(&pt, 0,profileDownload,0);	 }
+#define START_THREAD(a) {  pthread_t pt; pthread_create(&pt, 0,a,0);	 }
 	
 #else	
 
@@ -61,7 +61,7 @@ extern "C" {
 #define START_THREAD(a) CreateThread(NULL, 0, (a), NULL, 0, NULL)
 	
 #endif	
-	
+	void loggedOut();
 	/* user agent's utility functions */
 	void httpCookie(char *cookie);
 	void cleanupNumber(char *number);
@@ -121,6 +121,8 @@ extern "C" {
 #define VCARD_OTHER 4
 #define VCARD_EMAIL 5
 #define VCARD_SPOKNID 6
+#define UA_LOGIN_SUCCESSFULL 22
+#define SWITCH_TO_SIP        23
 	
 	struct AddressBook{
 		unsigned long		id;
@@ -263,7 +265,8 @@ extern "C" {
 	//for voip quality
 	
 	void setBandwidth(unsigned long timeTaken,int byteCount);
-	
+
+	THREAD_PROC sendLogOutPacket(void *lDataP);
 #ifdef _MACOS_
 #define TEST_CALL_ID -2
 #define _T(X) X
@@ -350,7 +353,7 @@ extern "C" {
 	void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId);
 	
 #endif		
-	void loggedOut();
+	
 	extern void relistVMails();
 	extern void relistContacts();
 	extern void relistCDRs();

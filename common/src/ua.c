@@ -76,7 +76,6 @@ static const char cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01
  ** Translation Table to decode (created by author)
  */
 static const char cd64[]="|$$$}rstuvwxyz{$$$$$$$>?@ABCDEFGHIJKLMNOPQRSTUVW$$$$$$XYZ[\\]^_`abcdefghijklmnopq";
-
 //base64 encoder
 void encodeblock( unsigned char in[3], unsigned char out[4], int len )
 {
@@ -622,7 +621,6 @@ void cdrLoad() {
 	sprintf(pathname, "%s\\calls.txt", myFolder);
 	
 #endif	
-	
 	
 	pf = fopen(pathname, "r");
 	if (!pf)
@@ -1971,7 +1969,16 @@ void profileMerge(){
 		if (strlen(xmlstatus->txt))
 			errorCode = atoi(xmlstatus->txt);
 	}
-
+	if(errorCode==0)//mean success
+	{
+		
+		alert(errorCode, UA_LOGIN_SUCCESSFULL, NULL);
+	
+	}
+	else
+	{
+		alert(errorCode, ALERT_ERROR, NULL);
+	}
 	//Tasvir Rohila - 10-04-2009 - bug#19095
 	//For upgrades or any other notification server sends <alert href="">Some msg</alert> in down.xml
 	phref = NULL;
@@ -2156,8 +2163,8 @@ void profileMerge(){
 	fclose(pf);
 	gnewMails = newMails;
 	
-	if(errorCode)
-		alert(errorCode, ALERT_ERROR, NULL);
+	/*if(errorCode)
+		alert(errorCode, ALERT_ERROR, NULL);*/
 	//TBD detect new voicemails and alert the user
 	if (newMails)
 	{
@@ -2512,6 +2519,8 @@ THREAD_PROC profileDownload(void *extras)
 	{
 		free(pstack);
 		pstack = 0;
+		terminateB = 0;
+		UaThreadEnd();
 	}
 	else
 	{
@@ -2524,8 +2533,13 @@ THREAD_PROC profileDownload(void *extras)
 
 	return 0;
 }
-
 void loggedOut()
+{
+	
+START_THREAD(sendLogOutPacket);
+}
+
+THREAD_PROC sendLogOutPacket(void *lDataP)
 {
 	int byteCount;
 	char	key[64];
@@ -2559,6 +2573,7 @@ void loggedOut()
 	sprintf(pathDown, "%s\\down.xml", myFolder);
 #endif
 	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
+	return 0;
 	
 }
 

@@ -862,9 +862,11 @@ void LTP_ltpLogin(struct ltpStack *ps, int command)
 			else
 				ps->loginStatus = LOGIN_STATUS_OFFLINE;
 			
+			ps->loginStatus = LOGIN_STATUS_TIMEDOUT;
 			ps->myPriority = NORMAL_PRIORITY;
 			/* let's rest and try after sometime */
 			ps->loginNextDate = (unsigned int)ps->now + LTP_LOGIN_INTERVAL;
+			alert(-1, ALERT_OFFLINE, 0);
 			return;
 		}
 		/*
@@ -938,7 +940,7 @@ static void LTP_callTick(struct ltpStack *ps, struct Call *pc)
 	 the call on hold was getting dropped by the asterisk side as there were no media packets received at all.
 	 instead, 
 	 */
-	if (pc->ltpState == CALL_CONNECTED && ps->activeLine != pc->lineId){
+	if (pc->ltpState == CALL_CONNECTED &&pc->InConference==0 && ps->activeLine != pc->lineId){
 		
 		short silence[160] = {0};
 		LTP_rtpOut(ps, pc, 160, silence, 0);
@@ -3157,7 +3159,7 @@ static void sip_on_reg_state(pjsua_acc_id acc_id)
 	{
 		//Sign-in attempt failed. Maximum number of stale retries exceeded. This happens when server 
 		//keeps rejecting our authorization request with stale=true. 
-		if (info.status == PJSIP_EAUTHSTALECOUNT)
+		if (info.status == PJSIP_EAUTHSTALECOUNT || info.status == PJSIP_SC_REQUEST_TIMEOUT)
 			pstack->loginStatus = LOGIN_STATUS_TIMEDOUT;
 		else
 		{
@@ -3179,14 +3181,20 @@ void       callbackpjsip(int level, const char *data, int len)
 
 }
 
-int sip_spokn_pj_init(char *errorstring)
+int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 {
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
 	pjsua_transport_config transcfg;
 	pjsua_media_config cfgmedia;
-	//pj_str_t tmp;
+	if(ps->pjpool)
+	{	
+		pj_pool_release(ps->pjpool);
+		ps->pjpool = 0;
+		
+	}
+	
 	pjsua_destroy();
     /* Create pjsua first! */
     status = pjsua_create();
@@ -3203,7 +3211,12 @@ int sip_spokn_pj_init(char *errorstring)
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
+	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.spokn.com");
 	
+		
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
 	//log_cfg.cb = callbackpjsip;
@@ -3230,20 +3243,10 @@ int sip_spokn_pj_init(char *errorstring)
 	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
 	 
 	 */
-	
-	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
-	
-	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
-	
-	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/32000"), 0);
-	
-	pjsua_codec_set_priority(pj_cstr(&tmp, "pcmu"), 0);
-	
-	pjsua_codec_set_priority(pj_cstr(&tmp, "pcma"), 0);
-	
-	pjsua_codec_set_priority(pj_cstr(&tmp, "ilbc"), 0);
-	
-	pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
+	pj_str_t tmp1;
+	pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
+			
+	pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
 	
 #endif	
 	
@@ -3405,6 +3408,13 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 
 			if (acc_id != PJSUA_INVALID_ID)
 				pjsua_acc_set_registration(acc_id, PJ_FALSE);
+			
+			if(ps->pjpool)
+			{	
+				pj_pool_release(ps->pjpool);
+				ps->pjpool = 0;
+				
+			}
 			pjsua_destroy();
 		}	
 	}
@@ -3582,24 +3592,49 @@ void sip_startConference ()
 }
 void sip_setMute(int enableB)
 {
+	//int	i;
+	//pjsua_conf_port_id  port;
 	if (enableB)
+	{
 		pjsua_conf_adjust_rx_level(0 , 0.0f);
+		
+	}
 	else
+	{
+		
 		pjsua_conf_adjust_rx_level(0 , 1.0f);
+		
+		
+	}
+	
+	
 }
 
 
 void sip_setHold(struct ltpStack *ps,int enableB)
 {
+	int	i;
 	if (enableB)
 	{
-		if (ps->call[ps->activeLine].ltpSession != PJSUA_INVALID_ID)
-			pjsua_call_set_hold(ps->call[ps->activeLine].ltpSession, NULL);
+		for (i = 0; i < pstack->maxSlots; i++)
+			if (pstack->call[i].ltpState != CALL_IDLE && pstack->call[i].ltpSession!=PJSUA_INVALID_ID){
+				pjsua_call_set_hold((pjsua_call_id)pstack->call[i].ltpSession, NULL);
+				
+			}
+			
 	}
 	else
 	{
-		if (ps->call[ps->activeLine].ltpSession != PJSUA_INVALID_ID)
-			pjsua_call_reinvite(ps->call[ps->activeLine].ltpSession, PJ_TRUE, NULL);
+		/*if (ps->call[ps->activeLine].ltpSession != PJSUA_INVALID_ID)
+			pjsua_call_reinvite(ps->call[ps->activeLine].ltpSession, PJ_TRUE, NULL);*/
+		
+		
+		for (i = 0; i < pstack->maxSlots; i++)
+			if (pstack->call[i].ltpState != CALL_IDLE && pstack->call[i].ltpSession!=PJSUA_INVALID_ID){
+				pjsua_call_reinvite((pjsua_call_id)pstack->call[i].ltpSession, PJ_TRUE, NULL);
+				
+			}
+		
 	}
 	
 }
@@ -3916,11 +3951,9 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 }
 void switchReinvite(struct ltpStack *ps, int lineid)
 {
-	int	i, inConf=0;
+	int	i;
 	pjsua_call_id call_id;
-	for (i = 0; i < ps->maxSlots; i++)
-		if (lineid == ps->call[i].lineId && ps->call[i].ltpState == CALL_CONNECTED && ps->call[i].InConference)
-			inConf = 1;
+	
 
 	for (i = 0; i < ps->maxSlots; i++)
 		if (ps->call[i].ltpState != CALL_IDLE){
