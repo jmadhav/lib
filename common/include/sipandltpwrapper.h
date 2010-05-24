@@ -41,7 +41,7 @@ struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int frames
 void startConference(struct ltpStack *ps);
 void switchReinvite(struct ltpStack *ps, int lineid);
 void Unconference(struct ltpStack *pstackP);	
-void shiftToConferenceCall(struct ltpStack *ps);
+	void shiftToConferenceCall(struct ltpStack *ps,int oldLineId);
 void setPrivateCall(struct ltpStack *ps,int lineid);
 #ifdef __cplusplus
 }

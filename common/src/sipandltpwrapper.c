@@ -5,6 +5,7 @@
  
  Spokn is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
+ 
  the Free Software Foundation, version 2 of the License.
   
  Spokn is distributed in the hope that it will be useful,
@@ -935,12 +936,20 @@ void LTP_ltpLoginCancelLtp(struct ltpStack *ps)
 static void LTP_callTick(struct ltpStack *ps, struct Call *pc)
 {
 	struct ltp *p = (struct ltp *)pc->ltpRequest;
+	//struct Call *pcactiveP;
 	
 	/** farhan, aug 20 2009, bug id 23023
 	 the call on hold was getting dropped by the asterisk side as there were no media packets received at all.
 	 instead, 
 	 */
-	if (pc->ltpState == CALL_CONNECTED &&pc->InConference==0 && ps->activeLine != pc->lineId){
+	/*int noconfOn=1;
+	if(ps->activeLine>=0 && ps->activeLine<ps->maxSlots)
+	{	
+		pcactiveP = ps->call + ps->activeLine;
+		noconfOn = !pcactiveP->InConference;
+		
+	}*///(noconfOn || pc->InConference == 0)
+		if (pc->ltpState == CALL_CONNECTED && pc->InConference==0 && ps->activeLine != pc->lineId){
 		
 		short silence[160] = {0};
 		LTP_rtpOut(ps, pc, 160, silence, 0);
@@ -3892,17 +3901,32 @@ void startConference(struct ltpStack *ps)
 			ps->call[i].InConference = 1;
 		}
 }
-void shiftToConferenceCall(struct ltpStack *ps)
+void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 {
 	int	i;
+	int lactiveLineId = -1;
 	for (i = 0; i < ps->maxSlots; i++)
 	{	
 		if (ps->call[i].ltpState != CALL_IDLE){
+			
+			if(ps->call[i].lineId!=oldLineId)
+			{
+				ps->call[i].InConference = 1;
+			}
+			else {
+				ps->call[i].InConference = 0;
+			}
+
 			if(ps->sipOnB)
 			{
-				if(ps->call[i].InConference)
+				if(ps->call[i].lineId!=oldLineId)
 				{	
 					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
+					if(lactiveLineId<0)
+					{	
+						lactiveLineId = ps->call[i].lineId;
+					}	
+					
 				}
 				else {
 						
@@ -3911,10 +3935,23 @@ void shiftToConferenceCall(struct ltpStack *ps)
 				}
 				
 			}
+			else {
+				if(ps->call[i].lineId!=oldLineId)
+				{	
+					if(lactiveLineId<0)
+					{	
+						lactiveLineId = ps->call[i].lineId;
+					}
+				}	
+			}
+
 						
 		}
 	}	
-	
+	if(lactiveLineId>=0)
+	{
+		ps->activeLine= lactiveLineId;
+	}
 
 	
 
@@ -3922,7 +3959,7 @@ void shiftToConferenceCall(struct ltpStack *ps)
 void setPrivateCall(struct ltpStack *ps,int lineid)
 {
 	int	i;
-	
+
 	for (i = 0; i < ps->maxSlots; i++)
 	{	
 		if (ps->call[i].ltpState != CALL_IDLE){
@@ -3937,16 +3974,19 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 				else {
 				
 					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
+					
 				}
 
 			}
-			if(ps->call[i].lineId ==lineid)
+			//if(ps->call[i].lineId ==lineid)
 			{	
 				ps->call[i].InConference = 0;
+				
 			}	
 		}
 	}	
 	
+	ps->activeLine= lineid;
 
 }
 void switchReinvite(struct ltpStack *ps, int lineid)
