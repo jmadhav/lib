@@ -18,7 +18,7 @@
 
 #ifndef _SIP_AND_LTP_WRAPPER_H
 	#define _SIP_AND_LTP_WRAPPER_H
-//#define _SPEEX_CODEC_
+#define _SPEEX_CODEC_
 #include "ltpmobile.h"
 #ifdef __cplusplus
 extern "C" {
