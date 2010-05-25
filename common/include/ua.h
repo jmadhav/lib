@@ -53,14 +53,23 @@ extern "C" {
 	//pthread_create(&ltpInterfaceP->pthObj, 0,PollThread,ltpInterfaceP);
 	
 #define THREAD_PROC void * 
-#define START_THREAD(a) {  pthread_t pt; pthread_create(&pt, 0,a,0);	 }
-	
+	#define START_THREAD(a) {  pthread_t pt; pthread_create(&pt, 0,a,0);	 }
+
 #else	
 
 #define THREAD_PROC DWORD WINAPI
 #define START_THREAD(a) CreateThread(NULL, 0, (a), NULL, 0, NULL)
 	
 #endif	
+	typedef struct LogoutStructType
+	{
+		char	 ltpUserid[40];
+		char  ltpPassword[40]; 
+		char  ltpServerName[40];
+		char  ltpNonce[20];
+		int   bigEndian;
+		
+	} LogoutStructType;	
 	void loggedOut();
 	/* user agent's utility functions */
 	void httpCookie(char *cookie);
@@ -214,6 +223,7 @@ extern "C" {
 	void vmsDelete(struct VMail *p);
 	void vmsSave();
 	void vmsEmpty();
+	
 	/*
 	 profile related definitions
 	 */

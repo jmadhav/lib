@@ -285,8 +285,10 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	//try connecting the socket
 	sock = (int)socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)))
+	{
+		closesocket(sock);
 		return 0;
-	
+	}
 	//send the http headers
 	send(sock, header, strlen(header),0);
 	byteCount += strlen(header);
@@ -294,7 +296,10 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	//send the xml data
 	pf = fopen(requestfile, "rb");
 	if (!pf)
+	{	
+		closesocket(sock);
 		return 0;
+	}	
 #ifdef MAX_SIZE_DATA
 	data = malloc(MAX_SIZE_DATA+10);
 	memset(data,0,MAX_SIZE_DATA+10);
@@ -342,6 +347,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 			if(data)
 				free(data);
 		#endif	
+		closesocket(sock);
 		return 0;
 	}
 	//read the body 
@@ -407,6 +413,7 @@ end:
 	if(data)
 		free(data);
 #endif	
+	closesocket(sock);
 	return byteCount;
 }
 
@@ -2218,7 +2225,7 @@ void profileGetKey()
 			pstack->ltpUserid);
 	fclose(pfOut);
 	
-	byteCount = restCall(requestfile, responsefile, "www.spokn.com", "/cgi-bin/userxml.cgi");
+	byteCount = restCall(requestfile, responsefile, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
 	if (!byteCount)
 		return;
 	
@@ -2536,51 +2543,143 @@ THREAD_PROC profileDownload(void *extras)
 void loggedOut()
 {
 	
-//START_THREAD(sendLogOutPacket);
-	int byteCount;
-	char	key[64];
-	char	pathUpload[MAX_PATH], pathDown[MAX_PATH];
-	FILE	*pfOut;
-	
-	profileGetKey();
-	
-	httpCookie(key);
-	
 #ifdef _MACOS_
-	sprintf(pathUpload, "%s/upload.xml", myFolder);
-#else
-	sprintf(pathUpload, "%s\\upload.xml", myFolder);
-#endif
+	LogoutStructType *logoutStructP=0;
+	logoutStructP = (LogoutStructType *) malloc(sizeof(LogoutStructType));
+	strcpy(logoutStructP->ltpUserid,pstack->ltpUserid);
+	strcpy(logoutStructP->ltpPassword,pstack->ltpPassword);
+	strcpy(logoutStructP->ltpNonce,pstack->ltpNonce);
+	strcpy(logoutStructP->ltpServerName,pstack->ltpServerName);
+	logoutStructP->bigEndian =pstack-> bigEndian;
 	
-	pfOut = fopen(pathUpload, "wb");
-	fprintf(pfOut,  
-			"<?xml version=\"1.0\"?>\n"
-			"<profile>\n"
-			" <u>%s</u>\n"
-			" <key>%s</key> \n"
-			" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
-			"<action>logout</action>",		
-			pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid);
-	fprintf(pfOut, "</profile>\n");
-	fclose(pfOut);
-#ifdef _MACOS_
-	sprintf(pathDown, "%s/down.xml", myFolder);
+	
+	pthread_t pt; pthread_create(&pt, 0,sendLogOutPacket,logoutStructP);
 #else
-	sprintf(pathDown, "%s\\down.xml", myFolder);
-#endif
-	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
+	LogoutStructType *logoutStructP=0;
+	logoutStructP = (LogoutStructType *) malloc(sizeof(LogoutStructType));
+	strcpy(logoutStructP->ltpUserid,pstack->ltpUserid);
+	strcpy(logoutStructP->ltpPassword,pstack->ltpPassword);
+	strcpy(logoutStructP->ltpNonce,pstack->ltpNonce);
+	strcpy(logoutStructP->ltpServerName,pstack->ltpServerName);
+	logoutStructP->bigEndian =pstack-> bigEndian;
+	
+	CreateThread(NULL, 0, sendLogOutPacket, logoutStructP, 0, NULL);
+#endif	
+	
 }
-/*
+
 THREAD_PROC sendLogOutPacket(void *lDataP)
 {
 	int byteCount;
+	struct	MD5Context	md5;
+	unsigned char	digest[16];
+
 	char	key[64];
 	char	pathUpload[MAX_PATH], pathDown[MAX_PATH];
-	FILE	*pfOut;
+//	FILE	*pfOut;
+	LogoutStructType *logoutStructP=0;
+	logoutStructP = (LogoutStructType*)lDataP;
+	//getkey function code
+	char	 *strxml;
+#ifdef MAX_SIZE_DATA
+	unsigned  char *buffer=0;
+#else
+	unsigned char buffer[10000];
 	
-	profileGetKey();
+#endif
+	char	requestfile[MAX_PATH], responsefile[MAX_PATH];
+	FILE	*pfIn, *pfOut;
+	int		length;
+	if(lDataP==0)
+	{
+		return 0;
+	}
+#ifdef _MACOS_
+	sprintf(requestfile, "%s/keyreq.txt", myFolder);
+	sprintf(responsefile, "%s/keyresp.txt", myFolder);
 	
-	httpCookie(key);
+#else
+	sprintf(requestfile, "%s\\keyreq.txt", myFolder);
+	sprintf(responsefile, "%s\\keyresp.txt", myFolder);
+	
+#endif	
+	
+	pfOut = fopen(requestfile, "wb");
+	if (!pfOut){
+		free(logoutStructP);
+		logoutStructP = 0;
+
+		return 0;
+	}
+	
+	
+	fprintf(pfOut, "<?xml version=\"1.0\"?><profile>\n <u>%s</u> </profile>", 
+			logoutStructP->ltpUserid);
+	fclose(pfOut);
+	
+	byteCount = restCall(requestfile, responsefile, logoutStructP->ltpServerName, "/cgi-bin/userxml.cgi");
+	if (!byteCount)
+	{	
+		free(logoutStructP);
+		logoutStructP = 0;
+
+		return 0;
+	}
+	pfIn = fopen(responsefile, "rb");
+	if (!pfIn){
+		fclose(pfOut);
+		free(logoutStructP);
+		logoutStructP = 0;
+
+		return 0;
+	}
+	
+#ifdef MAX_SIZE_DATA
+	buffer = malloc(MAX_SIZE_DATA+10);
+	memset(buffer,0,MAX_SIZE_DATA);
+	length = fread(buffer, 1,MAX_SIZE_DATA , pfIn);
+#else
+	length = fread(buffer, 1, sizeof(buffer), pfIn);
+#endif
+	
+	fclose(pfIn);
+	buffer[length] = 0;
+	
+	strxml = strstr((char*)buffer, "<?xml");
+	
+	if (strxml){
+		ezxml_t xml,  key;
+		
+		if (xml = ezxml_parse_str(strxml, strlen(strxml))){
+			if (key = ezxml_child(xml, "challenge")){
+				strcpy(logoutStructP->ltpNonce, key->txt);
+			}
+			else
+				logoutStructP->ltpNonce[0] = 0;
+			ezxml_free(xml);
+		}
+	}
+	unlink(requestfile);
+	unlink(responsefile);
+#ifdef MAX_SIZE_DATA	
+	if(buffer)
+		free(buffer);
+#endif
+	
+	
+	//end
+	
+		
+	memset(&md5, 0, sizeof(md5));
+	MD5Init(&md5);
+	
+	MD5Update(&md5, (char unsigned *)logoutStructP->ltpUserid, strlen(logoutStructP->ltpUserid), logoutStructP->bigEndian);
+	MD5Update(&md5, (char unsigned *)logoutStructP->ltpPassword, strlen(logoutStructP->ltpPassword), logoutStructP->bigEndian);
+	MD5Update(&md5, (char unsigned *)logoutStructP->ltpNonce, strlen(logoutStructP->ltpNonce), logoutStructP->bigEndian);
+	MD5Final(digest,&md5);
+	
+	digest2String(digest, key);
+	
 
 #ifdef _MACOS_
 	sprintf(pathUpload, "%s/upload.xml", myFolder);
@@ -2596,7 +2695,7 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 			" <key>%s</key> \n"
 			" <client title=\"%s\" ver=\"%s\" os=\"%s\" osver=\"%s\" model=\"%s\" uid=\"%s\" /> \n"
 			"<action>logout</action>",		
-			pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid);
+			logoutStructP->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid);
 	fprintf(pfOut, "</profile>\n");
 	fclose(pfOut);
 #ifdef _MACOS_
@@ -2604,11 +2703,14 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 #else
 	sprintf(pathDown, "%s\\down.xml", myFolder);
 #endif
-	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
+	byteCount = restCall(pathUpload, pathDown, logoutStructP->ltpServerName, "/cgi-bin/userxml.cgi");
+	
+	free(logoutStructP);
+	logoutStructP = 0;
 	return 0;
 	
 }
-*/
+
 void profileResync()
 {
 	
@@ -3209,11 +3311,11 @@ char *getAccountPage()
 	returnCharP = malloc(500);
 #ifdef _LTP_
 	
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/accounts?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/accounts?userid=%s&session=%s",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 
 #else
 	
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/accounts?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/accounts?userid=%s&session=%s",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 
 	
 #endif	
@@ -3229,10 +3331,10 @@ char *getCreditsPage()
 	returnCharP = malloc(500);
 #ifdef _LTP_ 
 	
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s&mode=cc",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/payment?userid=%s&session=%s&mode=cc",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 	
 #else
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s&mode=cc",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/payment?userid=%s&session=%s&mode=cc",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 	
 #endif	
 	
@@ -3248,10 +3350,10 @@ char *getSupportPage()
 	returnCharP = malloc(500);
 #ifdef _LTP_ 
 	
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/support?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/support?userid=%s&session=%s",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 
 #else
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/support?userid=%s&session=%s",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/support?userid=%s&session=%s",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 	
 #endif	
 	
@@ -3268,10 +3370,10 @@ char *getPayPalPage()
 	returnCharP = malloc(500);
 #ifdef _LTP_ 
 	
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s&mode=pp",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/payment?userid=%s&session=%s&mode=pp",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 	
 #else
-	sprintf(returnCharP,"http://www.spokn.com/services/iphone/payment?userid=%s&session=%s&mode=pp",pstack->ltpUserid,cookieCharP);
+	sprintf(returnCharP,"http://%s/services/iphone/payment?userid=%s&session=%s&mode=pp",pstack->ltpServerName,pstack->ltpUserid,cookieCharP);
 	
 #endif	
 	
