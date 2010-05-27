@@ -2931,6 +2931,10 @@ static void sip_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	
 	
 	#endif
+	if(pstack->now==0)
+	{
+		pstack->now = time(NULL);
+	}
 	pc->timeStart = pstack->now;
 	//example of what is in c.remote_info.ptr "+919849026029" <sip:+919849026029@spokn.com>
 	//skip ahead of sip and '+' sign if any
@@ -2974,7 +2978,7 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 				alert(pstack->call[i].lineId, ALERT_INCOMING_CALL, "");
 				pstack->call[i].ltpState = CALL_RING_RECEIVED;
 				break;
-			case PJSIP_INV_STATE_EARLY:	    /**< After response with To tag.	    */				
+			//case PJSIP_INV_STATE_EARLY:	    /**< After response with To tag.	    */				
 			case PJSIP_INV_STATE_CONNECTING:	    /**< After 2xx is sent/received.	    */
 				pstack->call[i].ltpState = CALL_RING_ACCEPTED;
 				break;
