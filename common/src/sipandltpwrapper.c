@@ -23,6 +23,7 @@
 #include "sipandltpwrapper.h"
 #include <stdlib.h>
 #include <string.h>
+
 #define USERAGENT "spokn-iphone-1.0.0"
 //#define USERAGENT "ltpmobile"
 #ifdef _WIN32_WCE
@@ -3245,18 +3246,18 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 		return 0;
 	}
 #ifdef _SPEEX_CODEC_
-
+	{
 	//speex code
 	/* Set codec priority 
 	 
 	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
 	 
 	 */
-	pj_str_t tmp1;
-	pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
+		pj_str_t tmp1;
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
 			
-	pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
-	
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
+	}
 #endif	
 	
     /* Add UDP transport. */
@@ -3834,7 +3835,7 @@ void ltpLogin(struct ltpStack *ps, int command)
 	
 	if(ps->sipOnB)
 	{
-		sip_ltpLogin(ps,command);
+		//sip_ltpLogin(ps,command);
 	}
 	else
 	{
@@ -3881,11 +3882,11 @@ void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 {
 	if(ps->sipOnB)
 	{
-		return sip_ltpMessageDTMF(ps, lineid, msg);
+		 sip_ltpMessageDTMF(ps, lineid, msg);
 	}
 	else
 	{
-		return LTP_ltpMessageDTMF(ps, lineid, msg);
+		LTP_ltpMessageDTMF(ps, lineid, msg);
 	}
 }
 void startConference(struct ltpStack *ps)
@@ -4021,8 +4022,8 @@ void switchReinvite(struct ltpStack *ps, int lineid)
 
 void Unconference(struct ltpStack *pstackP)
 {
-	
-	for (int i=0; i < pstackP->maxSlots; ++i)
+	int i;
+	for (i=0; i < pstackP->maxSlots; ++i)
 		pstackP->call[i].InConference = 0;
 }	
 

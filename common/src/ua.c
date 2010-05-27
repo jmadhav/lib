@@ -2527,15 +2527,11 @@ THREAD_PROC profileDownload(void *extras)
 		free(pstack);
 		pstack = 0;
 		terminateB = 0;
-		UaThreadEnd();
+		
 	}
-	else
-	{
-		#ifdef _MACOS_
+	#ifdef _MACOS_
 			UaThreadEnd();
-		#endif
-
-	}
+	#endif
 
 
 	return 0;
@@ -2578,7 +2574,7 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 	char	pathUpload[MAX_PATH], pathDown[MAX_PATH];
 //	FILE	*pfOut;
 	LogoutStructType *logoutStructP=0;
-	logoutStructP = (LogoutStructType*)lDataP;
+	
 	//getkey function code
 	char	 *strxml;
 #ifdef MAX_SIZE_DATA
@@ -2594,6 +2590,7 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 	{
 		return 0;
 	}
+	logoutStructP = (LogoutStructType*)lDataP;
 #ifdef _MACOS_
 	sprintf(requestfile, "%s/keyreq.txt", myFolder);
 	sprintf(responsefile, "%s/keyresp.txt", myFolder);
