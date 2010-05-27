@@ -3226,11 +3226,15 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
 	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	/*pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.nameserver[cfg.nameserver_count++]), 
+                         "www.spokn.com");
+	*/
 	pj_strdup2_with_null(ps->pjpool, 
                          &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
                          "stun.spokn.com");
 	
-		
+	//cfg.stun_ignore_failure	= 0;
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
 	//log_cfg.cb = callbackpjsip;
@@ -3283,6 +3287,23 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 
     pjsua_detect_nat_type();
 	return 1;
+}
+void sip_pj_DeInit(struct ltpStack *ps)
+
+{
+	if(ps->sipOnB==0)
+	{
+		return;
+	}
+	if(ps->pjpool)
+	{	
+		pj_pool_release(ps->pjpool);
+		ps->pjpool = 0;
+		
+	}
+	pjsua_destroy();
+	
+	
 }
 
 /* 
@@ -3423,17 +3444,9 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 			if (acc_id != PJSUA_INVALID_ID)
 				pjsua_acc_set_registration(acc_id, PJ_FALSE);
 			
-			if(ps->pjpool)
-			{	
-				pj_pool_release(ps->pjpool);
-				ps->pjpool = 0;
-				
-			}
-			pjsua_destroy();
 		}	
 	}
 }
-
 /* at the moment this simply unregisters from the sip server, maybe something else is required here */
 void sip_ltpLoginCancel(struct ltpStack *ps)
 {
