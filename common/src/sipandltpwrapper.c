@@ -3835,7 +3835,7 @@ void ltpLogin(struct ltpStack *ps, int command)
 	
 	if(ps->sipOnB)
 	{
-		//sip_ltpLogin(ps,command);
+		sip_ltpLogin(ps,command);
 	}
 	else
 	{
@@ -3851,7 +3851,7 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 	
 	if(ps->sipOnB)
 	{
-		sip_ltpTick(ps,timeNow);
+		//sip_ltpTick(ps,timeNow);
 	}
 	else
 	{
