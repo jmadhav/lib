@@ -3258,7 +3258,7 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	cfgmedia.snd_auto_close_time = 0;
 //	cfgmedia.ec_tail_len = 0;
 	
-	cfgmedia.enable_ice = 1;
+	//cfgmedia.enable_ice = 1;
 	
 	//cfgmedia.no_vad = 1;
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
@@ -3266,7 +3266,7 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 		strcpy(errorstring, "Error in pjsua_init()");
 		return 0;
 	}
-
+#define _SPEEX_CODEC_
 #ifdef _SPEEX_CODEC_
 	{
 	//speex code
