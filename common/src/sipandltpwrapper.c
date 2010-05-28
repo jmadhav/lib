@@ -3202,10 +3202,12 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	pj_status_t status;
 	pjsua_transport_config transcfg;
 	pjsua_media_config cfgmedia;
+	
 	if(ps->pjpool)
 	{	
 		pj_pool_release(ps->pjpool);
 		ps->pjpool = 0;
+		//return 1;
 		
 	}
 	
@@ -3226,14 +3228,25 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
 	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
-	/*pj_strdup2_with_null(ps->pjpool, 
+	//pj_str(
+	/*
+	pj_strdup2_with_null(ps->pjpool, 
                          &(cfg.nameserver[cfg.nameserver_count++]), 
-                         "www.spokn.com");
+                         "66.93.87.2");
 	*/
 	pj_strdup2_with_null(ps->pjpool, 
                          &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
                          "stun.spokn.com");
 	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.ideasip.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.sipgate.net:10000");
+	
+		
 	//cfg.stun_ignore_failure	= 0;
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
@@ -3245,18 +3258,19 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	cfgmedia.snd_auto_close_time = 0;
 //	cfgmedia.ec_tail_len = 0;
 	
+	cfgmedia.enable_ice = 1;
 	
-	
-	
+	//cfgmedia.no_vad = 1;
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");
 		return 0;
 	}
+
 #ifdef _SPEEX_CODEC_
 	{
 	//speex code
-	/* Set codec priority 
+	/* Set codec priority
 	 
 	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
 	 
@@ -3405,21 +3419,10 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		//check if an account already exists
 		if (strlen(pstack->ltpUserid) && strlen(pstack->ltpPassword) && pjsua_acc_get_count() > 0){
 			acc_id = pjsua_acc_get_default();
-			if (acc_id != PJSUA_INVALID_ID){
-
-				//if the the account details are the same, then just re-register
-				if (!strcmp(pstack->ltpUserid, acccfg.cred_info[0].username.ptr) &&
-					!strcmp(pstack->ltpPassword, acccfg.cred_info[0].data.ptr))
-				{
-					pjsua_acc_set_registration(acc_id, PJ_TRUE);
-					return;
-				}
-			}
-
 			//account details don't match, then delete this account and create a new default account
 			pjsua_acc_del(acc_id);
 		}
-
+		
 		pjsua_acc_config_default(&acccfg);
 
 		sprintf(url, "sip:%s@%s", pstack->ltpUserid, SIP_DOMAIN);

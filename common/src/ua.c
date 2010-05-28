@@ -585,10 +585,7 @@ static void cdrCompact() {
 		fwrite(line, strlen(line), 1, pf);
 		fclose(pf);
 	}
-	else
-	{
-		printf("\n%s\n",pathname);
-	}
+	
 }
 
 void cdrRemove(struct CDR *p)
