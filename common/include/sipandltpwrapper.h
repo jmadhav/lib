@@ -44,8 +44,9 @@ void switchReinvite(struct ltpStack *ps, int lineid);
 void Unconference(struct ltpStack *pstackP);	
 void shiftToConferenceCall(struct ltpStack *ps,int oldLineId);
 void setPrivateCall(struct ltpStack *ps,int lineid);
-	void sip_pj_DeInit(struct ltpStack *ps);
-	
+void sip_pj_DeInit(struct ltpStack *ps);
+	int sip_spokn_pj_Create(struct ltpStack *ps);	
+	int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring);
 #ifdef __cplusplus
 }
 #endif 

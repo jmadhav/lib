@@ -3194,7 +3194,172 @@ void       callbackpjsip(int level, const char *data, int len)
 	printf("\n%s",data);
 
 }
-
+int sip_spokn_pj_Create(struct ltpStack *ps)
+{
+	pj_status_t status;
+	if(ps->pjpool)
+	{	
+		pj_pool_release(ps->pjpool);
+		ps->pjpool = 0;
+		
+	}
+	pjsua_destroy();
+	
+	status = pjsua_create();
+	
+	if (status != PJ_SUCCESS){
+		
+		return 0;
+	}
+	
+	return 1;
+	
+}
+int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
+{
+	pjsua_config cfg;
+	pjsua_logging_config log_cfg;
+	pj_status_t status;
+	pjsua_transport_config transcfg;
+	pjsua_media_config cfgmedia;
+	pjsua_transport_config rtp_cfg;
+	
+	pj_thread_desc desc;
+	pj_thread_t *  thread=0;
+	memset(&desc,0,sizeof(pj_thread_desc));
+	pj_thread_register(NULL,desc,&thread);	
+	pjsua_config_default(&cfg);
+	cfg.cb.on_incoming_call = &sip_on_incoming_call;
+	cfg.cb.on_call_media_state = &sip_on_call_media_state;
+	cfg.cb.on_call_state = &sip_on_call_state;
+	cfg.cb.on_reg_state = &sip_on_reg_state;
+	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	//pj_str(
+	/*
+	 pj_strdup2_with_null(ps->pjpool, 
+	 &(cfg.nameserver[cfg.nameserver_count++]), 
+	 "66.93.87.2");
+	 */
+	
+	//cfg.stun_ignore_failure	= 0;
+	pjsua_logging_config_default(&log_cfg);
+	log_cfg.console_level = 0;
+	//log_cfg.cb = callbackpjsip;
+	pjsua_media_config_default(&cfgmedia);
+	cfgmedia.clock_rate = 8000;
+	cfgmedia.snd_clock_rate = 8000;
+	
+	cfgmedia.snd_auto_close_time = 0;
+	//cfgmedia.ec_tail_len = 0;
+	
+	//cfgmedia.enable_ice = 1;
+	/*cfgmedia.ice_max_host_cands = 1;
+	 pj_strdup2_with_null(ps->pjpool, 
+	 &(cfgmedia.turn_server), 
+	 "turn.spokn.com");
+	 cfgmedia.enable_turn = 1; 
+	 //cfgmedia.ec_tail_len = 0;
+	 //cfgmedia.no_vad = 1;
+	 cfgmedia.turn_auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
+	 
+	 
+	 cfgmedia.turn_auth_cred.data.static_cred.realm = pj_str(SIP_DOMAIN);
+	 cfgmedia.turn_auth_cred.data.static_cred.username = pj_str(pstack->ltpUserid);
+	 cfgmedia.turn_auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
+	 cfgmedia.turn_auth_cred.data.static_cred.data = pj_str(pstack->ltpPassword);;
+	 */
+	if(ps->stunB)
+	{	
+		pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.spokn.com");
+		
+		pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.ideasip.com");
+		
+		pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.sipgate.net:10000");
+	}
+	
+	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
+	if (status != PJ_SUCCESS){
+		strcpy(errorstring, "Error in pjsua_init()");
+		return 0;
+	}
+	
+	printf("\n sip start");
+#ifdef _SPEEX_CODEC_
+	{
+		//speex code
+		/* Set codec priority
+		 
+		 Use only "speex/8000" or "speex/16000". Set zero priority for others.
+		 
+		 */
+		pj_str_t tmp1;
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
+		
+		/*pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
+		 
+		 pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/32000"), 0);
+		 
+		 pjsua_codec_set_priority(pj_cstr(&tmp1, "pcmu"), 0);
+		 
+		 pjsua_codec_set_priority(pj_cstr(&tmp1, "pcma"), 0);*/
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
+	}
+#endif	
+	
+    /* Add UDP transport. */
+	
+	pjsua_transport_config_default(&transcfg);
+	transcfg.port = 5060;
+	
+	/*{
+	 enum { START_PORT=5060 };
+	 unsigned range;
+	 
+	 range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+	 transcfg.port = START_PORT + 
+	 ((pj_rand() % range) & 0xFFFE);
+	 }*/
+	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	if (status != PJ_SUCCESS){
+		strcpy(errorstring, "Error creating transport");
+		return 0;
+    }
+	pjsua_transport_config_default(&rtp_cfg);
+	{
+		enum { START_PORT=4000 };
+		unsigned range;
+		
+		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+		rtp_cfg.port = START_PORT + 
+		((pj_rand() % range) & 0xFFFE);
+		if(rtp_cfg.port==5060)//change to some other port
+		{
+			rtp_cfg.port = rtp_cfg.port + 102;
+			
+		}
+	}
+	
+	status = pjsua_media_transports_create(&rtp_cfg);
+	
+    /* Initialization is done, now start pjsua */
+    status = pjsua_start();
+	if (status != PJ_SUCCESS){ 
+		strcpy(errorstring, "Error starting pjsua");
+		return 0;
+	}
+	printf("\n sip end");
+	
+    //pjsua_detect_nat_type();
+	return 1;
+	
+}
 int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 {
 	pjsua_config cfg;
@@ -3203,25 +3368,16 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	pjsua_transport_config transcfg;
 	pjsua_media_config cfgmedia;
 	pjsua_transport_config rtp_cfg;
-	if(ps->pjpool)
-	{	
-		pj_pool_release(ps->pjpool);
-		ps->pjpool = 0;
-		//return 1;
-		
-	}
+	    /* Create pjsua first! */
+  
+	/* Init pjsua */
+	status = pjsua_create();
 	
-	pjsua_destroy();
-    /* Create pjsua first! */
-    status = pjsua_create();
-
 	if (status != PJ_SUCCESS){
-		strcpy(errorstring, "Error in pjsua_create()");
+		
 		return 0;
 	}
-
-	/* Init pjsua */
-
+	
 	pjsua_config_default(&cfg);
 	cfg.cb.on_incoming_call = &sip_on_incoming_call;
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
@@ -3234,21 +3390,7 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
                          &(cfg.nameserver[cfg.nameserver_count++]), 
                          "66.93.87.2");
 	*/
-	if(ps->stunB)
-	{	
-		pj_strdup2_with_null(ps->pjpool, 
-                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
-                         "stun.spokn.com");
-	
-		pj_strdup2_with_null(ps->pjpool, 
-                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
-                         "stun.ideasip.com");
-	
-		pj_strdup2_with_null(ps->pjpool, 
-                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
-                         "stun.sipgate.net:10000");
-	}
-		
+			
 	//cfg.stun_ignore_failure	= 0;
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
@@ -3276,13 +3418,28 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	cfgmedia.turn_auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
 	cfgmedia.turn_auth_cred.data.static_cred.data = pj_str(pstack->ltpPassword);;
 	*/
+	if(ps->stunB)
+	{	
+		pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.spokn.com");
 		
+		pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.ideasip.com");
+		
+		pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.sipgate.net:10000");
+	}
+	
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");
 		return 0;
 	}
-
+		
+printf("\n sip start");
 #ifdef _SPEEX_CODEC_
 	{
 	//speex code
@@ -3347,6 +3504,7 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 		strcpy(errorstring, "Error starting pjsua");
 		return 0;
 	}
+	printf("\n sip end");
 
     //pjsua_detect_nat_type();
 	return 1;
@@ -3464,7 +3622,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
     /* Register to SIP server by creating SIP account. */
 
 	if (command == CMD_LOGIN){
-		
+				
 		//check if an account already exists
 		if (strlen(pstack->ltpUserid) && strlen(pstack->ltpPassword) && pjsua_acc_get_count() > 0){
 			acc_id = pjsua_acc_get_default();
