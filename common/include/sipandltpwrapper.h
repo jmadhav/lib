@@ -18,7 +18,8 @@
 
 #ifndef _SIP_AND_LTP_WRAPPER_H
 	#define _SIP_AND_LTP_WRAPPER_H
-//#define _SPEEX_CODEC_
+#define _SPEEX_CODEC_
+#define MAXTIMEOUT 300
 #include "ltpmobile.h"
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +45,7 @@ void Unconference(struct ltpStack *pstackP);
 void shiftToConferenceCall(struct ltpStack *ps,int oldLineId);
 void setPrivateCall(struct ltpStack *ps,int lineid);
 	void sip_pj_DeInit(struct ltpStack *ps);
+	
 #ifdef __cplusplus
 }
 #endif 

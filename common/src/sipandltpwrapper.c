@@ -3202,7 +3202,7 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	pj_status_t status;
 	pjsua_transport_config transcfg;
 	pjsua_media_config cfgmedia;
-	
+	pjsua_transport_config rtp_cfg;
 	if(ps->pjpool)
 	{	
 		pj_pool_release(ps->pjpool);
@@ -3234,18 +3234,20 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
                          &(cfg.nameserver[cfg.nameserver_count++]), 
                          "66.93.87.2");
 	*/
-	pj_strdup2_with_null(ps->pjpool, 
+	if(ps->stunB)
+	{	
+		pj_strdup2_with_null(ps->pjpool, 
                          &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
                          "stun.spokn.com");
 	
-	pj_strdup2_with_null(ps->pjpool, 
+		pj_strdup2_with_null(ps->pjpool, 
                          &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
                          "stun.ideasip.com");
 	
-	pj_strdup2_with_null(ps->pjpool, 
+		pj_strdup2_with_null(ps->pjpool, 
                          &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
                          "stun.sipgate.net:10000");
-	
+	}
 		
 	//cfg.stun_ignore_failure	= 0;
 	pjsua_logging_config_default(&log_cfg);
@@ -3256,17 +3258,31 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	cfgmedia.snd_clock_rate = 8000;
 		
 	cfgmedia.snd_auto_close_time = 0;
-//	cfgmedia.ec_tail_len = 0;
+	//cfgmedia.ec_tail_len = 0;
 	
 	//cfgmedia.enable_ice = 1;
-	
+	/*cfgmedia.ice_max_host_cands = 1;
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfgmedia.turn_server), 
+                         "turn.spokn.com");
+	cfgmedia.enable_turn = 1; 
+	//cfgmedia.ec_tail_len = 0;
 	//cfgmedia.no_vad = 1;
+	cfgmedia.turn_auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
+	
+	
+	cfgmedia.turn_auth_cred.data.static_cred.realm = pj_str(SIP_DOMAIN);
+	cfgmedia.turn_auth_cred.data.static_cred.username = pj_str(pstack->ltpUserid);
+	cfgmedia.turn_auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
+	cfgmedia.turn_auth_cred.data.static_cred.data = pj_str(pstack->ltpPassword);;
+	*/
+		
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");
 		return 0;
 	}
-#define _SPEEX_CODEC_
+
 #ifdef _SPEEX_CODEC_
 	{
 	//speex code
@@ -3277,7 +3293,15 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	 */
 		pj_str_t tmp1;
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
-			
+		
+		/*pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/32000"), 0);
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcmu"), 0);
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcma"), 0);*/
+					
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
 	}
 #endif	
@@ -3286,12 +3310,37 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 
 	pjsua_transport_config_default(&transcfg);
 	transcfg.port = 5060;
+	
+	/*{
+		enum { START_PORT=5060 };
+		unsigned range;
+		
+		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+		transcfg.port = START_PORT + 
+		((pj_rand() % range) & 0xFFFE);
+	}*/
 	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error creating transport");
 		return 0;
     }
-
+	pjsua_transport_config_default(&rtp_cfg);
+	{
+		enum { START_PORT=4000 };
+		unsigned range;
+		
+		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+		rtp_cfg.port = START_PORT + 
+		((pj_rand() % range) & 0xFFFE);
+		if(rtp_cfg.port==5060)//change to some other port
+		{
+			rtp_cfg.port = rtp_cfg.port + 102;
+		
+		}
+	}
+	
+	status = pjsua_media_transports_create(&rtp_cfg);
+	
     /* Initialization is done, now start pjsua */
     status = pjsua_start();
 	if (status != PJ_SUCCESS){ 
@@ -3299,7 +3348,7 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 		return 0;
 	}
 
-    pjsua_detect_nat_type();
+    //pjsua_detect_nat_type();
 	return 1;
 }
 void sip_pj_DeInit(struct ltpStack *ps)
@@ -3351,7 +3400,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	strncpy(ps->userAgent,USERAGENT, MAX_USERID);
 	ps->ltpPresence = NOTIFY_ONLINE;
 	ps->updateTimingAdvance = 0;
-
+	ps->stunB = 1;
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
@@ -3434,7 +3483,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		acccfg.cred_info[0].username = pj_str(pstack->ltpUserid);
 		acccfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
 		acccfg.cred_info[0].data = pj_str(pstack->ltpPassword);
-
+		acccfg.reg_timeout = ps->timeOut;
 		pjsua_acc_add(&acccfg, PJ_TRUE, &acc_id);
 	}
 
@@ -3715,6 +3764,7 @@ struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int frames
 	if(tmpP)
 	{
 		tmpP->sipOnB = siponB;
+		tmpP->timeOut = MAXTIMEOUT;
 	}
 	return tmpP;
 }

@@ -646,7 +646,9 @@ struct ltpStack
 		LtpCallBackPtr ltpCallbackPtr;
 	#endif
 	int  sipOnB; 
+	int  stunB;
 	void *pjpool;
+	int timeOut;
 };
 
 
