@@ -2701,6 +2701,10 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 	
 	free(logoutStructP);
 	logoutStructP = 0;
+	
+	fwdnumber[0] = 0;
+	oldSetting = 0;
+	settingType = 0;
 	return 0;
 	
 }
