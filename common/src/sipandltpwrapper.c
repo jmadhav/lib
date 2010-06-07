@@ -3317,26 +3317,66 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
     /* Add UDP transport. */
 	
 	pjsua_transport_config_default(&transcfg);
+	{
+		enum { START_PORT=5060 };
+		unsigned range;
+		
+		range = (10000-START_PORT);
+		transcfg.port = START_PORT + 
+		((pj_rand() % range) & 0xFFFE);
+		if(transcfg.port==5060)//change to some other port
+		{
+			transcfg.port = rtp_cfg.port + 102;
+			
+		}
+	}
+	
 	
 	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+		
 	if (status != PJ_SUCCESS){
-	 transcfg.port = 5060;
-	 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
-	 if (status != PJ_SUCCESS)
-	 {
-		 sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
-		 return 0;
-	 }
+		
+		{
+			enum { START_PORT=5060 };
+			unsigned range;
+			
+			range = (65535-START_PORT);
+			transcfg.port = START_PORT + 
+			((pj_rand() % range) & 0xFFFE);
+			if(transcfg.port==5060)//change to some other port
+			{
+				transcfg.port = rtp_cfg.port + 102;
+				
+			}
+		}
+		status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+		if (status != PJ_SUCCESS)
+		{	
+		
+		
+				transcfg.port = 8060;	
+					status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+			 if (status != PJ_SUCCESS)
+			 {
+				 transcfg.port = 5060;
+				 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+				 if (status != PJ_SUCCESS)
+				 {	 
+					 sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
+					 return 0;
+				 }	 
+			 }
+		}	
 	}
 	pjsua_transport_config_default(&rtp_cfg);
 	{
-		enum { START_PORT=4000 };
+		enum { START_MEDIA_PORT=4000 };
 		unsigned range;
 		
-		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
-		rtp_cfg.port = START_PORT + 
+		range = (10000-START_MEDIA_PORT-PJSUA_MAX_CALLS*2);
+		rtp_cfg.port = START_MEDIA_PORT + 
 		((pj_rand() % range) & 0xFFFE);
-		if(rtp_cfg.port==5060)//change to some other port
+		if(rtp_cfg.port==5060 || transcfg.port==rtp_cfg.port)//change to some other port
 		{
 			rtp_cfg.port = rtp_cfg.port + 102;
 			
@@ -3344,6 +3384,32 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 	}
 	
 	status = pjsua_media_transports_create(&rtp_cfg);
+	if(status!=PJ_SUCCESS)
+	{
+		{
+			enum { START_PORT=4000 };
+			unsigned range;
+			
+			range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+			rtp_cfg.port = START_PORT + 
+			((pj_rand() % range) & 0xFFFE);
+			if(rtp_cfg.port==5060 || transcfg.port==rtp_cfg.port)//change to some other port
+			{
+				rtp_cfg.port = rtp_cfg.port + 102;
+				
+			}
+		}
+		
+		status = pjsua_media_transports_create(&rtp_cfg);
+		if(status!=PJ_SUCCESS)
+		{
+			rtp_cfg.port = 4000;			
+			status = pjsua_media_transports_create(&rtp_cfg);
+			
+		}
+		
+	
+	}
 	
     /* Initialization is done, now start pjsua */
     status = pjsua_start();
