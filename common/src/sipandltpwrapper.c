@@ -3210,6 +3210,7 @@ int sip_spokn_pj_Create(struct ltpStack *ps)
 }
 int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 {
+	int diffport;
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
@@ -3376,7 +3377,12 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 		range = (10000-START_MEDIA_PORT-PJSUA_MAX_CALLS*2);
 		rtp_cfg.port = START_MEDIA_PORT + 
 		((pj_rand() % range) & 0xFFFE);
-		if(rtp_cfg.port==5060 || transcfg.port==rtp_cfg.port)//change to some other port
+		diffport = transcfg.port-rtp_cfg.port;
+		if(diffport<0)
+		{
+			diffport = diffport*-1;
+		}
+		if(rtp_cfg.port==5060 || diffport<10)//change to some other port
 		{
 			rtp_cfg.port = rtp_cfg.port + 102;
 			
@@ -3393,12 +3399,20 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 			range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
 			rtp_cfg.port = START_PORT + 
 			((pj_rand() % range) & 0xFFFE);
-			if(rtp_cfg.port==5060 || transcfg.port==rtp_cfg.port)//change to some other port
+			
+			diffport = transcfg.port-rtp_cfg.port;
+			if(diffport<0)
+			{
+				diffport = diffport*-1;
+			}
+			if(rtp_cfg.port==5060 || diffport<10)//change to some other port
+				
 			{
 				rtp_cfg.port = rtp_cfg.port + 102;
 				
 			}
 		}
+		
 		
 		status = pjsua_media_transports_create(&rtp_cfg);
 		if(status!=PJ_SUCCESS)
