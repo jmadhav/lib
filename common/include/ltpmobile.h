@@ -649,6 +649,10 @@ struct ltpStack
 	int  stunB;
 	void *pjpool;
 	int timeOut;
+	int tranportID;
+	int randVariable;
+	int lport;
+	char* idBlock;
 };
 
 

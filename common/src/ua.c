@@ -535,6 +535,7 @@ static void cdrCompact() {
 	for (i=0;i<31;i++)
 	{
 		p->userid[i]=userid[i];
+		if(userid[i]==0) break;
 	}
 	p->userid[32]=0;
 	///
@@ -551,11 +552,30 @@ static void cdrCompact() {
 		}	
 	#endif
 	getTitleOf(p->userid, p->title);
+	if(listCDRs)
+	{	
+		if(listCDRs->date>p->date)
+		{
+			p->next = listCDRs->next;
+			listCDRs->next = p;
+		
+		}
+		else {
+				p->next = listCDRs;
+				listCDRs = p;
+
+		}
+	}
+	else
+	{
+		p->next = listCDRs;
+		listCDRs = p;
+	
+	}
+
 	
 	//add to the linked list
-	p->next = listCDRs;
-	listCDRs = p;
-#ifdef _MACOS_
+	#ifdef _MACOS_
 	sprintf(pathname, "%s/calls.txt", myFolder);
 	
 #else

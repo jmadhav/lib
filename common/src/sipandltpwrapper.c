@@ -3208,16 +3208,175 @@ int sip_spokn_pj_Create(struct ltpStack *ps)
 	return 1;
 	
 }
+int sip_destroy_transation(struct ltpStack *ps)
+{
+	/*if(ps->tranportID>=0 && ps->sipOnB)
+	{
+		pjsua_transport_close(ps->tranportID,0);
+		ps->tranportID = -1;
+		
+	}*/
+	return 1;
+}
+int sip_set_randomVariable(struct ltpStack *ps,int randVariable)
+{
+	ps->randVariable = randVariable;
+	return 0;
+}
+int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int *p_id)
+{
+	
+    /* Add UDP transport. */
+	pj_status_t status;
+	int idUser=0;
+	pjsua_transport_config transcfg;
+	int dummy_start_port = 5060;
+	unsigned range;
+	int diffport;
+	pjsua_transport_config rtp_cfg;
+	if(p_id)
+	{
+		if(*p_id>=0)
+		{
+			return 1 ;
+		}
+	}
+	
+	pjsua_transport_config_default(&transcfg);
+	if(userId)
+	{
+		idUser = atoi(userId);
+		if(idUser)
+		{
+			int tmpNo;
+			int tmpNo2;
+			tmpNo2 = idUser/1000;
+			tmpNo = idUser - tmpNo2*1000;
+			idUser = tmpNo+tmpNo2+ps->randVariable;//this variable is constant per user it is set once build install
+			if(idUser<5061)
+				idUser = idUser+5070;
+			idUser = idUser&0xFFFE;
+			transcfg.port = idUser;
+			status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+			
+		}
+	
+	 }
+	if(status!=PJ_SUCCESS)
+	{	
+		range = (10000-dummy_start_port);
+		transcfg.port = dummy_start_port + 
+		((pj_rand() % range) & 0xFFFE);
+		if(transcfg.port==5060)//change to some other port
+		{
+			transcfg.port = transcfg.port + 102;
+			
+		}
+			
+		status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+		
+		if (status != PJ_SUCCESS){
+			range = (65535-dummy_start_port);
+			transcfg.port = dummy_start_port + 
+			((pj_rand() % range) & 0xFFFE);
+			if(transcfg.port==5060)//change to some other port
+			{
+				transcfg.port = transcfg.port + 102;
+				
+			}
+			status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+			if (status != PJ_SUCCESS)
+			{	
+				
+				
+				transcfg.port = 8060;	
+				status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+				if (status != PJ_SUCCESS)
+				{
+					transcfg.port = 5060;
+					status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+					if (status != PJ_SUCCESS)
+					{	 
+						sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
+						return 0;
+					}	 
+				}
+			}	
+		}
+	}	
+	ps->lport = transcfg.port;
+	pjsua_transport_config_default(&rtp_cfg);
+	{
+		enum { START_MEDIA_PORT=4000 };
+		unsigned range;
+		
+		if(idUser==0)
+		{	
+			range = (10000-START_MEDIA_PORT-PJSUA_MAX_CALLS*2);
+			rtp_cfg.port = START_MEDIA_PORT + 
+			((pj_rand() % range) & 0xFFFE);
+		}
+		else {
+			rtp_cfg.port = START_MEDIA_PORT + (idUser>START_MEDIA_PORT)?(idUser+20-START_MEDIA_PORT):idUser;
+		}
+
+		diffport = transcfg.port-rtp_cfg.port;
+		if(diffport<0)
+		{
+			diffport = diffport*-1;
+		}
+		if(rtp_cfg.port==5060 || diffport<10)//change to some other port
+		{
+			rtp_cfg.port = rtp_cfg.port + 102;
+			
+		}
+	}
+	
+	status = pjsua_media_transports_create(&rtp_cfg);
+	if(status!=PJ_SUCCESS)
+	{
+		
+			enum { START_PORT=4000 };
+			unsigned range;
+			
+			range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+			rtp_cfg.port = START_PORT + 
+			((pj_rand() % range) & 0xFFFE);
+			
+			diffport = transcfg.port-rtp_cfg.port;
+			if(diffport<0)
+			{
+				diffport = diffport*-1;
+			}
+			if(rtp_cfg.port==5060 || diffport<10)//change to some other port
+				
+			{
+				rtp_cfg.port = rtp_cfg.port + 102;
+				
+			}
+		status = pjsua_media_transports_create(&rtp_cfg);
+		if(status!=PJ_SUCCESS)
+		{
+			rtp_cfg.port = 4000;			
+			status = pjsua_media_transports_create(&rtp_cfg);
+			
+		}
+		
+		
+	}	
+		
+		
+	return 1;
+	
+
+}
 int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 {
-	int diffport;
+	
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
-	pjsua_transport_config transcfg;
 	pjsua_media_config cfgmedia;
-	pjsua_transport_config rtp_cfg;
-	
 	pj_thread_desc desc;
 	pj_thread_t *  thread=0;
 	memset(&desc,0,sizeof(pj_thread_desc));
@@ -3314,117 +3473,12 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
 	}
 #endif	
-	
-    /* Add UDP transport. */
-	
-	pjsua_transport_config_default(&transcfg);
+	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
 	{
-		enum { START_PORT=5060 };
-		unsigned range;
 		
-		range = (10000-START_PORT);
-		transcfg.port = START_PORT + 
-		((pj_rand() % range) & 0xFFFE);
-		if(transcfg.port==5060)//change to some other port
-		{
-			transcfg.port = rtp_cfg.port + 102;
-			
-		}
-	}
-	
-	
-	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+		return 0;
+	}		
 		
-	if (status != PJ_SUCCESS){
-		
-		{
-			enum { START_PORT=5060 };
-			unsigned range;
-			
-			range = (65535-START_PORT);
-			transcfg.port = START_PORT + 
-			((pj_rand() % range) & 0xFFFE);
-			if(transcfg.port==5060)//change to some other port
-			{
-				transcfg.port = rtp_cfg.port + 102;
-				
-			}
-		}
-		status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
-		if (status != PJ_SUCCESS)
-		{	
-		
-		
-				transcfg.port = 8060;	
-					status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
-			 if (status != PJ_SUCCESS)
-			 {
-				 transcfg.port = 5060;
-				 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
-				 if (status != PJ_SUCCESS)
-				 {	 
-					 sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
-					 return 0;
-				 }	 
-			 }
-		}	
-	}
-	pjsua_transport_config_default(&rtp_cfg);
-	{
-		enum { START_MEDIA_PORT=4000 };
-		unsigned range;
-		
-		range = (10000-START_MEDIA_PORT-PJSUA_MAX_CALLS*2);
-		rtp_cfg.port = START_MEDIA_PORT + 
-		((pj_rand() % range) & 0xFFFE);
-		diffport = transcfg.port-rtp_cfg.port;
-		if(diffport<0)
-		{
-			diffport = diffport*-1;
-		}
-		if(rtp_cfg.port==5060 || diffport<10)//change to some other port
-		{
-			rtp_cfg.port = rtp_cfg.port + 102;
-			
-		}
-	}
-	
-	status = pjsua_media_transports_create(&rtp_cfg);
-	if(status!=PJ_SUCCESS)
-	{
-		{
-			enum { START_PORT=4000 };
-			unsigned range;
-			
-			range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
-			rtp_cfg.port = START_PORT + 
-			((pj_rand() % range) & 0xFFFE);
-			
-			diffport = transcfg.port-rtp_cfg.port;
-			if(diffport<0)
-			{
-				diffport = diffport*-1;
-			}
-			if(rtp_cfg.port==5060 || diffport<10)//change to some other port
-				
-			{
-				rtp_cfg.port = rtp_cfg.port + 102;
-				
-			}
-		}
-		
-		
-		status = pjsua_media_transports_create(&rtp_cfg);
-		if(status!=PJ_SUCCESS)
-		{
-			rtp_cfg.port = 4000;			
-			status = pjsua_media_transports_create(&rtp_cfg);
-			
-		}
-		
-	
-	}
-	
     /* Initialization is done, now start pjsua */
     status = pjsua_start();
 	if (status != PJ_SUCCESS){ 
@@ -3491,7 +3545,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 		return NULL;
 
 	zeroMemory(ps, sizeof(struct ltpStack));	
-
+	
 	ps->defaultCodec = (short16) maxbitrate;
 	ps->loginCommand = CMD_LOGIN;
 	ps->loginStatus = LOGIN_STATUS_OFFLINE;
@@ -3501,6 +3555,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->ltpPresence = NOTIFY_ONLINE;
 	ps->updateTimingAdvance = 0;
 	ps->stunB = 1;
+	ps->tranportID = -1;
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
@@ -3560,30 +3615,47 @@ void sip_ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 void sip_ltpLogin(struct ltpStack *ps, int command)
 {
 	pjsua_acc_id acc_id;
-	char	url[128];
+	//char	url[128];
+	//char	url1[128];
+	char errorStr[50]={0};
     /* Register to SIP server by creating SIP account. */
 
 	if (command == CMD_LOGIN){
-				
 		//check if an account already exists
-		if (strlen(pstack->ltpUserid) && strlen(pstack->ltpPassword) && pjsua_acc_get_count() > 0){
+		if (strlen(ps->ltpUserid) && strlen(ps->ltpPassword) && pjsua_acc_get_count() > 0){
 			acc_id = pjsua_acc_get_default();
 			//account details don't match, then delete this account and create a new default account
 			pjsua_acc_del(acc_id);
 		}
 		
+		if(sip_set_udp_transport(ps,ps->ltpUserid,errorStr,&ps->tranportID)==0)
+		{
+			alert(0,ATTEMPT_LOGIN_ERROR,strdup(errorStr));
+			return;
+		}
+				
 		pjsua_acc_config_default(&acccfg);
+		if(ps->idBlock==0)
+		{	
+				ps->idBlock = pj_pool_alloc(/*app_config.*/ps->pjpool, PJSIP_MAX_URL_SIZE);
+		}	
+		acccfg.id.ptr = (char*) ps->idBlock;
 
-		sprintf(url, "sip:%s@%s", pstack->ltpUserid, SIP_DOMAIN);
-		acccfg.id = pj_str(url);
+		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
+		//acccfg.id = pj_str(url);
 		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
+		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
+		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;
 		acccfg.cred_info[0].realm = pj_str(SIP_DOMAIN);
 		acccfg.cred_info[0].scheme = pj_str("digest");
-		acccfg.cred_info[0].username = pj_str(pstack->ltpUserid);
+		acccfg.cred_info[0].username = pj_str(ps->ltpUserid);
 		acccfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-		acccfg.cred_info[0].data = pj_str(pstack->ltpPassword);
+		acccfg.cred_info[0].data = pj_str(ps->ltpPassword);
 		acccfg.reg_timeout = ps->timeOut;
+		//pjsip_cfg()->regc.check_contact = PJ_FALSE;
+		//pjsip_cfg()->regc.add_xuid_param = PJ_TRUE;
+		
 		pjsua_acc_add(&acccfg, PJ_TRUE, &acc_id);
 	}
 
@@ -3597,7 +3669,8 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 			{	
 				pjsua_acc_set_registration(acc_id, PJ_FALSE);
 				//pjsua_acc_del(acc_id);
-			}	
+			}
+			
 			
 		}	
 	}
