@@ -552,6 +552,7 @@ static void cdrCompact() {
 		}	
 	#endif
 	getTitleOf(p->userid, p->title);
+	printf("\n %s %ld",p->userid,(long)p->date);
 	if(listCDRs)
 	{	
 		if(listCDRs->date>p->date)
@@ -694,8 +695,28 @@ void cdrLoad() {
 		getTitleOf(p->userid, p->title);
 		
 		//add to the linked list
-		p->next = listCDRs;
-		listCDRs = p;
+		//p->next = listCDRs;
+		//listCDRs = p;
+		if(listCDRs)
+		{	
+			if(listCDRs->date>p->date)
+			{
+				p->next = listCDRs->next;
+				listCDRs->next = p;
+				
+			}
+			else {
+				p->next = listCDRs;
+				listCDRs = p;
+				
+			}
+		}
+		else
+		{
+			p->next = listCDRs;
+			listCDRs = p;
+			
+		}
 		
 		ezxml_free(cdr);
 		
