@@ -3191,8 +3191,12 @@ static void sip_on_reg_state(pjsua_acc_id acc_id)
 void       callbackpjsip(int level, const char *data, int len)
 {
 	if(data)
-	printf("\n%s",data);
-
+	{	
+		if(strstr(data,"200"))
+		{	
+			printf("\n%s",data);
+		}	
+	}	
 }
 int sip_spokn_pj_Create(struct ltpStack *ps)
 {
@@ -3205,7 +3209,7 @@ int sip_spokn_pj_Create(struct ltpStack *ps)
 		return 0;
 	}
 	
-	return 1;
+	return 1;	
 	
 }
 int sip_destroy_transation(struct ltpStack *ps)
@@ -3258,7 +3262,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 			idUser = idUser&0xFFFE;
 			transcfg.port = idUser;
 			status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
-			
+			//printf("\n\n\n\nport %d\n\n\n",transcfg.port);
 		}
 	
 	 }
@@ -3305,6 +3309,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 		}
 	}	
 	ps->lport = transcfg.port;
+	
 	pjsua_transport_config_default(&rtp_cfg);
 	{
 		enum { START_MEDIA_PORT=4000 };
@@ -3372,7 +3377,9 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 }
 int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 {
+	char str[100];
 	
+	//char *hostP;
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
@@ -3397,7 +3404,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 	//cfg.stun_ignore_failure	= 0;
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
-	//log_cfg.cb = callbackpjsip;
+//	log_cfg.cb = callbackpjsip;
 	pjsua_media_config_default(&cfgmedia);
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
@@ -3421,16 +3428,42 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 	 cfgmedia.turn_auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
 	 cfgmedia.turn_auth_cred.data.static_cred.data = pj_str(pstack->ltpPassword);;
 	 */
-	
+	//ps->stunB = 0;
+//	pjsip_cfg()->regc.add_xuid_param = 1;
+
 	if(ps->stunB)
 	{	
 		#ifdef SRV_RECORD
-		pj_strdup2_with_null(ps->pjpool, 
-							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
-							 "spokn.com");
-		
+		const pj_str_t *hostP;
+		hostP = pj_gethostname();
+		if(hostP)
+		{	
+			if(hostP->slen)//if got host name
+			{	
+				printf("\n host %s",hostP->ptr);
+				pj_strdup2_with_null(ps->pjpool, 
+								 &(cfg.nameserver[cfg.nameserver_count++]), 
+								 hostP->ptr);
+				pj_strdup2_with_null(ps->pjpool, 
+								 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+								 "spokn.com");
+			}
+			else
+			{
+				pj_strdup2_with_null(ps->pjpool, 
+									 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+									 "stun.spokn.com");
+			
+			}
+		}
+		else {
+				pj_strdup2_with_null(ps->pjpool, 
+								 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+								 "stun.spokn.com");
+		}
+
 		#else
-		pj_strdup2_with_null(ps->pjpool, 
+				pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 							 "stun.spokn.com");
 		
@@ -3443,7 +3476,11 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 							 "stun.sipgate.net:10000");*/
 		#endif
 	}
-	
+	sprintf(str,"spokn iphone version %s",CLIENT_VERSION);
+	pj_strdup2_with_null(ps->pjpool, 
+						 &(cfg.user_agent), 
+						 str);
+	 
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");

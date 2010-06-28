@@ -53,6 +53,7 @@ int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
 int bandwidth;
 int gnewMails;
+int GthreadTerminate = 0;
 
 //variable to set the type for incoming call termination setting
 int settingType = -1;  //not assigned state yet
@@ -245,7 +246,7 @@ static int readNetLine(int sock, char *buff, int maxlength)
 }
 
 
-static int restCall(char *requestfile, char *responsefile, char *host, char *url)
+static int restCall(char *requestfile, char *responsefile, char *host, char *url,int terminateThreadB)
 {
 	FILE	*pf;
 	SOCKET	sock;
@@ -258,7 +259,7 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 #else
 	char	data[10000], header[1000];
 #endif
-	
+	//printf("\nrestCall");
 	//host = "anurag.spokn.com";
 	
 	pf = fopen(requestfile, "rb");
@@ -414,6 +415,14 @@ end:
 		free(data);
 #endif	
 	closesocket(sock);
+	if(GthreadTerminate && terminateThreadB)
+	{
+		//printf("\nthread terminate");
+		threadStatus = ThreadNotStart ;
+		busy = 0;
+		//GthreadTerminate = 0;
+		pthread_exit(0);
+	}
 	return byteCount;
 }
 
@@ -552,7 +561,7 @@ static void cdrCompact() {
 		}	
 	#endif
 	getTitleOf(p->userid, p->title);
-	printf("\n %s %ld",p->userid,(long)p->date);
+	//printf("\n %s %ld",p->userid,(long)p->date);
 	if(listCDRs)
 	{	
 		if(listCDRs->date>p->date)
@@ -1408,7 +1417,7 @@ static void vmsUpload(struct VMail *v)
 	fprintf(pfOut, "</gsm>\n</vms>\n");
 	fclose(pfOut);
 	
-	byteCount = restCall(requestfile, responsefile, mailServer, "/cgi-bin/vmsoutbound.cgi");
+	byteCount = restCall(requestfile, responsefile, mailServer, "/cgi-bin/vmsoutbound.cgi",1);
 	if (!byteCount)
 		return;
 	
@@ -1620,7 +1629,7 @@ static void vmsDownload()
 		if (!count)
 			unlink(pathname);
 		closesocket(sock);
-		if(threadStatus == ThreadTerminate)
+		if(threadStatus == ThreadTerminate || GthreadTerminate == 1)
 		{
 			break;
 		}
@@ -1628,6 +1637,16 @@ static void vmsDownload()
 	} //loop over for the next voice mail
 	//add by mukesh for bug id 20359
 	free(p);
+	if(GthreadTerminate)
+	{
+		//printf("\nthread vmail download");
+		threadStatus = ThreadNotStart ;
+		busy = 0;
+		//GthreadTerminate = 0;
+		pthread_exit(0);
+	}
+	
+	
 }
 
 /** 
@@ -2263,7 +2282,7 @@ void profileGetKey()
 			pstack->ltpUserid);
 	fclose(pfOut);
 	
-	byteCount = restCall(requestfile, responsefile, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
+	byteCount = restCall(requestfile, responsefile, pstack->ltpServerName, "/cgi-bin/userxml.cgi",1);
 	if (!byteCount)
 		return;
 	
@@ -2319,7 +2338,7 @@ THREAD_PROC profileDownload(void *extras)
 	struct VMail *vm;
 	int	byteCount = 0;
 	unsigned long timeStart, timeFinished, timeTaken;
-   	if (busy > 0|| !strlen(pstack->ltpUserid))
+   	if (busy > 0 || GthreadTerminate==1 || !strlen(pstack->ltpUserid))
 	{	
 	#ifdef _MACOS_
 			stopAnimation();
@@ -2335,6 +2354,7 @@ THREAD_PROC profileDownload(void *extras)
 	#ifdef _MACOS_
 		UaThreadBegin();
 	#endif
+	GthreadTerminate = 0;
 	forwardStartB = 0;
 	profileGetKey();
 	//add by mukesh for bug id 20359
@@ -2526,7 +2546,7 @@ THREAD_PROC profileDownload(void *extras)
 	#endif
 	
 	
-	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi");
+	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi",1);
 	if (!byteCount)
 	{
 		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
@@ -2605,6 +2625,7 @@ void loggedOut()
 THREAD_PROC sendLogOutPacket(void *lDataP)
 {
 	int byteCount;
+	int oldval;
 	struct	MD5Context	md5;
 	unsigned char	digest[16];
 
@@ -2652,7 +2673,8 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 			logoutStructP->ltpUserid);
 	fclose(pfOut);
 	
-	byteCount = restCall(requestfile, responsefile, logoutStructP->ltpServerName, "/cgi-bin/userxml.cgi");
+	byteCount = restCall(requestfile, responsefile, logoutStructP->ltpServerName, "/cgi-bin/userxml.cgi",0);
+	
 	if (!byteCount)
 	{	
 		free(logoutStructP);
@@ -2738,7 +2760,12 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 #else
 	sprintf(pathDown, "%s\\down.xml", myFolder);
 #endif
-	byteCount = restCall(pathUpload, pathDown, logoutStructP->ltpServerName, "/cgi-bin/userxml.cgi");
+	oldval = GthreadTerminate;
+	GthreadTerminate = 0;
+		byteCount = restCall(pathUpload, pathDown, logoutStructP->ltpServerName, "/cgi-bin/userxml.cgi",0);
+	
+	GthreadTerminate = oldval;
+	
 	
 	free(logoutStructP);
 	logoutStructP = 0;
@@ -2752,7 +2779,10 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 
 void profileResync()
 {
-	
+	if(GthreadTerminate)
+	{
+		GthreadTerminate = 0;
+	}
 	if((strcmp(uaUserid ,pstack->ltpUserid)!=0))
 	{
 		strcpy(uaUserid ,pstack->ltpUserid);
@@ -2813,6 +2843,15 @@ void setBandwidth(unsigned long timeTaken,int byteCount)
 			bandwidth = 0;
 	}
 }
+void ReStartUAThread()
+{
+	GthreadTerminate = 0;
+}
+void TerminateUAThread()
+{
+	GthreadTerminate = 1;
+}
+
 #ifdef _MACOS_
 UACallBackType uaCallBackObject;
 
@@ -3685,5 +3724,4 @@ void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId)
 	return NULL;
 	
 }
-
 #endif

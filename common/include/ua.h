@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with Spokn.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#pragma pack(4)
 
 #ifndef UAREST_DEFINED
 #define UAREST_DEFINED
@@ -277,6 +277,8 @@ extern "C" {
 	void setBandwidth(unsigned long timeTaken,int byteCount);
 
 	THREAD_PROC sendLogOutPacket(void *lDataP);
+	void TerminateUAThread();
+	void ReStartUAThread();
 #ifdef _MACOS_
 #define TEST_CALL_ID -2
 #define _T(X) X
@@ -386,6 +388,7 @@ extern "C" {
 	char *getSupportPage();
 	void UaThreadEnd();
 	void UaThreadBegin();
+	
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus
