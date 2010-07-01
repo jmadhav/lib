@@ -3375,9 +3375,9 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 	
 
 }
-int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
+int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 {
-	char str[100];
+	
 	
 	//char *hostP;
 	pjsua_config cfg;
@@ -3408,7 +3408,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 	pjsua_media_config_default(&cfgmedia);
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
-	
+	//cfgmedia.ec_options = 1;
 	cfgmedia.snd_auto_close_time = 0;
 	//cfgmedia.ec_tail_len = 0;
 	
@@ -3476,11 +3476,13 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 							 "stun.sipgate.net:10000");*/
 		#endif
 	}
-	sprintf(str,"spokn iphone version %s",CLIENT_VERSION);
-	pj_strdup2_with_null(ps->pjpool, 
+	//sprintf(str,"spokn iphone version %s",CLIENT_VERSION);
+	if(userAgentP)
+	{	
+		pj_strdup2_with_null(ps->pjpool, 
 						 &(cfg.user_agent), 
-						 str);
-	 
+						 userAgentP);
+	}
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");
@@ -3488,6 +3490,11 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 	}
 	
 	
+	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
+	{
+		
+		return 0;
+	}		
 #ifdef _SPEEX_CODEC_
 	{
 		//speex code
@@ -3496,26 +3503,23 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 		 Use only "speex/8000" or "speex/16000". Set zero priority for others.
 		 
 		 */
+		//int x;
 		pj_str_t tmp1;
-		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
+		//pjsua_codec_set_priority(pj_cstr(&tmp1, "speex"), PJMEDIA_CODEC_PRIO_HIGHEST);
 		
-		/*pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
-		 
-		 pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/32000"), 0);
-		 
-		 pjsua_codec_set_priority(pj_cstr(&tmp1, "pcmu"), 0);
-		 
-		 pjsua_codec_set_priority(pj_cstr(&tmp1, "pcma"), 0);*/
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST );
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "ilbc"), 250);
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/32000"), 0);
 		
-		pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcmu"), 0);
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcma"), 0);
+		
+		//pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
 	}
 #endif	
-	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
-	{
-		
-		return 0;
-	}		
-		
+	
     /* Initialization is done, now start pjsua */
     status = pjsua_start();
 	if (status != PJ_SUCCESS){ 
@@ -3527,7 +3531,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 	return 1;
 	
 }
-int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
+int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 {
 	pj_status_t status;
 	    /* Create pjsua first! */
@@ -3540,7 +3544,7 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 		return 0;
 	}
 	
-	return sip_spokn_pj_config(ps,errorstring);
+	return sip_spokn_pj_config(ps,luserAgentP,errorstring);
 }
 void sip_pj_DeInit(struct ltpStack *ps)
 
