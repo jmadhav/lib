@@ -48,6 +48,7 @@ extern "C" {
 #ifndef FALSE
 #define FALSE 0
 #endif	
+//#define _STAGING_SERVER_	
 #define closesocket close
 	
 	//pthread_create(&ltpInterfaceP->pthObj, 0,PollThread,ltpInterfaceP);

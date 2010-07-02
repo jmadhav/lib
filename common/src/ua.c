@@ -273,13 +273,21 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	fclose(pf);
 	
 	//prepare the http header
+#ifdef _STAGING_SERVER_
 	sprintf(header, 
 			"POST %s HTTP/1.1\r\n"
 			"Host: %s\r\n"
 			"Content-Length: %d\r\n"
 			"Authorization: %s %s\r\n\r\n",
 			url, host, contentLength,STAGING_AUTH_STRING1,STAGING_AUTH_STRING2);
+#else
 	
+	sprintf(header, 
+			"POST %s HTTP/1.1\r\n"
+			"Host: %s\r\n"
+			"Content-Length: %d\r\n\r\n",url, host, contentLength);
+	
+#endif
 	addr.sin_addr.s_addr = lookupDNS(host);
 	if (addr.sin_addr.s_addr == INADDR_NONE)
 		return 0;
@@ -676,7 +684,10 @@ void cdrLoad() {
 	struct CDR *p;
 	int		index;
 	char	line[1000];
-	ezxml_t	cdr, duration, date, userid, type, abidP,recordidP,uId;
+	ezxml_t	cdr, duration, date, userid, type, abidP,recordidP;
+#ifdef _MAC_OSX_CLIENT_
+	ezxml_t uld;
+#endif	
 #ifdef _MACOS_
 	sprintf(pathname, "%s/calls.txt", myFolder);
 	
@@ -1177,7 +1188,11 @@ static void vmsSort()
 static struct VMail *vmsRead(ezxml_t vmail)
 {
 	struct VMail *p;
-	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete,abidP,recordidP,uId;
+	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete,abidP,recordidP;//,uId;
+	#ifdef _MAC_OSX_CLIENT_
+		ezxml_t uId;
+	#endif	
+	
 	
 	date = ezxml_child(vmail, "dt");
 	vmsid = ezxml_child(vmail, "id");
@@ -2670,7 +2685,7 @@ THREAD_PROC profileDownload(void *extras)
 		terminateB = 0;
 		
 	}
-	#ifdef _MACOS_
+	#ifdef _MAC_OSX_CLIENT_
 			threadStopped();
 	#endif
 
