@@ -3960,8 +3960,6 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 		strcpy(pc->remoteUserid, remoteid);
 		pc->ltpSession = (unsigned int) call_id;
 		pc->ltpState = CALL_RING_SENT;
-		
-	
 	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	#ifdef _MACOS_
@@ -4039,17 +4037,11 @@ void sip_setMute(int enableB)
 	if (enableB)
 	{
 		pjsua_conf_adjust_rx_level(0 , 0.0f);
-		
 	}
 	else
 	{
-		
 		pjsua_conf_adjust_rx_level(0 , 1.0f);
-		
-		
 	}
-	
-	
 }
 
 
@@ -4063,22 +4055,15 @@ void sip_setHold(struct ltpStack *ps,int enableB)
 				pjsua_call_set_hold((pjsua_call_id)pstack->call[i].ltpSession, NULL);
 				
 			}
-			
 	}
 	else
 	{
-		/*if (ps->call[ps->activeLine].ltpSession != PJSUA_INVALID_ID)
-			pjsua_call_reinvite(ps->call[ps->activeLine].ltpSession, PJ_TRUE, NULL);*/
-		
-		
 		for (i = 0; i < pstack->maxSlots; i++)
 			if (pstack->call[i].ltpState != CALL_IDLE && pstack->call[i].ltpSession!=PJSUA_INVALID_ID){
 				pjsua_call_reinvite((pjsua_call_id)pstack->call[i].ltpSession, PJ_TRUE, NULL);
 				
 			}
-		
 	}
-	
 }
 
 void setMute(struct ltpStack *ps,int enableB)
@@ -4090,10 +4075,7 @@ void setMute(struct ltpStack *ps,int enableB)
 	else
 	{
 		//sip_setMute(ps,enableB);
-	
 	}
-
-
 }
 
 void setHold(struct ltpStack *ps,int enableB)
@@ -4106,11 +4088,9 @@ void setHold(struct ltpStack *ps,int enableB)
 	else
 	{
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-
 }
+
 struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int framesPerPacket)
 {
 	struct ltpStack  *tmpP=0;
@@ -4122,7 +4102,6 @@ struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int frames
 	{
 		//sip_setMute(ps,enableB);
 		tmpP = LTP_ltpInit(maxslots,maxbitrate,framesPerPacket);
-		
 	}
 	if(tmpP)
 	{
@@ -4146,10 +4125,7 @@ int ltpTalk(struct ltpStack *ps, char *remoteid)
 		return 0;
 		//return LTP_ltpTalk(ps,remoteid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpHangup(struct ltpStack *ps, int lineid)
@@ -4163,15 +4139,11 @@ void ltpHangup(struct ltpStack *ps, int lineid)
 	{
 		LTP_ltpHangup(ps,lineid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpRefuse(struct ltpStack *ps, int lineid, char *msg)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpRefuse(ps,lineid,msg);
@@ -4181,33 +4153,24 @@ void ltpRefuse(struct ltpStack *ps, int lineid, char *msg)
 	{
 		LTP_ltpRefuse(ps,lineid,msg);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpAnswer(struct ltpStack *ps, int lineid)
 {
-	
 	if(ps->sipOnB)
 	{
 		sip_ltpAnswer(ps,lineid);
 	}
 	else
-		
 	{
 		LTP_ltpAnswer(ps,lineid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 int ltpRing(struct ltpStack *ps, char *remoteid, int command)
 {
-	
 	if(ps->sipOnB)
 	{
 		return sip_ltpRing(ps,remoteid,command);
@@ -4220,15 +4183,11 @@ int ltpRing(struct ltpStack *ps, char *remoteid, int command)
 			remoteid = remoteid + 1;
 		}
 		return LTP_ltpRing(ps,remoteid,command);
-		
 	}
-	
-	
 }
 
 int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpMessage(ps,userid,msg);
@@ -4237,16 +4196,12 @@ int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 	else
 	{
 		//sip_setMute(ps,enableB);
-	return 	LTP_ltpMessage(ps,userid,msg);
-		
+		return 	LTP_ltpMessage(ps,userid,msg);
 	}
-	
-	
 }
 
 void ltpChat(struct ltpStack *ps, char *userid, char *message)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpChat(ps,userid,message);
@@ -4254,13 +4209,9 @@ void ltpChat(struct ltpStack *ps, char *userid, char *message)
 	}
 	else
 	{
-		
 	   //	LTP_ltpChat(ps,userid,message);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpLogin(struct ltpStack *ps, int command)
@@ -4273,15 +4224,11 @@ void ltpLogin(struct ltpStack *ps, int command)
 	else
 	{
 		LTP_ltpLogin(ps,command);
-		
 	}
-	
-	
 }
 
 void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpTick(ps,timeNow);
@@ -4289,15 +4236,11 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 	else
 	{
 		LTP_ltpTick(ps,timeNow);
-		
 	}
-	
-	
 }
 
 void ltpLoginCancel(struct ltpStack *ps)
 {
-	
 	if(ps->sipOnB)
 	{
 		sip_ltpLoginCancel(ps);
@@ -4306,10 +4249,7 @@ void ltpLoginCancel(struct ltpStack *ps)
 	{
 	//	LTP_ltpLoginCancel(ps);
 		return;
-		
 	}
-	
-	
 }
 void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 {
@@ -4350,7 +4290,6 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 			else {
 				ps->call[i].InConference = 0;
 			}
-
 			if(ps->sipOnB)
 			{
 				if(ps->call[i].lineId!=oldLineId)
@@ -4363,7 +4302,6 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 					
 				}
 				else {
-						
 						pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 					//pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 				}
@@ -4378,17 +4316,12 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 					}
 				}	
 			}
-
-						
 		}
 	}	
 	if(lactiveLineId>=0)
 	{
 		ps->activeLine= lactiveLineId;
 	}
-
-	
-
 }
 void setPrivateCall(struct ltpStack *ps,int lineid)
 {
@@ -4401,16 +4334,12 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 			{
 				if(ps->call[i].lineId !=lineid)
 				{	
-				
-										//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
+					//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 					pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 				}
 				else {
-				
 					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
-					
 				}
-
 			}
 			//if(ps->call[i].lineId ==lineid)
 			{	
@@ -4421,14 +4350,12 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 	}	
 	
 	ps->activeLine= lineid;
-
 }
 void switchReinvite(struct ltpStack *ps, int lineid)
 {
 	int	i;
 	pjsua_call_id call_id;
 	
-
 	for (i = 0; i < ps->maxSlots; i++)
 		if (ps->call[i].ltpState != CALL_IDLE&& ps->call[i].ltpState != CALL_HANGING){
 			call_id = (pjsua_call_id) ps->call[i].ltpSession;
