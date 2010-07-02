@@ -317,11 +317,12 @@ extern "C" {
 #define END_THREAD 8	
 #define USERNAME_RANGE  30
 #define PASSWORD_RANGE  30	
-	
-#ifdef _MAC_OSX_CLIENT_
+
 #define REFRESH_DIALER	11
-#define THREAD_STARTED  12
-#define	THREAD_STOPPED  13
+
+#ifdef _MAC_OSX_CLIENT_
+	#define THREAD_STARTED  12
+	#define	THREAD_STOPPED  13
 #endif
 	
 #define EMAIL_RANGE  127
