@@ -47,8 +47,9 @@ extern "C" {
 #ifdef SUPPORT_SPEEX
 #include <speex/speex.h>
 #endif
-typedef unsigned int macuint32;	
+typedef unsigned long macuint32;	
 #ifdef _MACOS_
+#define _UINT32	
 #define uint32 macuint32
 #endif	
 /*	Queue:

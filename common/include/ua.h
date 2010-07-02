@@ -195,14 +195,15 @@ extern "C" {
 #define VMAIL_ACTIVE 1
 #define VMAIL_DELIVERED 2
 #define VMAIL_FAILED 3
-	
+#pragma pack(4)	
 #define VMAIL_MAXCOUNT 100 //no more than VMAIL_MAXCOUNT mails to be stored on the user agent
 	
 	struct VMail {
+	
 		char	userid[128]; //bug#26028, increased size to match AddressBook->email;
 		time_t	date;
 		char	vmsid[100];
-		char	hashid[50];
+		char	hashid[33];
 		short	status;
 		short	direction;
 		short	deleted; //those deleted at the server
@@ -215,7 +216,7 @@ extern "C" {
 		int isexistRecordID;
 		int uniqueID;
 	#ifdef  _MAC_OSX_CLIENT_
-		char uniqueId[100];
+		char uniqueId[40];
 	#endif
 #endif	
 		
