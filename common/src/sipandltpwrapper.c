@@ -3509,7 +3509,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 		
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST );
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
-		pjsua_codec_set_priority(pj_cstr(&tmp1, "ilbc"), 250);
+		//pjsua_codec_set_priority(pj_cstr(&tmp1, "ilbc"), 250);
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/32000"), 0);
 		
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcmu"), 0);
