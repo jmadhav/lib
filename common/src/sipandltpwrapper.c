@@ -2928,7 +2928,9 @@ static void sip_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	
 		pstack->now = time(NULL);
 	
-	
+	#ifdef _MAC_OSX_CLIENT_
+		pc->timeEllapsed=-1;
+	#endif
 	
 	#endif
 	if(pstack->now==0)
@@ -2986,6 +2988,9 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 				pstack->call[i].ltpState = CALL_CONNECTED;
 				#ifdef _MACOS_
 				pstack->now = time(NULL);
+					#ifdef _MAC_OSX_CLIENT_
+						pstack->call[i].timeEllapsed=0;
+					#endif
 				#endif	
 				pstack->call[i].timeStart = pstack->now; /* reset the call timer for the correct duration */
 				alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
@@ -3384,10 +3389,13 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *errorstring)
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
 	pjsua_media_config cfgmedia;
+#ifndef  _MAC_OSX_CLIENT_
 	pj_thread_desc desc;
 	pj_thread_t *  thread=0;
 	memset(&desc,0,sizeof(pj_thread_desc));
 	pj_thread_register(NULL,desc,&thread);	
+	
+#endif	
 	pjsua_config_default(&cfg);
 	cfg.cb.on_incoming_call = &sip_on_incoming_call;
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
@@ -3541,6 +3549,149 @@ int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
 	}
 	
 	return sip_spokn_pj_config(ps,errorstring);
+}
+
+int sip_mac_init(struct ltpStack *ps, char *errorstring)
+{
+	pjsua_config cfg;
+	pjsua_logging_config log_cfg;
+	pj_status_t status;
+	pjsua_transport_config transcfg;
+	pjsua_media_config cfgmedia;
+	pj_str_t tmp;
+	
+	if(ps->pjpool)
+	{ 
+		pj_pool_release(ps->pjpool);
+		ps->pjpool = 0;
+		
+	}
+	pjsua_destroy();
+	/* Create pjsua first! */
+    status = pjsua_create();
+	
+	if (status != PJ_SUCCESS)
+	{
+		sprintf(errorstring, "Error in pjsua_create(). [status:%d]",status);
+		return status;
+	}
+	
+	/* Init pjsua */
+	//init callback config
+	pjsua_config_default(&cfg);
+	//cfg.thread_cnt = 6; //MAX_SLOTS
+	cfg.cb.on_incoming_call = &sip_on_incoming_call;
+	cfg.cb.on_call_media_state = &sip_on_call_media_state;
+	cfg.cb.on_call_state = &sip_on_call_state;
+	cfg.cb.on_reg_state = &sip_on_reg_state;
+	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.spokn.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.spokn.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.ideasip.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.sipgate.net:10000");
+	//init logging config
+	pjsua_logging_config_default(&log_cfg);
+	log_cfg.console_level = 6;
+	
+	//init media config
+	pjsua_media_config_default(&cfgmedia);
+	cfgmedia.clock_rate = 8000;
+	cfgmedia.snd_clock_rate = 8000;
+	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.enable_ice=1;
+#ifdef _SPEEX_CODEC_	
+	//use speex as the AEC (Acoustic Echo Canceller)
+	cfgmedia.ec_options = PJMEDIA_ECHO_SPEEX;
+#endif
+	
+	//thus init pjsua
+	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
+	if (status != PJ_SUCCESS)
+	{
+		sprintf(errorstring, "Error in pjsua_init(). [status:%d]",status);
+		return status;
+	}
+	
+#ifdef _SPEEX_CODEC_
+	//speex code
+	/* Set codec priority 
+	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
+	 */
+	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
+	/*
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/32000"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcmu"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcma"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "ilbc"), 0);
+	 */
+	pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
+#endif	
+	
+	
+    /* Add UDP transport. */
+	//Try port 8060 first. If it fails, then try with 5060 as a fallback.
+	/*pjsua_transport_config_default(&transcfg);
+	 transcfg.port = 8060;
+	 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	 if (status != PJ_SUCCESS){
+	 transcfg.port = 5060;
+	 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	 if (status != PJ_SUCCESS)
+	 {
+	 sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
+	 return status;
+	 }
+	 }*/
+	pjsua_transport_config_default(&transcfg);
+	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	if (status != PJ_SUCCESS){
+		strcpy(errorstring, "Error creating transport");
+		return 0;
+    }
+	pjsua_transport_config rtp_cfg;
+	pjsua_transport_config_default(&rtp_cfg);
+	{
+		enum { START_PORT=4000 };
+		unsigned range;
+		
+		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+		rtp_cfg.port = START_PORT + 
+		((pj_rand() % range) & 0xFFFE);
+		if(rtp_cfg.port==5060)//change to some other port
+		{
+			rtp_cfg.port = rtp_cfg.port + 102;
+		}
+	}
+	
+	status = pjsua_media_transports_create(&rtp_cfg);
+	
+    /* Initialization is done, now start pjsua */
+    status = pjsua_start();
+	if (status != PJ_SUCCESS){ 
+		strcpy(errorstring, "Error starting pjsua");
+		return status;
+	}
+	
+    pjsua_detect_nat_type();
+	return 1;
+	
 }
 void sip_pj_DeInit(struct ltpStack *ps)
 
@@ -3814,11 +3965,10 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	#ifdef _MACOS_
-	
 	pstack->now = time(NULL);
-	
-	
-	
+		#ifdef	_MAC_OSX_CLIENT_
+			pc->timeEllapsed=-1;
+		#endif
 	#endif
 	pc->timeStart = pstack->now;
 	ps->activeLine =pc->lineId;
