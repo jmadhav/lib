@@ -63,6 +63,9 @@ int bkupsettingType = -1; //backup of last known settingType;
 int uniqueIDContact,uniqueIDVmail,uniqueIDCalllog;
 #endif
 
+#ifdef _MAC_OSX_CLIENT_
+UACallBackType uaCallBackObject;
+#endif
 
 //add by mukesh 20359
 ThreadStatusEnum threadStatus;
@@ -273,8 +276,9 @@ static int restCall(char *requestfile, char *responsefile, char *host, char *url
 	sprintf(header, 
 			"POST %s HTTP/1.1\r\n"
 			"Host: %s\r\n"
-			"Content-Length: %d\r\n\r\n",
-			url, host, contentLength);
+			"Content-Length: %d\r\n"
+			"Authorization: %s %s\r\n\r\n",
+			url, host, contentLength,STAGING_AUTH_STRING1,STAGING_AUTH_STRING2);
 	
 	addr.sin_addr.s_addr = lookupDNS(host);
 	if (addr.sin_addr.s_addr == INADDR_NONE)
@@ -419,6 +423,9 @@ end:
 	{
 		//printf("\nthread terminate");
 		threadStatus = ThreadNotStart ;
+	#ifdef _MAC_OSX_CLIENT_
+		threadStopped();
+	#endif
 		busy = 0;
 		//GthreadTerminate = 0;
 		pthread_exit(0);
@@ -444,6 +451,15 @@ void cdrEmpty()
 	listCDRs = NULL;
 }
 
+#ifdef _MAC_OSX_CLIENT_
+
+void threadStopped()
+{
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,THREAD_STOPPED,(unsigned long)uaCallBackObject.uData,0);	
+}
+
+#endif
+
 static void cdrSave(){
 	char pathname[MAX_PATH];
 	struct	 CDR *q;
@@ -465,10 +481,13 @@ static void cdrSave(){
 #ifdef _MACOS_
 		///		int addressUId;
 		//	int propertyID;	
-		
-		
+	#ifdef _MAC_OSX_CLIENT_ 
+		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid><uniqueId>%s</uniqueId></cdr>\r\n",
+				(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid,q->addressUId,q->recordID,q->uniqueId);
+	#else
 		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid></cdr>\r\n",
 				(unsigned long)q->date, (int)q->duration, (int)q->direction, q->userid,q->recordUId,q->isexistRecordID);
+	#endif
 		
 #else
 		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
@@ -512,8 +531,12 @@ static void cdrCompact() {
 }
 
 #ifdef _MACOS_
-		void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid)
+	#ifdef	_MAC_OSX_CLIENT_
+	void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid,char *Uid)
 	#else
+		void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid)
+	#endif
+#else
 		void cdrAdd(char *userid, time_t time, int duration, int direction)
 #endif
 {
@@ -555,6 +578,9 @@ static void cdrCompact() {
 	#ifdef _MACOS_
 		p->recordUId=abid;
 		p->isexistRecordID=0;
+	#ifdef  _MAC_OSX_CLIENT_
+		strcpy(p->uniqueId,Uid);	
+	#endif
 		if(recordid)
 		{	
 			p->isexistRecordID=1;
@@ -597,10 +623,13 @@ static void cdrCompact() {
 	///		int addressUId;
 	//	int propertyID;	
 	
-	
-	sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid></cdr>\r\n",
+	#ifdef _MAC_OSX_CLIENT_
+		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid><uniqueId>%s</uniqueId></cdr>\r\n",
+			(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid,p->addressUId,p->recordID,p->uniqueId);
+	#else
+		sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid> <abid>%d</abid><recordid>%d</recordid></cdr>\r\n",
 			(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid,p->recordUId,p->isexistRecordID);
-	
+	#endif
 #else
 	sprintf(line, "<cdr><date>%lu</date><duration>%d</duration><type>%d</type><userid>%s</userid></cdr>\r\n",
 			(unsigned long)p->date, (int)p->duration, (int)p->direction, p->userid);
@@ -647,7 +676,7 @@ void cdrLoad() {
 	struct CDR *p;
 	int		index;
 	char	line[1000];
-	ezxml_t	cdr, duration, date, userid, type, abidP,recordidP;
+	ezxml_t	cdr, duration, date, userid, type, abidP,recordidP,uId;
 #ifdef _MACOS_
 	sprintf(pathname, "%s/calls.txt", myFolder);
 	
@@ -674,6 +703,9 @@ void cdrLoad() {
 		abidP = ezxml_child(cdr, "abid");
 		recordidP = ezxml_child(cdr, "recordid");
 		
+#ifdef	_MAC_OSX_CLIENT_
+		uId=ezxml_child(cdr, "uniqueId");
+#endif
 		
 		p = (struct CDR *) malloc(sizeof(struct CDR));
 		if (!p){
@@ -689,6 +721,13 @@ void cdrLoad() {
 			p->recordUId = (unsigned long)atol(abidP->txt);
 		if (recordidP)
 			p->isexistRecordID = (unsigned long)atol(recordidP->txt);
+		#ifdef	_MAC_OSX_CLIENT_
+			if(uId)
+			{
+				strcpy(p->uniqueId,uId->txt);
+			}
+		#endif	
+		
 		#endif
 		if (date)
 			p->date = (unsigned long)atol(date->txt);
@@ -817,8 +856,8 @@ int countOfContacts()
 	struct AddressBook	*p;
 	int	i;
 	for (i = 0, p = listContacts; p; p = p->next)
-		i++;
-	
+		if(!p->isDeleted)
+			i++;
 	return i;
 }
 
@@ -1138,7 +1177,7 @@ static void vmsSort()
 static struct VMail *vmsRead(ezxml_t vmail)
 {
 	struct VMail *p;
-	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete,abidP,recordidP;
+	ezxml_t	date, userid, vmsid, direction, status, deleted, hashid, toDelete,abidP,recordidP,uId;
 	
 	date = ezxml_child(vmail, "dt");
 	vmsid = ezxml_child(vmail, "id");
@@ -1150,7 +1189,9 @@ static struct VMail *vmsRead(ezxml_t vmail)
 	toDelete = ezxml_child(vmail, "todelete");
 	abidP = ezxml_child(vmail, "abid");
 	recordidP = ezxml_child(vmail, "recordid");
-	
+#ifdef	_MAC_OSX_CLIENT_
+	uId=ezxml_child(vmail, "uniqueId");
+#endif
 	//check for all the required tags within <vm>
 	if (!status || !date || !vmsid || !userid || !direction 
 		|| !status || !hashid)
@@ -1167,6 +1208,7 @@ static struct VMail *vmsRead(ezxml_t vmail)
 		#ifdef _MACOS_
 			p->uniqueID = ++uniqueIDVmail;
 		#endif
+				
 		strcpy(p->hashid, hashid->txt);
 		strcpy(p->vmsid, vmsid->txt);
 		#ifdef _MACOS_
@@ -1178,8 +1220,13 @@ static struct VMail *vmsRead(ezxml_t vmail)
 			{
 				p->isexistRecordID = (unsigned long)atol(recordidP->txt);
 			}
+		
+		#ifdef	_MAC_OSX_CLIENT_
+		if(uId)
+			strcpy(p->uniqueId,uId->txt);
 		#endif
-			//make this 'starred', this is fresh mail
+		#endif
+		//make this 'starred', this is fresh mail
 		
 		if(listVMails)
 			p->next = listVMails;
@@ -1228,9 +1275,15 @@ static int vmsWrite(FILE *pf, struct VMail *p)
 	if (p->deleted)
 		return 0;
 	#ifdef _MACOS_
-		fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
-	 (unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->recordUId,p->isexistRecordID); 
-	#else
+	
+		#ifdef _MAC_OSX_CLIENT_
+			fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid><uniqueId>%s</uniqueId>",
+					(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->uniqueId);
+		#else
+			fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
+					(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->recordUId,p->isexistRecordID);	
+		#endif	
+#else
 	fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir>",
 			(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in");
 	#endif
@@ -1309,7 +1362,11 @@ void vmsDelete(struct VMail *p)
 }
 
 #ifdef _MACOS_
-	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID)
+	#ifdef  _MAC_OSX_CLIENT_ //If Mac OSx Client
+		struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID,char *uId)
+	#else	// else iPhone client
+		struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID)
+	#endif
 #else
 	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction)
 #endif
@@ -1332,7 +1389,11 @@ void vmsDelete(struct VMail *p)
 		return NULL;
 	memset(p, 0, sizeof(struct VMail));
 	#ifdef _MACOS_
-		p->uniqueID = ++uniqueIDVmail;
+		#ifdef _MAC_OSX_CLIENT_
+			strcpy(p->uniqueId,uId);
+		#else
+				p->uniqueID = ++uniqueIDVmail;	
+		#endif
 	#endif
 	strcpy(p->userid, userid);
 	if (vmsid)
@@ -1424,7 +1485,11 @@ static void vmsUpload(struct VMail *v)
 	pfIn = fopen(responsefile, "rb");
 	if (!pfIn){
 #ifndef _MACOS_
+	#ifdef _MAC_OSX_CLIENT_
+		uaCallBackObject.alertNotifyP(UA_ERROR_ALERT,0,ERR_CODE_VMS_NO_RESPONSE,(unsigned long)uaCallBackObject.uData,NULL);
+	#else	
 		alert(-1, ALERT_ERROR, "Failed to upload.");
+	#endif
 		return;
 #else
 		alert(-1, ALERT_VMAILERROR, "Failed to upload.");
@@ -1442,20 +1507,20 @@ static void vmsUpload(struct VMail *v)
 	fclose(pfIn);
 	if (length < 40){
 	#ifndef _MACOS_
+		#ifdef _MAC_OSX_CLIENT_
+			uaCallBackObject.alertNotifyP(UA_ERROR_ALERT,0,ERR_CODE_VMS_NO_RESPONSE,(unsigned long)uaCallBackObject.uData,NULL);
+		#else	
 			alert(-1, ALERT_ERROR, "Unable to send the VMS properly.");
-			//return;
+		#endif
 	#else
 			alert(-1, ALERT_VMAILERROR, "Unable to send the VMS properly.");
-			//	return;
 	#endif
-		
-		
-		return;
+	return;
 	}
 	buffer[length] = 0;
 	
 	strxml = strstr((char*)buffer, "<?xml");
-	
+
 	//todo check that the response is not 'o' and store the returned value as the vmsid
 	if (strxml){
 		ezxml_t xml, status, vmsid, code;
@@ -1467,21 +1532,29 @@ static void vmsUpload(struct VMail *v)
 				if (vmsid)
 					strcpy(v->vmsid, vmsid->txt);
 				else
+				{
 				#ifndef _MACOS_
-									alert(-1, ALERT_ERROR, "Voicemail response incorrect");
-								//return;
+					#ifdef	_MAC_OSX_CLIENT_
+						uaCallBackObject.alertNotifyP(UA_ERROR_ALERT,0,ERR_CODE_VMS_INVALID_RESPONSE,(unsigned long)uaCallBackObject.uData,NULL);
+					#else	
+					alert(-1, ALERT_ERROR, "Voicemail response incorrect");
+					#endif
 				#else
-								alert(-1, ALERT_VMAILERROR, "Voicemail response incorrect");
-								//return;
+					alert(-1, ALERT_VMAILERROR, "Voicemail response incorrect");
 				#endif
+				}
 				if (!strcmp(status->txt, "active"))
 					v->status = VMAIL_ACTIVE;
-				//bug#26105, Handler for VMS delivery failure
-				else if(!strcmp(status->txt, "failed"))
+				else if(!strcmp(status->txt, "failed"))//bug#26105, Handler for VMS delivery failure
 				{
 					code = ezxml_child(xml, "code");
+	
+				#ifdef _MAC_OSX_CLIENT_
+					uaCallBackObject.alertNotifyP(UA_ERROR_ALERT,0,(code ? atoi(code->txt) : -1),(unsigned long)uaCallBackObject.uData,NULL);
+				#else 
 					alert(code ? atoi(code->txt) : -1, ALERT_ERROR, "Voicemail upload failed");
-					v->status=VMAIL_FAILED;
+				#endif
+				v->status=VMAIL_FAILED;
 				}
 			}
 			ezxml_free(xml);
@@ -1641,6 +1714,9 @@ static void vmsDownload()
 	{
 		//printf("\nthread vmail download");
 		threadStatus = ThreadNotStart ;
+	#ifdef _MAC_OSX_CLIENT_
+		threadStopped();
+	#endif
 		busy = 0;
 		//GthreadTerminate = 0;
 		pthread_exit(0);
@@ -2232,8 +2308,11 @@ void profileMerge(){
 	//TBD detect new voicemails and alert the user
 	if (newMails)
 	{
-		
+#ifdef _MAC_OSX_CLIENT_
+		uaCallBackObject.alertNotifyP(UA_ALERT,0,ALERT_NEWVMAIL,(unsigned long)uaCallBackObject.uData,NULL);
+#else 
 		alert(-1, ALERT_NEWVMAIL, NULL);
+#endif
 	}
 	vmsSort();
 	relistVMails();	
@@ -2246,7 +2325,11 @@ void profileMerge(){
 		relistContacts();
 	}
 	if (palert)
+#ifdef _MAC_OSX_CLIENT_
+		uaCallBackObject.alertNotifyP(UA_ALERT,0,ALERT_SERVERMSG,(unsigned long)uaCallBackObject.uData,stralert);
+#else	
 		alert(-1, ALERT_SERVERMSG, stralert);
+#endif
 }
 
 void profileGetKey()
@@ -2588,7 +2671,7 @@ THREAD_PROC profileDownload(void *extras)
 		
 	}
 	#ifdef _MACOS_
-			UaThreadEnd();
+			threadStopped();
 	#endif
 
 
@@ -2816,6 +2899,7 @@ void uaInit()
 	createFolders();
 	profileLoad();
 	uaUserid[0]=0;
+	gnewMails=0;
 }
 
 
@@ -2852,8 +2936,17 @@ void TerminateUAThread()
 	GthreadTerminate = 1;
 }
 
+
+
 #ifdef _MACOS_
 UACallBackType uaCallBackObject;
+
+	#ifdef	_MAC_OSX_CLIENT_
+	int getThreadState()
+	{
+		return threadStatus;
+	}
+	#endif
 
 void UACallBackInit(UACallBackPtr uaCallbackP,struct ltpStack *pstackP)
 {
@@ -2931,8 +3024,9 @@ void relistCDRs()
 }
 void refreshDisplay()
 {
-	
+	uaCallBackObject.alertNotifyP(UA_ALERT,0,REFRESH_DIALER,(unsigned long)uaCallBackObject.uData,0);	
 }
+
 int makeVmsFileName(char *fnameP,char **fnameWithPathP)
 {
 	*fnameWithPathP = malloc(strlen(vmFolder)+strlen(fnameP)+10);
@@ -2962,7 +3056,11 @@ static void md5ToHex(unsigned char *digest, char *string)
 	*string = 0;
 }
 
+#ifdef _MAC_OSX_CLIENT_
+int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID,char *uId)
+#else 
 int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID)
+#endif
 //int sendVms(char *remoteParty,char *vmsfileNameP)
 {
 	FILE *fp;
@@ -3008,7 +3106,12 @@ int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID)
 			
 		}
 		resultCharP = NormalizeNumber(comaSepCharP,2);
+		
+#ifdef _MAC_OSX_CLIENT_
+		vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT,laddressUId,lrecordID,uId);
+#else	
 	    vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT,laddressUId,lrecordID);
+#endif
 		//vmsP = vmsUpdate(resultCharP, vmsid,NULL, ticks(), VMAIL_NEW, VMAIL_OUT);
 		free(resultCharP);
 		comaSepCharP = terminateCharP;
@@ -3142,6 +3245,7 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 			break;
 			
 		case GETVMAILLIST:
+			
 		case GETVMAILUNDILEVERD:		
 		{
 			struct VMail *p;
@@ -3184,13 +3288,9 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 			int count = 0;
 			for (p = listCDRs; p; p = p->next)
 			{	
-				
-				
-				
 				if(uaObj==GETCALLLOGMISSEDLIST)
 				{
 					if((p->direction & CALLTYPE_IN) && (p->direction & CALLTYPE_MISSED))
-						
 					{
 						if (count==index)
 						{	
@@ -3198,7 +3298,6 @@ void * GetObjectAtIndex(UAObjectType uaObj ,int index)
 						}
 						++count;
 					}
-					
 				}
 				else
 				{	
@@ -3724,4 +3823,35 @@ void * GetObjectByUniqueID(UAObjectType uaObj ,int luniqueId)
 	return NULL;
 	
 }
+
+struct AddressBook * getContactList()
+{
+	return listContacts;
+}
+struct CDR * getCallList()
+{
+	return listCDRs;
+}
+
+int getCreditBalance()
+{
+	return creditBalance;
+}
+
+struct VMail *getVMailList()
+{
+	return listVMails;
+}
+
+int getVmailCount()
+{
+	int x=0;
+	if(!listVMails)
+		return 0;
+	for (struct VMail *q = listVMails; q; q = q->next)
+		if (!q->deleted && !q->toDelete)
+			x++;
+	return x;
+}
+
 #endif

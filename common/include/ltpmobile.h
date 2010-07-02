@@ -36,16 +36,20 @@ extern "C" {
 
 /* SUPPORT_SPEEX is a preprocessor directive that should be passed from compiler options */
 
-#define SUPPORT_SPEEX 1
+	
 
+#define SUPPORT_SPEEX 1
 #define short16 short
 #define int32 int
 
+	
 
 #ifdef SUPPORT_SPEEX
 #include <speex/speex.h>
 #endif
+typedef unsigned long macuint32;	
 #ifdef _MACOS_
+#define _UINT32	
 #define uint32 macuint32
 #endif	
 /*	Queue:
@@ -383,8 +387,11 @@ struct Call
 		/* often, the call is associated  with a window or a channel etc. this int can be cast to stor
 		this */
 		int		uiHandle;
-
-		/* though, not implemented yet, this will store a private encryption key
+#ifdef  _MAC_OSX_CLIENT_
+	int timeEllapsed;
+	char uniqueId[64];
+#endif
+	/* though, not implemented yet, this will store a private encryption key
 		for encrypting voice between end-points */
 		char	key[128];
 };
@@ -540,6 +547,19 @@ struct Contact{
 #define LTP_CODEC_SPEEX 3
 #define LTP_CODEC_LGSM 98
 
+	
+#ifdef _MAC_OSX_CLIENT_
+	
+#define LOGIN_STATUS_OFFLINE 100
+#define LOGIN_STATUS_NO_ACCESS 101
+#define LOGIN_STATUS_FAILED 102
+#define LOGIN_STATUS_TRYING_LOGIN 103
+#define LOGIN_STATUS_ONLINE 104
+#define LOGIN_STATUS_TRYING_LOGOUT 105
+#define LOGIN_STATUS_BUSY_OTHERDEVICE 106
+#define LOGIN_STATUS_TIMEDOUT	107
+#else
+	
 #define LOGIN_STATUS_OFFLINE 0
 #define LOGIN_STATUS_NO_ACCESS 1
 #define LOGIN_STATUS_FAILED 2
@@ -549,7 +569,8 @@ struct Contact{
 #define LOGIN_STATUS_BUSY_OTHERDEVICE 6
 #define LOGIN_STATUS_TIMEDOUT		7
 
-
+#endif
+	
 #define LTP_MSG_REMOTE 1
 #define LTP_MSG_YOUR 2
 #define LTP_MSG_ALERT 3
@@ -700,6 +721,9 @@ struct Message{
 #define ALERT_MESSAGE_ERROR 16
 #define ALERT_MESSAGE_DELIVERED 17
 #define ALERT_CALL_NOT_START 18	
+#define ALERT_SERVERMSG 19
+#define ALERT_LOGIN_STATUS_CHANGED 20
+#define ALERT_CALL_STATUS_CHANGED 21
 
 /* sub versions by date */
 #define UA_SUBVERSION 010000x
@@ -712,7 +736,18 @@ struct Message{
 #define LTP_CHAT_MAX_RETRY 5
 #define LTP_CHAT_RETRY_INTERVAL 3
 
-
+	//Error codes returned by server, handled in ALERT_ERROR;
+#define ERR_CODE_VMS_SUCCESS	200
+#define ERR_CODE_VMS_NO_CREDITS	101
+#define ERR_CODE_VMS_BAD_HASH	102
+#define ERR_CODE_VMS_NO_ROUTING	103
+#define ERR_CODE_VMS_INVALID_RESPONSE 104
+#define ERR_CODE_VMS_NO_RESPONSE	105
+#define ERR_CODE_VMS_UNKNOWN	106
+	
+	//duplicate call forward number
+#define ERR_CODE_CALL_FWD_DUPLICATE	402
+	
 unsigned int32 lookupDNS(char *host);
 void alert(int lineid, int alertcode, void *data);
 int netWrite(void *msg, int length, unsigned int32 address, unsigned short16 port);
@@ -760,7 +795,7 @@ void ltpUpdatePresence(struct ltpStack *ps, unsigned short16 state, char *label)
 
 /* we use a slighlty modified md5 algorithm that can use a runtime flag to determine if it is
 being used on a big endian system */
-typedef unsigned long uint32;
+
 struct MD5Context {
 		uint32 buf[4];
 		uint32 bits[2];

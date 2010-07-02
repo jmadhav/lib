@@ -102,13 +102,20 @@ extern "C" {
 		int addressUId;
 		int isexistRecordID;
 		int uniqueID;
+	#ifdef  _MAC_OSX_CLIENT_
+		char uniqueId[64];
+	#endif
 #endif	
 	};
 	extern struct CDR *listCDRs;
 	
 	void cdrLoad();
 	#ifdef _MACOS_
-		void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid);
+		#ifdef _MAC_OSX_CLIENT_
+			void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid,char *Uid);
+		#else
+			void cdrAdd(char *userid, time_t time, int duration, int direction ,int abid,int recordid);
+		#endif
 	#else
 		void cdrAdd(char *userid, time_t time, int duration, int direction);
 	#endif
@@ -188,10 +195,11 @@ extern "C" {
 #define VMAIL_ACTIVE 1
 #define VMAIL_DELIVERED 2
 #define VMAIL_FAILED 3
-	
+#pragma pack(4)	
 #define VMAIL_MAXCOUNT 100 //no more than VMAIL_MAXCOUNT mails to be stored on the user agent
 	
 	struct VMail {
+	
 		char	userid[128]; //bug#26028, increased size to match AddressBook->email;
 		time_t	date;
 		char	vmsid[100];
@@ -207,6 +215,9 @@ extern "C" {
 		int recordUId;
 		int isexistRecordID;
 		int uniqueID;
+	#ifdef  _MAC_OSX_CLIENT_
+		char uniqueId[40];
+	#endif
 #endif	
 		
 	};
@@ -215,8 +226,14 @@ extern "C" {
 	
 	void vmsLoad();
 #ifdef _MACOS_
+
+#ifdef  _MAC_OSX_CLIENT_ //If Mac OSx Client
+		struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID,char *uId);
+#else	// else iPhone client
 	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction,int laddressUId,int lrecordID);
-	#else
+#endif
+
+#else
 	struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
 #endif
 	//struct VMail *vmsUpdate(char *userid, char *hashid, char *vmsid, time_t time, int status, int direction);
@@ -236,7 +253,7 @@ extern "C" {
 #define ALERT_NEWVMAIL 100
 #define ALERT_VMAILERROR 101
 	//Handler for server-sent messages
-#define ALERT_SERVERMSG	102
+//#define ALERT_SERVERMSG	102
 #define ALERT_HOSTNOTFOUND 110
 	
 	//Seperator for href & message, sent by server.
@@ -271,6 +288,9 @@ extern "C" {
 	extern void createFolders();
 	extern void cdrRemoveAll();
 	extern unsigned long ticks();
+#ifdef _MAC_OSX_CLIENT_
+	extern void threadStopped();
+#endif
 	void cdrEmpty();
 	//for voip quality
 	
@@ -279,12 +299,16 @@ extern "C" {
 	THREAD_PROC sendLogOutPacket(void *lDataP);
 	void TerminateUAThread();
 	void ReStartUAThread();
+
 #ifdef _MACOS_
 #define TEST_CALL_ID -2
 #define _T(X) X
 #define UA_ALERT     2000	
+#define UA_ERROR_ALERT 2001
+
 #define REFRESH_CONTACT 1	
 #define REFRESH_VMAIL   2	
+	
 #define REFRESH_CALLLOG    3	
 #define REFRESH_ALL       4	
 #define LOAD_ADDRESS_BOOK 5	
@@ -293,6 +317,12 @@ extern "C" {
 #define END_THREAD 8	
 #define USERNAME_RANGE  30
 #define PASSWORD_RANGE  30	
+	
+#ifdef _MAC_OSX_CLIENT_
+#define REFRESH_DIALER	11
+#define THREAD_STARTED  12
+#define	THREAD_STOPPED  13
+#endif
 	
 #define EMAIL_RANGE  127
 #define NUMBER_RANGE  31	
@@ -341,7 +371,12 @@ extern "C" {
 	void * GetObjectAtIndex(UAObjectType uaObj,int index);
 	int GetVmsFileName(struct VMail *vmailP,char **fnameWithPathP);
 	int makeVmsFileName(char *fnameP,char **fnameWithPathP);
+#ifdef _MAC_OSX_CLIENT_
+	int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID,char *uId);
+	
+#else
 	int sendVms(char *remoteParty,char *vmsfileNameP,int laddressUId,int lrecordID);
+#endif
 	//int sendVms(char *remoteParty,char *vmsfileNameP);
 	int getBalance();
 	void SetDeviceDetail(char *lclientName,char *clientVer,char *lclientOs,char *lclientOsVer,char *lclientModel,char *clientUId);
@@ -384,6 +419,14 @@ extern "C" {
 	int terminateThread();
 	void relistAll();
 
+#ifdef _MAC_OSX_CLIENT_
+	struct AddressBook * getContactList();
+	int getCreditBalance();
+	struct CDR *getCallList();
+	int getVmailCount();
+	struct VMail *getVMailList();	
+#endif
+	
 	void stopAnimation();
 	char *getSupportPage();
 	void UaThreadEnd();

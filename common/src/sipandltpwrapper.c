@@ -2928,7 +2928,9 @@ static void sip_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	
 		pstack->now = time(NULL);
 	
-	
+	#ifdef _MAC_OSX_CLIENT_
+		pc->timeEllapsed=-1;
+	#endif
 	
 	#endif
 	if(pstack->now==0)
@@ -2986,6 +2988,9 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 				pstack->call[i].ltpState = CALL_CONNECTED;
 				#ifdef _MACOS_
 				pstack->now = time(NULL);
+					#ifdef _MAC_OSX_CLIENT_
+						pstack->call[i].timeEllapsed=0;
+					#endif
 				#endif	
 				pstack->call[i].timeStart = pstack->now; /* reset the call timer for the correct duration */
 				alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
@@ -3384,10 +3389,13 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
 	pjsua_media_config cfgmedia;
+#ifndef  _MAC_OSX_CLIENT_
 	pj_thread_desc desc;
 	pj_thread_t *  thread=0;
 	memset(&desc,0,sizeof(pj_thread_desc));
 	pj_thread_register(NULL,desc,&thread);	
+	
+#endif	
 	pjsua_config_default(&cfg);
 	cfg.cb.on_incoming_call = &sip_on_incoming_call;
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
@@ -3545,6 +3553,149 @@ int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 	}
 	
 	return sip_spokn_pj_config(ps,luserAgentP,errorstring);
+}
+
+int sip_mac_init(struct ltpStack *ps, char *errorstring)
+{
+	pjsua_config cfg;
+	pjsua_logging_config log_cfg;
+	pj_status_t status;
+	pjsua_transport_config transcfg;
+	pjsua_media_config cfgmedia;
+	pj_str_t tmp;
+	
+	if(ps->pjpool)
+	{ 
+		pj_pool_release(ps->pjpool);
+		ps->pjpool = 0;
+		
+	}
+	pjsua_destroy();
+	/* Create pjsua first! */
+    status = pjsua_create();
+	
+	if (status != PJ_SUCCESS)
+	{
+		sprintf(errorstring, "Error in pjsua_create(). [status:%d]",status);
+		return status;
+	}
+	
+	/* Init pjsua */
+	//init callback config
+	pjsua_config_default(&cfg);
+	//cfg.thread_cnt = 6; //MAX_SLOTS
+	cfg.cb.on_incoming_call = &sip_on_incoming_call;
+	cfg.cb.on_call_media_state = &sip_on_call_media_state;
+	cfg.cb.on_call_state = &sip_on_call_state;
+	cfg.cb.on_reg_state = &sip_on_reg_state;
+	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.spokn.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.spokn.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.ideasip.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.sipgate.net:10000");
+	//init logging config
+	pjsua_logging_config_default(&log_cfg);
+	log_cfg.console_level = 6;
+	
+	//init media config
+	pjsua_media_config_default(&cfgmedia);
+	cfgmedia.clock_rate = 8000;
+	cfgmedia.snd_clock_rate = 8000;
+	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.enable_ice=1;
+#ifdef _SPEEX_CODEC_	
+	//use speex as the AEC (Acoustic Echo Canceller)
+	cfgmedia.ec_options = PJMEDIA_ECHO_SPEEX;
+#endif
+	
+	//thus init pjsua
+	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
+	if (status != PJ_SUCCESS)
+	{
+		sprintf(errorstring, "Error in pjsua_init(). [status:%d]",status);
+		return status;
+	}
+	
+#ifdef _SPEEX_CODEC_
+	//speex code
+	/* Set codec priority 
+	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
+	 */
+	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
+	/*
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/32000"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcmu"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcma"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "ilbc"), 0);
+	 */
+	pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
+#endif	
+	
+	
+    /* Add UDP transport. */
+	//Try port 8060 first. If it fails, then try with 5060 as a fallback.
+	/*pjsua_transport_config_default(&transcfg);
+	 transcfg.port = 8060;
+	 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	 if (status != PJ_SUCCESS){
+	 transcfg.port = 5060;
+	 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	 if (status != PJ_SUCCESS)
+	 {
+	 sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
+	 return status;
+	 }
+	 }*/
+	pjsua_transport_config_default(&transcfg);
+	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	if (status != PJ_SUCCESS){
+		strcpy(errorstring, "Error creating transport");
+		return 0;
+    }
+	pjsua_transport_config rtp_cfg;
+	pjsua_transport_config_default(&rtp_cfg);
+	{
+		enum { START_PORT=4000 };
+		unsigned range;
+		
+		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+		rtp_cfg.port = START_PORT + 
+		((pj_rand() % range) & 0xFFFE);
+		if(rtp_cfg.port==5060)//change to some other port
+		{
+			rtp_cfg.port = rtp_cfg.port + 102;
+		}
+	}
+	
+	status = pjsua_media_transports_create(&rtp_cfg);
+	
+    /* Initialization is done, now start pjsua */
+    status = pjsua_start();
+	if (status != PJ_SUCCESS){ 
+		strcpy(errorstring, "Error starting pjsua");
+		return status;
+	}
+	
+    pjsua_detect_nat_type();
+	return 1;
+	
 }
 void sip_pj_DeInit(struct ltpStack *ps)
 
@@ -3813,16 +3964,13 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 		strcpy(pc->remoteUserid, remoteid);
 		pc->ltpSession = (unsigned int) call_id;
 		pc->ltpState = CALL_RING_SENT;
-		
-	
 	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	#ifdef _MACOS_
-	
 	pstack->now = time(NULL);
-	
-	
-	
+		#ifdef	_MAC_OSX_CLIENT_
+			pc->timeEllapsed=-1;
+		#endif
 	#endif
 	pc->timeStart = pstack->now;
 	ps->activeLine =pc->lineId;
@@ -3893,17 +4041,11 @@ void sip_setMute(int enableB)
 	if (enableB)
 	{
 		pjsua_conf_adjust_rx_level(0 , 0.0f);
-		
 	}
 	else
 	{
-		
 		pjsua_conf_adjust_rx_level(0 , 1.0f);
-		
-		
 	}
-	
-	
 }
 
 
@@ -3917,22 +4059,15 @@ void sip_setHold(struct ltpStack *ps,int enableB)
 				pjsua_call_set_hold((pjsua_call_id)pstack->call[i].ltpSession, NULL);
 				
 			}
-			
 	}
 	else
 	{
-		/*if (ps->call[ps->activeLine].ltpSession != PJSUA_INVALID_ID)
-			pjsua_call_reinvite(ps->call[ps->activeLine].ltpSession, PJ_TRUE, NULL);*/
-		
-		
 		for (i = 0; i < pstack->maxSlots; i++)
 			if (pstack->call[i].ltpState != CALL_IDLE && pstack->call[i].ltpSession!=PJSUA_INVALID_ID){
 				pjsua_call_reinvite((pjsua_call_id)pstack->call[i].ltpSession, PJ_TRUE, NULL);
 				
 			}
-		
 	}
-	
 }
 
 void setMute(struct ltpStack *ps,int enableB)
@@ -3944,10 +4079,7 @@ void setMute(struct ltpStack *ps,int enableB)
 	else
 	{
 		//sip_setMute(ps,enableB);
-	
 	}
-
-
 }
 
 void setHold(struct ltpStack *ps,int enableB)
@@ -3960,11 +4092,9 @@ void setHold(struct ltpStack *ps,int enableB)
 	else
 	{
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-
 }
+
 struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int framesPerPacket)
 {
 	struct ltpStack  *tmpP=0;
@@ -3976,7 +4106,6 @@ struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int frames
 	{
 		//sip_setMute(ps,enableB);
 		tmpP = LTP_ltpInit(maxslots,maxbitrate,framesPerPacket);
-		
 	}
 	if(tmpP)
 	{
@@ -4000,10 +4129,7 @@ int ltpTalk(struct ltpStack *ps, char *remoteid)
 		return 0;
 		//return LTP_ltpTalk(ps,remoteid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpHangup(struct ltpStack *ps, int lineid)
@@ -4017,15 +4143,11 @@ void ltpHangup(struct ltpStack *ps, int lineid)
 	{
 		LTP_ltpHangup(ps,lineid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpRefuse(struct ltpStack *ps, int lineid, char *msg)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpRefuse(ps,lineid,msg);
@@ -4035,33 +4157,24 @@ void ltpRefuse(struct ltpStack *ps, int lineid, char *msg)
 	{
 		LTP_ltpRefuse(ps,lineid,msg);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpAnswer(struct ltpStack *ps, int lineid)
 {
-	
 	if(ps->sipOnB)
 	{
 		sip_ltpAnswer(ps,lineid);
 	}
 	else
-		
 	{
 		LTP_ltpAnswer(ps,lineid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 int ltpRing(struct ltpStack *ps, char *remoteid, int command)
 {
-	
 	if(ps->sipOnB)
 	{
 		return sip_ltpRing(ps,remoteid,command);
@@ -4074,15 +4187,11 @@ int ltpRing(struct ltpStack *ps, char *remoteid, int command)
 			remoteid = remoteid + 1;
 		}
 		return LTP_ltpRing(ps,remoteid,command);
-		
 	}
-	
-	
 }
 
 int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpMessage(ps,userid,msg);
@@ -4091,16 +4200,12 @@ int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 	else
 	{
 		//sip_setMute(ps,enableB);
-	return 	LTP_ltpMessage(ps,userid,msg);
-		
+		return 	LTP_ltpMessage(ps,userid,msg);
 	}
-	
-	
 }
 
 void ltpChat(struct ltpStack *ps, char *userid, char *message)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpChat(ps,userid,message);
@@ -4108,13 +4213,9 @@ void ltpChat(struct ltpStack *ps, char *userid, char *message)
 	}
 	else
 	{
-		
 	   //	LTP_ltpChat(ps,userid,message);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpLogin(struct ltpStack *ps, int command)
@@ -4127,15 +4228,11 @@ void ltpLogin(struct ltpStack *ps, int command)
 	else
 	{
 		LTP_ltpLogin(ps,command);
-		
 	}
-	
-	
 }
 
 void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpTick(ps,timeNow);
@@ -4143,15 +4240,11 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 	else
 	{
 		LTP_ltpTick(ps,timeNow);
-		
 	}
-	
-	
 }
 
 void ltpLoginCancel(struct ltpStack *ps)
 {
-	
 	if(ps->sipOnB)
 	{
 		sip_ltpLoginCancel(ps);
@@ -4160,10 +4253,7 @@ void ltpLoginCancel(struct ltpStack *ps)
 	{
 	//	LTP_ltpLoginCancel(ps);
 		return;
-		
 	}
-	
-	
 }
 void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 {
@@ -4204,7 +4294,6 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 			else {
 				ps->call[i].InConference = 0;
 			}
-
 			if(ps->sipOnB)
 			{
 				if(ps->call[i].lineId!=oldLineId)
@@ -4217,7 +4306,6 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 					
 				}
 				else {
-						
 						pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 					//pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 				}
@@ -4232,17 +4320,12 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 					}
 				}	
 			}
-
-						
 		}
 	}	
 	if(lactiveLineId>=0)
 	{
 		ps->activeLine= lactiveLineId;
 	}
-
-	
-
 }
 void setPrivateCall(struct ltpStack *ps,int lineid)
 {
@@ -4255,16 +4338,12 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 			{
 				if(ps->call[i].lineId !=lineid)
 				{	
-				
-										//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
+					//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 					pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 				}
 				else {
-				
 					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
-					
 				}
-
 			}
 			//if(ps->call[i].lineId ==lineid)
 			{	
@@ -4275,14 +4354,12 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 	}	
 	
 	ps->activeLine= lineid;
-
 }
 void switchReinvite(struct ltpStack *ps, int lineid)
 {
 	int	i;
 	pjsua_call_id call_id;
 	
-
 	for (i = 0; i < ps->maxSlots; i++)
 		if (ps->call[i].ltpState != CALL_IDLE&& ps->call[i].ltpState != CALL_HANGING){
 			call_id = (pjsua_call_id) ps->call[i].ltpSession;
