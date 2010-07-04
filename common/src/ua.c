@@ -34,6 +34,7 @@
 #include "ltpandsip.h"
 #endif
 #define MAX_SIZE_DATA 10000
+int appTerminateB;
 int forwardStartB;
 //struct AddressBook addressBookG={0,"TestCall","","","","","","1234567"};
 // this is the single object that is the instance of the ltp stack for the user agent
@@ -435,6 +436,9 @@ end:
 		threadStopped();
 	#endif
 		busy = 0;
+	#ifdef _MACOS_
+		UaThreadEnd();
+	#endif
 		//GthreadTerminate = 0;
 		pthread_exit(0);
 	}
@@ -1733,6 +1737,9 @@ static void vmsDownload()
 		threadStopped();
 	#endif
 		busy = 0;
+		#ifdef _MACOS_
+			UaThreadEnd();
+		#endif
 		//GthreadTerminate = 0;
 		pthread_exit(0);
 	}
@@ -2688,7 +2695,10 @@ THREAD_PROC profileDownload(void *extras)
 	#ifdef _MAC_OSX_CLIENT_
 			threadStopped();
 	#endif
-
+	#ifdef _MACOS_
+		UaThreadEnd();
+	#endif
+	
 
 	return 0;
 }
@@ -2723,7 +2733,6 @@ void loggedOut()
 THREAD_PROC sendLogOutPacket(void *lDataP)
 {
 	int byteCount;
-	int oldval;
 	struct	MD5Context	md5;
 	unsigned char	digest[16];
 
@@ -2858,11 +2867,11 @@ THREAD_PROC sendLogOutPacket(void *lDataP)
 #else
 	sprintf(pathDown, "%s\\down.xml", myFolder);
 #endif
-	oldval = GthreadTerminate;
-	GthreadTerminate = 0;
+	//oldval = GthreadTerminate;
+	//GthreadTerminate = 0;
 		byteCount = restCall(pathUpload, pathDown, logoutStructP->ltpServerName, "/cgi-bin/userxml.cgi",0);
 	
-	GthreadTerminate = oldval;
+	//GthreadTerminate = oldval;
 	
 	
 	free(logoutStructP);
@@ -3008,8 +3017,10 @@ void UaThreadBegin()
 }
 void UaThreadEnd()
 {
-	uaCallBackObject.alertNotifyP(UA_ALERT,0,END_THREAD,(unsigned long)uaCallBackObject.uData,0);
-
+	if(appTerminateB==0)
+	{	
+		uaCallBackObject.alertNotifyP(UA_ALERT,0,END_THREAD,(unsigned long)uaCallBackObject.uData,0);
+	}	
 }
 void stopAnimation()
 {
@@ -3868,5 +3879,13 @@ int getVmailCount()
 			x++;
 	return x;
 }
-
+void applicationEnd()
+{
+	appTerminateB = 1;
+	TerminateUAThread();
+	while(threadStatus==ThreadStart)
+	{
+		sleep(1);
+	}
+}
 #endif
