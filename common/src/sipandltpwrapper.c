@@ -3700,6 +3700,8 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 void sip_pj_DeInit(struct ltpStack *ps)
 
 {
+	if(ps==0)
+		return;
 	if(ps->sipOnB==0)
 	{
 		return;
@@ -4135,22 +4137,45 @@ int ltpTalk(struct ltpStack *ps, char *remoteid)
 void ltpHangup(struct ltpStack *ps, int lineid)
 {
 	
-	if(ps->sipOnB)
-	{
-		sip_ltpHangup(ps,lineid);
+	if(lineid>=0)
+	{	
+		if(ps->sipOnB)
+		{
+			sip_ltpHangup(ps,lineid);
+		}
+		else
+		{
+			LTP_ltpHangup(ps,lineid);
+			//sip_setMute(ps,enableB);
+		}
 	}
-	else
-	{
-		LTP_ltpHangup(ps,lineid);
-		//sip_setMute(ps,enableB);
+	else {
+		int i;
+		
+		for (i = 0; i < ps->maxSlots; i++)
+		{
+			if (ps->call[i].ltpState != CALL_IDLE){
+				if(ps->sipOnB)
+				{
+					sip_ltpHangup(ps,ps->call[i].lineId );
+				}
+				else
+				{
+					LTP_ltpHangup(ps,ps->call[i].lineId );
+					//sip_setMute(ps,enableB);
+				}
+				
+			}
+		}	
 	}
+
 }
 
 void ltpRefuse(struct ltpStack *ps, int lineid, char *msg)
 {
 	if(ps->sipOnB)
 	{
-		//sip_ltpRefuse(ps,lineid,msg);
+		sip_ltpHangup(ps,lineid);
 		return;
 	}
 	else
