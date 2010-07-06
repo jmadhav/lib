@@ -2445,9 +2445,9 @@ THREAD_PROC profileDownload(void *extras)
 	unsigned long timeStart, timeFinished, timeTaken;
    	if (busy > 0 || GthreadTerminate==1 || !strlen(pstack->ltpUserid))
 	{	
-	#ifdef _MACOS_
+	/*#ifdef _MACOS_
 			stopAnimation();
-	#endif
+	#endif*/
 		return 0;
 	}	
 	else 
