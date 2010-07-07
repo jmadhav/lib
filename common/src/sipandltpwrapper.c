@@ -3378,7 +3378,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 void sip_ltpTick(struct ltpStack *ps, unsigned int timeNow)
 {
 	pstack->now = timeNow;
-	pjsua_handle_events(1);
+	//pjsua_handle_events(1);
 }
 
 
@@ -3405,16 +3405,17 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		//check if an account already exists
 		if (strlen(pstack->ltpUserid) && strlen(pstack->ltpPassword) && pjsua_acc_get_count() > 0){
 			acc_id = pjsua_acc_get_default();
-			if (acc_id != PJSUA_INVALID_ID){
+			//if (acc_id != PJSUA_INVALID_ID){
 
-				//if the the account details are the same, then just re-register
-				if (!strcmp(pstack->ltpUserid, acccfg.cred_info[0].username.ptr) &&
-					!strcmp(pstack->ltpPassword, acccfg.cred_info[0].data.ptr))
-				{
-					pjsua_acc_set_registration(acc_id, PJ_TRUE);
-					return;
-				}
-			}
+			//	//if the the account details are the same, then just re-register
+			//	if (!strcmp(pstack->ltpUserid, acccfg.cred_info[0].username.ptr) &&
+			//		!strcmp(pstack->ltpPassword, acccfg.cred_info[0].data.ptr))
+			//	{
+			//		pjsua_acc_set_registration(acc_id, PJ_TRUE);
+			//		return;
+			//	}
+			//	
+			//}
 
 			//account details don't match, then delete this account and create a new default account
 			pjsua_acc_del(acc_id);
@@ -3442,7 +3443,10 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 			acc_id = pjsua_acc_get_default();
 
 			if (acc_id != PJSUA_INVALID_ID)
+			{
 				pjsua_acc_set_registration(acc_id, PJ_FALSE);
+				
+			}
 			
 		}	
 	}
@@ -3868,7 +3872,7 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 	
 	if(ps->sipOnB)
 	{
-		//sip_ltpTick(ps,timeNow);
+		sip_ltpTick(ps,timeNow);
 	}
 	else
 	{
