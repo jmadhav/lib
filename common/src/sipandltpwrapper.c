@@ -2928,7 +2928,9 @@ static void sip_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	
 		pstack->now = time(NULL);
 	
-	
+	#ifdef _MAC_OSX_CLIENT_
+		pc->timeEllapsed=-1;
+	#endif
 	
 	#endif
 	if(pstack->now==0)
@@ -2986,6 +2988,9 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 				pstack->call[i].ltpState = CALL_CONNECTED;
 				#ifdef _MACOS_
 				pstack->now = time(NULL);
+					#ifdef _MAC_OSX_CLIENT_
+						pstack->call[i].timeEllapsed=0;
+					#endif
 				#endif	
 				pstack->call[i].timeStart = pstack->now; /* reset the call timer for the correct duration */
 				alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
@@ -3191,106 +3196,514 @@ static void sip_on_reg_state(pjsua_acc_id acc_id)
 void       callbackpjsip(int level, const char *data, int len)
 {
 	if(data)
-	printf("\n%s",data);
+	{	
+		if(strstr(data,"200"))
+		{	
+			printf("\n%s",data);
+		}	
+	}	
+}
+int sip_spokn_pj_Create(struct ltpStack *ps)
+{
+	pj_status_t status;
+		
+	status = pjsua_create();
+	
+	if (status != PJ_SUCCESS){
+		
+		return 0;
+	}
+	
+	return 1;	
+	
+}
+int sip_destroy_transation(struct ltpStack *ps)
+{
+	/*if(ps->tranportID>=0 && ps->sipOnB)
+	{
+		pjsua_transport_close(ps->tranportID,0);
+		ps->tranportID = -1;
+		
+	}*/
+	return 1;
+}
+int sip_set_randomVariable(struct ltpStack *ps,int randVariable)
+{
+	ps->randVariable = randVariable;
+	return 0;
+}
+int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int *p_id)
+{
+	
+    /* Add UDP transport. */
+	pj_status_t status = 1;
+	int idUser=0;
+	pjsua_transport_config transcfg;
+	int dummy_start_port = 5060;
+	unsigned range;
+	int diffport;
+	pjsua_transport_config rtp_cfg;
+	if(p_id)
+	{
+		if(*p_id>=0)
+		{
+			return 1 ;
+		}
+	}
+	
+	pjsua_transport_config_default(&transcfg);
+	if(userId)
+	{
+		idUser = atoi(userId);
+		if(idUser)
+		{
+			int tmpNo;
+			int tmpNo2;
+			tmpNo2 = idUser/1000;
+			tmpNo = idUser - tmpNo2*1000;
+			idUser = tmpNo+tmpNo2+ps->randVariable;//this variable is constant per user it is set once build install
+			if(idUser<5061)
+				idUser = idUser+5070;
+			idUser = idUser&0xFFFE;
+			transcfg.port = idUser;
+			status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+			//printf("\n\n\n\nport %d\n\n\n",transcfg.port);
+		}
+	
+	 }
+	if(status!=PJ_SUCCESS)
+	{	
+		range = (10000-dummy_start_port);
+		transcfg.port = dummy_start_port + 
+		((pj_rand() % range) & 0xFFFE);
+		if(transcfg.port==5060)//change to some other port
+		{
+			transcfg.port = transcfg.port + 102;
+			
+		}
+			
+		status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+		
+		if (status != PJ_SUCCESS){
+			range = (65535-dummy_start_port);
+			transcfg.port = dummy_start_port + 
+			((pj_rand() % range) & 0xFFFE);
+			if(transcfg.port==5060)//change to some other port
+			{
+				transcfg.port = transcfg.port + 102;
+				
+			}
+			status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+			if (status != PJ_SUCCESS)
+			{	
+				
+				
+				transcfg.port = 8060;	
+				status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+				if (status != PJ_SUCCESS)
+				{
+					transcfg.port = 5060;
+					status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+					if (status != PJ_SUCCESS)
+					{	 
+						sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
+						return 0;
+					}	 
+				}
+			}	
+		}
+	}	
+	ps->lport = transcfg.port;
+	
+	pjsua_transport_config_default(&rtp_cfg);
+	{
+		enum { START_MEDIA_PORT=4000 };
+		unsigned range;
+		
+		if(idUser==0)
+		{	
+			range = (10000-START_MEDIA_PORT-PJSUA_MAX_CALLS*2);
+			rtp_cfg.port = START_MEDIA_PORT + 
+			((pj_rand() % range) & 0xFFFE);
+		}
+		else {
+			rtp_cfg.port = START_MEDIA_PORT + (idUser>START_MEDIA_PORT)?(idUser+20-START_MEDIA_PORT):idUser;
+		}
+
+		diffport = transcfg.port-rtp_cfg.port;
+		if(diffport<0)
+		{
+			diffport = diffport*-1;
+		}
+		if(rtp_cfg.port==5060 || diffport<10)//change to some other port
+		{
+			rtp_cfg.port = rtp_cfg.port + 102;
+			
+		}
+	}
+	
+	status = pjsua_media_transports_create(&rtp_cfg);
+	if(status!=PJ_SUCCESS)
+	{
+		
+			enum { START_PORT=4000 };
+			unsigned range;
+			
+			range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+			rtp_cfg.port = START_PORT + 
+			((pj_rand() % range) & 0xFFFE);
+			
+			diffport = transcfg.port-rtp_cfg.port;
+			if(diffport<0)
+			{
+				diffport = diffport*-1;
+			}
+			if(rtp_cfg.port==5060 || diffport<10)//change to some other port
+				
+			{
+				rtp_cfg.port = rtp_cfg.port + 102;
+				
+			}
+		status = pjsua_media_transports_create(&rtp_cfg);
+		if(status!=PJ_SUCCESS)
+		{
+			rtp_cfg.port = 4000;			
+			status = pjsua_media_transports_create(&rtp_cfg);
+			
+		}
+		
+		
+	}	
+		
+		
+	return 1;
+	
 
 }
-
-int sip_spokn_pj_init(struct ltpStack *ps, char *errorstring)
+int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 {
+	
+	
+	//char *hostP;
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
-	pjsua_transport_config transcfg;
 	pjsua_media_config cfgmedia;
-	if(ps->pjpool)
-	{	
-		pj_pool_release(ps->pjpool);
-		ps->pjpool = 0;
-		
-	}
+#ifdef _MACOS_
+	#ifndef  _MAC_OSX_CLIENT_
+		pj_thread_desc desc;
+		pj_thread_t *  thread=0;
+		memset(&desc,0,sizeof(pj_thread_desc));
+		pj_thread_register(NULL,desc,&thread);	
 	
-	pjsua_destroy();
-    /* Create pjsua first! */
-    status = pjsua_create();
-
-	if (status != PJ_SUCCESS){
-		strcpy(errorstring, "Error in pjsua_create()");
-		return 0;
-	}
-
-	/* Init pjsua */
-
+	#endif	
+#endif
 	pjsua_config_default(&cfg);
 	cfg.cb.on_incoming_call = &sip_on_incoming_call;
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
 	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
-	/*pj_strdup2_with_null(ps->pjpool, 
-                         &(cfg.nameserver[cfg.nameserver_count++]), 
-                         "www.spokn.com");
-	*/
-	pj_strdup2_with_null(ps->pjpool, 
-                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
-                         "stun.spokn.com");
-	
+	//pj_str(
+#ifdef SRV_RECORD
+	 pj_strdup2_with_null(ps->pjpool, 
+	 &(cfg.nameserver[cfg.nameserver_count++]), 
+	 "66.93.87.2");
+	 
+#endif
 	//cfg.stun_ignore_failure	= 0;
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
-	//log_cfg.cb = callbackpjsip;
-	 pjsua_media_config_default(&cfgmedia);
+//	log_cfg.cb = callbackpjsip;
+	pjsua_media_config_default(&cfgmedia);
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
-		
+	//cfgmedia.ec_options = 1;
 	cfgmedia.snd_auto_close_time = 0;
-//	cfgmedia.ec_tail_len = 0;
+	//cfgmedia.ec_tail_len = 0;
 	
-	
-	
-	
+	//cfgmedia.enable_ice = 1;
+	/*cfgmedia.ice_max_host_cands = 1;
+	 pj_strdup2_with_null(ps->pjpool, 
+	 &(cfgmedia.turn_server), 
+	 "turn.spokn.com");
+	 cfgmedia.enable_turn = 1; 
+	 //cfgmedia.ec_tail_len = 0;
+	 //cfgmedia.no_vad = 1;
+	 cfgmedia.turn_auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
+	 
+	 
+	 cfgmedia.turn_auth_cred.data.static_cred.realm = pj_str(SIP_DOMAIN);
+	 cfgmedia.turn_auth_cred.data.static_cred.username = pj_str(pstack->ltpUserid);
+	 cfgmedia.turn_auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
+	 cfgmedia.turn_auth_cred.data.static_cred.data = pj_str(pstack->ltpPassword);;
+	 */
+	//ps->stunB = 0;
+//	pjsip_cfg()->regc.add_xuid_param = 1;
+
+	if(ps->stunB)
+	{	
+		#ifdef SRV_RECORD
+		const pj_str_t *hostP;
+		hostP = pj_gethostname();
+		if(hostP)
+		{	
+			if(hostP->slen)//if got host name
+			{	
+				printf("\n host %s",hostP->ptr);
+				pj_strdup2_with_null(ps->pjpool, 
+								 &(cfg.nameserver[cfg.nameserver_count++]), 
+								 hostP->ptr);
+				pj_strdup2_with_null(ps->pjpool, 
+								 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+								 "spokn.com");
+			}
+			else
+			{
+				pj_strdup2_with_null(ps->pjpool, 
+									 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+									 "stun.spokn.com");
+			
+			}
+		}
+		else {
+				pj_strdup2_with_null(ps->pjpool, 
+								 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+								 "stun.spokn.com");
+		}
+
+		#else
+				pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.spokn.com");
+		
+		/*pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.ideasip.com");
+		
+		pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun.sipgate.net:10000");*/
+		#endif
+	}
+	//sprintf(str,"spokn iphone version %s",CLIENT_VERSION);
+	if(userAgentP)
+	{	
+		pj_strdup2_with_null(ps->pjpool, 
+						 &(cfg.user_agent), 
+						 userAgentP);
+	}
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");
 		return 0;
 	}
+	
+	
+	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
+	{
+		
+		return 0;
+	}		
 #ifdef _SPEEX_CODEC_
 	{
-	//speex code
-	/* Set codec priority 
-	 
-	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
-	 
-	 */
+		//speex code
+		/* Set codec priority
+		 
+		 Use only "speex/8000" or "speex/16000". Set zero priority for others.
+		 
+		 */
+		//int x;
 		pj_str_t tmp1;
-		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
-			
-		pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
+		//pjsua_codec_set_priority(pj_cstr(&tmp1, "speex"), PJMEDIA_CODEC_PRIO_HIGHEST);
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST );
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
+		//pjsua_codec_set_priority(pj_cstr(&tmp1, "ilbc"), 250);
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/32000"), 0);
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcmu"), 0);
+		
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcma"), 0);
+		
+		//pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
 	}
 #endif	
 	
-    /* Add UDP transport. */
-
-	pjsua_transport_config_default(&transcfg);
-	transcfg.port = 5060;
-	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
-	if (status != PJ_SUCCESS){
-		strcpy(errorstring, "Error creating transport");
-		return 0;
-    }
-
     /* Initialization is done, now start pjsua */
     status = pjsua_start();
 	if (status != PJ_SUCCESS){ 
 		strcpy(errorstring, "Error starting pjsua");
 		return 0;
 	}
-
+	
     pjsua_detect_nat_type();
 	return 1;
+	
+}
+int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
+{
+	pj_status_t status;
+	    /* Create pjsua first! */
+  
+	/* Init pjsua */
+	status = pjsua_create();
+	
+	if (status != PJ_SUCCESS){
+		
+		return 0;
+	}
+	
+	return sip_spokn_pj_config(ps,luserAgentP,errorstring);
+}
+
+int sip_mac_init(struct ltpStack *ps, char *errorstring)
+{
+	pjsua_config cfg;
+	pjsua_logging_config log_cfg;
+	pj_status_t status;
+	pjsua_transport_config transcfg;
+	pjsua_media_config cfgmedia;
+	pj_str_t tmp;
+	pjsua_transport_config rtp_cfg;
+	if(ps->pjpool)
+	{ 
+		pj_pool_release(ps->pjpool);
+		ps->pjpool = 0;
+		
+	}
+	pjsua_destroy();
+	/* Create pjsua first! */
+    status = pjsua_create();
+	
+	if (status != PJ_SUCCESS)
+	{
+		sprintf(errorstring, "Error in pjsua_create(). [status:%d]",status);
+		return status;
+	}
+	
+	/* Init pjsua */
+	//init callback config
+	pjsua_config_default(&cfg);
+	//cfg.thread_cnt = 6; //MAX_SLOTS
+	cfg.cb.on_incoming_call = &sip_on_incoming_call;
+	cfg.cb.on_call_media_state = &sip_on_call_media_state;
+	cfg.cb.on_call_state = &sip_on_call_state;
+	cfg.cb.on_reg_state = &sip_on_reg_state;
+	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.spokn.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.spokn.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.ideasip.com");
+	
+	pj_strdup2_with_null(ps->pjpool, 
+                         &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+                         "stun.sipgate.net:10000");
+	//init logging config
+	pjsua_logging_config_default(&log_cfg);
+	log_cfg.console_level = 6;
+	
+	//init media config
+	pjsua_media_config_default(&cfgmedia);
+	cfgmedia.clock_rate = 8000;
+	cfgmedia.snd_clock_rate = 8000;
+	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.enable_ice=1;
+#ifdef _SPEEX_CODEC_	
+	//use speex as the AEC (Acoustic Echo Canceller)
+	cfgmedia.ec_options = PJMEDIA_ECHO_SPEEX;
+#endif
+	
+	//thus init pjsua
+	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
+	if (status != PJ_SUCCESS)
+	{
+		sprintf(errorstring, "Error in pjsua_init(). [status:%d]",status);
+		return status;
+	}
+	
+#ifdef _SPEEX_CODEC_
+	//speex code
+	/* Set codec priority 
+	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
+	 */
+	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
+	/*
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/32000"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcmu"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcma"), 0);
+	 
+	 pjsua_codec_set_priority(pj_cstr(&tmp, "ilbc"), 0);
+	 */
+	pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
+#endif	
+	
+	
+    /* Add UDP transport. */
+	//Try port 8060 first. If it fails, then try with 5060 as a fallback.
+	/*pjsua_transport_config_default(&transcfg);
+	 transcfg.port = 8060;
+	 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	 if (status != PJ_SUCCESS){
+	 transcfg.port = 5060;
+	 status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	 if (status != PJ_SUCCESS)
+	 {
+	 sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
+	 return status;
+	 }
+	 }*/
+	pjsua_transport_config_default(&transcfg);
+	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, NULL);
+	if (status != PJ_SUCCESS){
+		strcpy(errorstring, "Error creating transport");
+		return 0;
+    }
+	
+	pjsua_transport_config_default(&rtp_cfg);
+	{
+		enum { START_PORT=4000 };
+		unsigned range;
+		
+		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+		rtp_cfg.port = START_PORT + 
+		((pj_rand() % range) & 0xFFFE);
+		if(rtp_cfg.port==5060)//change to some other port
+		{
+			rtp_cfg.port = rtp_cfg.port + 102;
+		}
+	}
+	
+	status = pjsua_media_transports_create(&rtp_cfg);
+	
+    /* Initialization is done, now start pjsua */
+    status = pjsua_start();
+	if (status != PJ_SUCCESS){ 
+		strcpy(errorstring, "Error starting pjsua");
+		return status;
+	}
+	
+    pjsua_detect_nat_type();
+	return 1;
+	
 }
 void sip_pj_DeInit(struct ltpStack *ps)
 
 {
+	if(ps==0)
+		return;
 	if(ps->sipOnB==0)
 	{
 		return;
@@ -3328,7 +3741,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 		return NULL;
 
 	zeroMemory(ps, sizeof(struct ltpStack));	
-
+	
 	ps->defaultCodec = (short16) maxbitrate;
 	ps->loginCommand = CMD_LOGIN;
 	ps->loginStatus = LOGIN_STATUS_OFFLINE;
@@ -3337,7 +3750,8 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	strncpy(ps->userAgent,USERAGENT, MAX_USERID);
 	ps->ltpPresence = NOTIFY_ONLINE;
 	ps->updateTimingAdvance = 0;
-
+	ps->stunB = 1;
+	ps->tranportID = -1;
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
@@ -3397,13 +3811,14 @@ void sip_ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 void sip_ltpLogin(struct ltpStack *ps, int command)
 {
 	pjsua_acc_id acc_id;
-	char	url[128];
+	//char	url[128];
+	//char	url1[128];
+	char errorStr[50]={0};
     /* Register to SIP server by creating SIP account. */
 
 	if (command == CMD_LOGIN){
-		
 		//check if an account already exists
-		if (strlen(pstack->ltpUserid) && strlen(pstack->ltpPassword) && pjsua_acc_get_count() > 0){
+		if (strlen(ps->ltpUserid) && strlen(ps->ltpPassword) && pjsua_acc_get_count() > 0){
 			acc_id = pjsua_acc_get_default();
 			//if (acc_id != PJSUA_INVALID_ID){
 
@@ -3417,22 +3832,39 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 			//	
 			//}
 
+
 			//account details don't match, then delete this account and create a new default account
 			pjsua_acc_del(acc_id);
 		}
-
+		
+		if(sip_set_udp_transport(ps,ps->ltpUserid,errorStr,&ps->tranportID)==0)
+		{
+			alert(0,ATTEMPT_LOGIN_ERROR,strdup(errorStr));
+			return;
+		}
+				
 		pjsua_acc_config_default(&acccfg);
+		if(ps->idBlock==0)
+		{	
+				ps->idBlock = pj_pool_alloc(/*app_config.*/ps->pjpool, PJSIP_MAX_URL_SIZE);
+		}	
+		acccfg.id.ptr = (char*) ps->idBlock;
 
-		sprintf(url, "sip:%s@%s", pstack->ltpUserid, SIP_DOMAIN);
-		acccfg.id = pj_str(url);
+		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
+		//acccfg.id = pj_str(url);
 		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
+		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
+		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;
 		acccfg.cred_info[0].realm = pj_str(SIP_DOMAIN);
 		acccfg.cred_info[0].scheme = pj_str("digest");
-		acccfg.cred_info[0].username = pj_str(pstack->ltpUserid);
+		acccfg.cred_info[0].username = pj_str(ps->ltpUserid);
 		acccfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-		acccfg.cred_info[0].data = pj_str(pstack->ltpPassword);
-
+		acccfg.cred_info[0].data = pj_str(ps->ltpPassword);
+		acccfg.reg_timeout = ps->timeOut;
+		//pjsip_cfg()->regc.check_contact = PJ_FALSE;
+		//pjsip_cfg()->regc.add_xuid_param = PJ_TRUE;
+		
 		pjsua_acc_add(&acccfg, PJ_TRUE, &acc_id);
 	}
 
@@ -3443,9 +3875,9 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 			acc_id = pjsua_acc_get_default();
 
 			if (acc_id != PJSUA_INVALID_ID)
-			{
+			{	
 				pjsua_acc_set_registration(acc_id, PJ_FALSE);
-				
+				//pjsua_acc_del(acc_id);
 			}
 			
 		}	
@@ -3548,16 +3980,13 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 		strcpy(pc->remoteUserid, remoteid);
 		pc->ltpSession = (unsigned int) call_id;
 		pc->ltpState = CALL_RING_SENT;
-		
-	
 	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	#ifdef _MACOS_
-	
 	pstack->now = time(NULL);
-	
-	
-	
+		#ifdef	_MAC_OSX_CLIENT_
+			pc->timeEllapsed=-1;
+		#endif
 	#endif
 	pc->timeStart = pstack->now;
 	ps->activeLine =pc->lineId;
@@ -3628,17 +4057,11 @@ void sip_setMute(int enableB)
 	if (enableB)
 	{
 		pjsua_conf_adjust_rx_level(0 , 0.0f);
-		
 	}
 	else
 	{
-		
 		pjsua_conf_adjust_rx_level(0 , 1.0f);
-		
-		
 	}
-	
-	
 }
 
 
@@ -3652,22 +4075,15 @@ void sip_setHold(struct ltpStack *ps,int enableB)
 				pjsua_call_set_hold((pjsua_call_id)pstack->call[i].ltpSession, NULL);
 				
 			}
-			
 	}
 	else
 	{
-		/*if (ps->call[ps->activeLine].ltpSession != PJSUA_INVALID_ID)
-			pjsua_call_reinvite(ps->call[ps->activeLine].ltpSession, PJ_TRUE, NULL);*/
-		
-		
 		for (i = 0; i < pstack->maxSlots; i++)
 			if (pstack->call[i].ltpState != CALL_IDLE && pstack->call[i].ltpSession!=PJSUA_INVALID_ID){
 				pjsua_call_reinvite((pjsua_call_id)pstack->call[i].ltpSession, PJ_TRUE, NULL);
 				
 			}
-		
 	}
-	
 }
 
 void setMute(struct ltpStack *ps,int enableB)
@@ -3679,10 +4095,7 @@ void setMute(struct ltpStack *ps,int enableB)
 	else
 	{
 		//sip_setMute(ps,enableB);
-	
 	}
-
-
 }
 
 void setHold(struct ltpStack *ps,int enableB)
@@ -3695,11 +4108,9 @@ void setHold(struct ltpStack *ps,int enableB)
 	else
 	{
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-
 }
+
 struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int framesPerPacket)
 {
 	struct ltpStack  *tmpP=0;
@@ -3711,11 +4122,11 @@ struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int frames
 	{
 		//sip_setMute(ps,enableB);
 		tmpP = LTP_ltpInit(maxslots,maxbitrate,framesPerPacket);
-		
 	}
 	if(tmpP)
 	{
 		tmpP->sipOnB = siponB;
+		tmpP->timeOut = MAXTIMEOUT;
 	}
 	return tmpP;
 }
@@ -3734,68 +4145,75 @@ int ltpTalk(struct ltpStack *ps, char *remoteid)
 		return 0;
 		//return LTP_ltpTalk(ps,remoteid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpHangup(struct ltpStack *ps, int lineid)
 {
 	
-	if(ps->sipOnB)
-	{
-		sip_ltpHangup(ps,lineid);
+	if(lineid>=0)
+	{	
+		if(ps->sipOnB)
+		{
+			sip_ltpHangup(ps,lineid);
+		}
+		else
+		{
+			LTP_ltpHangup(ps,lineid);
+			//sip_setMute(ps,enableB);
+		}
 	}
-	else
-	{
-		LTP_ltpHangup(ps,lineid);
-		//sip_setMute(ps,enableB);
+	else {
+		int i;
 		
+		for (i = 0; i < ps->maxSlots; i++)
+		{
+			if (ps->call[i].ltpState != CALL_IDLE){
+				if(ps->sipOnB)
+				{
+					sip_ltpHangup(ps,ps->call[i].lineId );
+				}
+				else
+				{
+					LTP_ltpHangup(ps,ps->call[i].lineId );
+					//sip_setMute(ps,enableB);
+				}
+				
+			}
+		}	
 	}
-	
-	
+
 }
 
 void ltpRefuse(struct ltpStack *ps, int lineid, char *msg)
 {
-	
 	if(ps->sipOnB)
 	{
-		//sip_ltpRefuse(ps,lineid,msg);
+		sip_ltpHangup(ps,lineid);
 		return;
 	}
 	else
 	{
 		LTP_ltpRefuse(ps,lineid,msg);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpAnswer(struct ltpStack *ps, int lineid)
 {
-	
 	if(ps->sipOnB)
 	{
 		sip_ltpAnswer(ps,lineid);
 	}
 	else
-		
 	{
 		LTP_ltpAnswer(ps,lineid);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 int ltpRing(struct ltpStack *ps, char *remoteid, int command)
 {
-	
 	if(ps->sipOnB)
 	{
 		return sip_ltpRing(ps,remoteid,command);
@@ -3808,15 +4226,11 @@ int ltpRing(struct ltpStack *ps, char *remoteid, int command)
 			remoteid = remoteid + 1;
 		}
 		return LTP_ltpRing(ps,remoteid,command);
-		
 	}
-	
-	
 }
 
 int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpMessage(ps,userid,msg);
@@ -3825,16 +4239,12 @@ int ltpMessage(struct ltpStack *ps, char *userid, char *msg)
 	else
 	{
 		//sip_setMute(ps,enableB);
-	return 	LTP_ltpMessage(ps,userid,msg);
-		
+		return 	LTP_ltpMessage(ps,userid,msg);
 	}
-	
-	
 }
 
 void ltpChat(struct ltpStack *ps, char *userid, char *message)
 {
-	
 	if(ps->sipOnB)
 	{
 		//sip_ltpChat(ps,userid,message);
@@ -3842,13 +4252,9 @@ void ltpChat(struct ltpStack *ps, char *userid, char *message)
 	}
 	else
 	{
-		
 	   //	LTP_ltpChat(ps,userid,message);
 		//sip_setMute(ps,enableB);
-		
 	}
-	
-	
 }
 
 void ltpLogin(struct ltpStack *ps, int command)
@@ -3861,15 +4267,11 @@ void ltpLogin(struct ltpStack *ps, int command)
 	else
 	{
 		LTP_ltpLogin(ps,command);
-		
 	}
-	
-	
 }
 
 void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 {
-	
 	if(ps->sipOnB)
 	{
 		sip_ltpTick(ps,timeNow);
@@ -3877,15 +4279,11 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 	else
 	{
 		LTP_ltpTick(ps,timeNow);
-		
 	}
-	
-	
 }
 
 void ltpLoginCancel(struct ltpStack *ps)
 {
-	
 	if(ps->sipOnB)
 	{
 		sip_ltpLoginCancel(ps);
@@ -3894,10 +4292,7 @@ void ltpLoginCancel(struct ltpStack *ps)
 	{
 	//	LTP_ltpLoginCancel(ps);
 		return;
-		
 	}
-	
-	
 }
 void ltpMessageDTMF(struct ltpStack *ps, int lineid, char *msg)
 {
@@ -3915,7 +4310,7 @@ void startConference(struct ltpStack *ps)
 	int	i;
 
 	for (i = 0; i < ps->maxSlots; i++)
-		if (ps->call[i].ltpState != CALL_IDLE){
+		if (ps->call[i].ltpState != CALL_IDLE && ps->call[i].ltpState != CALL_HANGING){
 			if(ps->sipOnB)
 			{
 				pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
@@ -3929,7 +4324,7 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 	int lactiveLineId = -1;
 	for (i = 0; i < ps->maxSlots; i++)
 	{	
-		if (ps->call[i].ltpState != CALL_IDLE){
+		if (ps->call[i].ltpState != CALL_IDLE&& ps->call[i].ltpState != CALL_HANGING){
 			
 			if(ps->call[i].lineId!=oldLineId)
 			{
@@ -3938,7 +4333,6 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 			else {
 				ps->call[i].InConference = 0;
 			}
-
 			if(ps->sipOnB)
 			{
 				if(ps->call[i].lineId!=oldLineId)
@@ -3951,7 +4345,6 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 					
 				}
 				else {
-						
 						pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 					//pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 				}
@@ -3966,17 +4359,12 @@ void shiftToConferenceCall(struct ltpStack *ps,int oldLineId)
 					}
 				}	
 			}
-
-						
 		}
 	}	
 	if(lactiveLineId>=0)
 	{
 		ps->activeLine= lactiveLineId;
 	}
-
-	
-
 }
 void setPrivateCall(struct ltpStack *ps,int lineid)
 {
@@ -3984,21 +4372,17 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 
 	for (i = 0; i < ps->maxSlots; i++)
 	{	
-		if (ps->call[i].ltpState != CALL_IDLE){
+		if (ps->call[i].ltpState != CALL_IDLE && ps->call[i].ltpState != CALL_HANGING){
 			if(ps->sipOnB)
 			{
 				if(ps->call[i].lineId !=lineid)
 				{	
-				
-										//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
+					//	pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_FALSE, NULL);
 					pjsua_call_set_hold((pjsua_call_id)ps->call[i].ltpSession, NULL);
 				}
 				else {
-				
 					pjsua_call_reinvite((pjsua_call_id)ps->call[i].ltpSession, PJ_TRUE, NULL);
-					
 				}
-
 			}
 			//if(ps->call[i].lineId ==lineid)
 			{	
@@ -4009,16 +4393,14 @@ void setPrivateCall(struct ltpStack *ps,int lineid)
 	}	
 	
 	ps->activeLine= lineid;
-
 }
 void switchReinvite(struct ltpStack *ps, int lineid)
 {
 	int	i;
 	pjsua_call_id call_id;
 	
-
 	for (i = 0; i < ps->maxSlots; i++)
-		if (ps->call[i].ltpState != CALL_IDLE){
+		if (ps->call[i].ltpState != CALL_IDLE&& ps->call[i].ltpState != CALL_HANGING){
 			call_id = (pjsua_call_id) ps->call[i].ltpSession;
 			if (lineid == ps->call[i].lineId){
 				if(ps->sipOnB)

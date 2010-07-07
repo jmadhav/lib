@@ -18,12 +18,15 @@
 
 #ifndef _SIP_AND_LTP_WRAPPER_H
 	#define _SIP_AND_LTP_WRAPPER_H
-//#define _SPEEX_CODEC_
+#define _SPEEX_CODEC_
+//#define SRV_RECORD
+#define ATTEMPT_LOGIN_ERROR      6015 
+#define MAXTIMEOUT 300
 #include "ltpmobile.h"
 #ifdef __cplusplus
 extern "C" {
 #endif 
-int sip_spokn_pj_init(struct ltpStack *ps,char *errorstring);
+int sip_spokn_pj_init(struct ltpStack *ps,char* luserAgentP,char *errorstring);
 void LTP_ltpHangup(struct ltpStack *ps, int lineid);
 void LTP_ltpRefuse(struct ltpStack *ps, int lineid, char *msg);
 
@@ -43,10 +46,14 @@ void switchReinvite(struct ltpStack *ps, int lineid);
 void Unconference(struct ltpStack *pstackP);	
 void shiftToConferenceCall(struct ltpStack *ps,int oldLineId);
 void setPrivateCall(struct ltpStack *ps,int lineid);
-	void sip_pj_DeInit(struct ltpStack *ps);
+void sip_pj_DeInit(struct ltpStack *ps);
+int sip_spokn_pj_Create(struct ltpStack *ps);	
+int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int *p_id);	
+int sip_destroy_transation(struct ltpStack *ps);
+int sip_set_randomVariable(struct ltpStack *ps,int randVariable);	
+	int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring);	
 #ifdef __cplusplus
 }
 #endif 
-
 
 #endif
