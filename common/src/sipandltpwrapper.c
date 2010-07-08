@@ -1660,6 +1660,7 @@ static struct Call *LTP_onRing(struct ltpStack *ps, struct ltp *ppack, unsigned 
 		strncpy(pc->remoteUserid, ppack->from, MAX_USERID);
 		strncpy(pc->title, ppack->data, MAX_TITLE);
 		pc->timeStart = ps->now;
+		pc->timeEllapsed = -1;
 		
 		if (ppack->command == CMD_TALK)
 			pc->inTalk = 1;
@@ -1729,6 +1730,7 @@ static void LTP_onAnswer(struct ltpStack *ps, struct ltp *ppack, unsigned int fr
 		LTP_callStopRequest(pc);
 		pc->ltpState = CALL_CONNECTED;
 		pc->timeStart = ps->now;
+		pc->timeEllapsed=0;
 		//Tasvir Rohila, 17/7/2009, bug#21083, latest call to be established should become active.
 		ps->activeLine = pc->lineId;
 		
@@ -2048,6 +2050,7 @@ int LTP_ltpRing(struct ltpStack *ps, char *remoteid, int mode)
 	pc->remotePort = ps->bigEndian ? RTP_PORT : flip16(RTP_PORT);
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	pc->timeStart = ps->now;
+	pc->timeEllapsed = -1;
 	if (mode == CMD_TALK)
 		pc->inTalk = 1;
 	
@@ -2103,6 +2106,7 @@ void LTP_ltpAnswer(struct ltpStack *ps, int lineid)
 	ppack->contactPort = pc->fwdPort;
 	
 	pc->timeStart = ps->now;
+	pc->timeEllapsed = 0;
     pc->ltpState = CALL_CONNECTED;
 	alert(pc->lineId, ALERT_CONNECTED, pc->title);
 	LTP_callStartRequest(ps, pc, NULL);
@@ -2925,14 +2929,11 @@ static void sip_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
 	pc->kindOfCall = CALLTYPE_IN | CALLTYPE_CALL;
 	#ifdef _MACOS_
-	
 		pstack->now = time(NULL);
-	
-	#ifdef _MAC_OSX_CLIENT_
-		pc->timeEllapsed=-1;
 	#endif
-	
-	#endif
+
+	pc->timeEllapsed=-1;
+
 	if(pstack->now==0)
 	{
 		pstack->now = time(NULL);
@@ -2987,11 +2988,9 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 			case PJSIP_INV_STATE_CONFIRMED:	    /**< After ACK is sent/received.	    */
 				pstack->call[i].ltpState = CALL_CONNECTED;
 				#ifdef _MACOS_
-				pstack->now = time(NULL);
-					#ifdef _MAC_OSX_CLIENT_
-						pstack->call[i].timeEllapsed=0;
-					#endif
-				#endif	
+					pstack->now = time(NULL);
+				#endif  	
+				pstack->call[i].timeEllapsed=0;
 				pstack->call[i].timeStart = pstack->now; /* reset the call timer for the correct duration */
 				alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
 				break;
@@ -3983,11 +3982,9 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	#ifdef _MACOS_
-	pstack->now = time(NULL);
-		#ifdef	_MAC_OSX_CLIENT_
-			pc->timeEllapsed=-1;
-		#endif
-	#endif
+		pstack->now = time(NULL);
+	#endif  
+	pc->timeEllapsed=-1;
 	pc->timeStart = pstack->now;
 	ps->activeLine =pc->lineId;
 
