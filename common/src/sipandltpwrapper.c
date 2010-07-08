@@ -3236,7 +3236,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 {
 	
     /* Add UDP transport. */
-	pj_status_t status;
+	pj_status_t status = 1;
 	int idUser=0;
 	pjsua_transport_config transcfg;
 	int dummy_start_port = 5060;
@@ -3393,13 +3393,15 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
 	pjsua_media_config cfgmedia;
-#ifndef  _MAC_OSX_CLIENT_
-	pj_thread_desc desc;
-	pj_thread_t *  thread=0;
-	memset(&desc,0,sizeof(pj_thread_desc));
-	pj_thread_register(NULL,desc,&thread);	
+#ifdef _MACOS_
+	#ifndef  _MAC_OSX_CLIENT_
+		pj_thread_desc desc;
+		pj_thread_t *  thread=0;
+		memset(&desc,0,sizeof(pj_thread_desc));
+		pj_thread_register(NULL,desc,&thread);	
 	
-#endif	
+	#endif	
+#endif
 	pjsua_config_default(&cfg);
 	cfg.cb.on_incoming_call = &sip_on_incoming_call;
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
@@ -3567,7 +3569,7 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	pjsua_transport_config transcfg;
 	pjsua_media_config cfgmedia;
 	pj_str_t tmp;
-	
+	pjsua_transport_config rtp_cfg;
 	if(ps->pjpool)
 	{ 
 		pj_pool_release(ps->pjpool);
@@ -3673,7 +3675,7 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 		strcpy(errorstring, "Error creating transport");
 		return 0;
     }
-	pjsua_transport_config rtp_cfg;
+	
 	pjsua_transport_config_default(&rtp_cfg);
 	{
 		enum { START_PORT=4000 };
@@ -3794,7 +3796,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 void sip_ltpTick(struct ltpStack *ps, unsigned int timeNow)
 {
 	pstack->now = timeNow;
-	pjsua_handle_events(1);
+	//pjsua_handle_events(1);
 }
 
 
@@ -3822,6 +3824,19 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		//check if an account already exists
 		if (strlen(ps->ltpUserid) && strlen(ps->ltpPassword) && pjsua_acc_get_count() > 0){
 			acc_id = pjsua_acc_get_default();
+			//if (acc_id != PJSUA_INVALID_ID){
+
+			//	//if the the account details are the same, then just re-register
+			//	if (!strcmp(pstack->ltpUserid, acccfg.cred_info[0].username.ptr) &&
+			//		!strcmp(pstack->ltpPassword, acccfg.cred_info[0].data.ptr))
+			//	{
+			//		pjsua_acc_set_registration(acc_id, PJ_TRUE);
+			//		return;
+			//	}
+			//	
+			//}
+
+
 			//account details don't match, then delete this account and create a new default account
 			pjsua_acc_del(acc_id);
 		}
@@ -3868,7 +3883,6 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 				pjsua_acc_set_registration(acc_id, PJ_FALSE);
 				//pjsua_acc_del(acc_id);
 			}
-			
 			
 		}	
 	}
@@ -4264,7 +4278,7 @@ void ltpTick(struct ltpStack *ps, unsigned int timeNow)
 {
 	if(ps->sipOnB)
 	{
-		//sip_ltpTick(ps,timeNow);
+		sip_ltpTick(ps,timeNow);
 	}
 	else
 	{

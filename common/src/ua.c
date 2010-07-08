@@ -438,9 +438,9 @@ end:
 		busy = 0;
 	#ifdef _MACOS_
 		UaThreadEnd();
+		pthread_exit(0);
 	#endif
 		//GthreadTerminate = 0;
-		pthread_exit(0);
 	}
 	return byteCount;
 }
@@ -1739,9 +1739,9 @@ static void vmsDownload()
 		busy = 0;
 		#ifdef _MACOS_
 			UaThreadEnd();
+			pthread_exit(0); 
 		#endif
 		//GthreadTerminate = 0;
-		pthread_exit(0);
 	}
 	
 	
