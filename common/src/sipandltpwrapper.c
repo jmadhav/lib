@@ -3188,8 +3188,12 @@ static void sip_on_reg_state(pjsua_acc_id acc_id)
 		alert(-1, ALERT_OFFLINE, info.status_text.ptr);
 	}
 	else if (info.status >= 500 && info.status <= 606)
+	{
 		pstack->loginStatus = LOGIN_STATUS_NO_ACCESS;
-	
+#ifdef _MAC_OSX_CLIENT_
+		alert(-1, ALERT_LOGIN_STATUS_CHANGED, info.status_text.ptr);
+#endif
+	}
 	sprintf(buff, "%d", info.status);
 	//	SetDlgItemTextA(wndMain, IDC_STATUS, buff);
 }
@@ -3314,7 +3318,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 		}
 	}	
 	ps->lport = transcfg.port;
-	
+	//return 1;
 	pjsua_transport_config_default(&rtp_cfg);
 	{
 		enum { START_MEDIA_PORT=4000 };
@@ -3327,7 +3331,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 			((pj_rand() % range) & 0xFFFE);
 		}
 		else {
-			rtp_cfg.port = START_MEDIA_PORT + (idUser>START_MEDIA_PORT)?(idUser+20-START_MEDIA_PORT):idUser;
+			rtp_cfg.port = START_MEDIA_PORT + ((idUser>START_MEDIA_PORT)?(idUser+20-START_MEDIA_PORT):idUser);
 		}
 
 		diffport = transcfg.port-rtp_cfg.port;
@@ -3371,8 +3375,6 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 			status = pjsua_media_transports_create(&rtp_cfg);
 			
 		}
-		
-		
 	}	
 		
 		
@@ -3419,7 +3421,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	//cfgmedia.ec_options = 1;
 	cfgmedia.snd_auto_close_time = 0;
 	//cfgmedia.ec_tail_len = 0;
-	
+	//cfgmedia.enable_ice=1;
 	//cfgmedia.enable_ice = 1;
 	/*cfgmedia.ice_max_host_cands = 1;
 	 pj_strdup2_with_null(ps->pjpool, 
@@ -3502,7 +3504,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	{
 		
 		return 0;
-	}		
+	}	
 #ifdef _SPEEX_CODEC_
 	{
 		//speex code
@@ -3545,6 +3547,7 @@ int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 	    /* Create pjsua first! */
   
 	/* Init pjsua */
+	pjsua_destroy();
 	status = pjsua_create();
 	
 	if (status != PJ_SUCCESS){
@@ -3570,7 +3573,6 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 		ps->pjpool = 0;
 		
 	}
-	pjsua_destroy();
 	/* Create pjsua first! */
     status = pjsua_create();
 	
@@ -3698,7 +3700,6 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	
 }
 void sip_pj_DeInit(struct ltpStack *ps)
-
 {
 	if(ps->sipOnB==0)
 	{
@@ -3810,6 +3811,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 	//char	url[128];
 	//char	url1[128];
 	char errorStr[50]={0};
+	char	url[128];
     /* Register to SIP server by creating SIP account. */
 
 	if (command == CMD_LOGIN){
@@ -3827,6 +3829,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		}
 				
 		pjsua_acc_config_default(&acccfg);
+
 		if(ps->idBlock==0)
 		{	
 				ps->idBlock = pj_pool_alloc(/*app_config.*/ps->pjpool, PJSIP_MAX_URL_SIZE);
@@ -3848,6 +3851,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		//pjsip_cfg()->regc.check_contact = PJ_FALSE;
 		//pjsip_cfg()->regc.add_xuid_param = PJ_TRUE;
 		
+
 		pjsua_acc_add(&acccfg, PJ_TRUE, &acc_id);
 	}
 
