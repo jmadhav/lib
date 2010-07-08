@@ -3340,6 +3340,10 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 			rtp_cfg.port = rtp_cfg.port + 102;
 			
 		}
+		if(rtp_cfg.port&1)//if odd address
+		{
+			rtp_cfg.port = rtp_cfg.port + 1;
+		}
 	}
 	
 	status = pjsua_media_transports_create(&rtp_cfg);
