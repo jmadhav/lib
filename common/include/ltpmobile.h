@@ -47,11 +47,15 @@ extern "C" {
 #ifdef SUPPORT_SPEEX
 #include <speex/speex.h>
 #endif
-typedef unsigned long macuint32;	
+
+
 #ifdef _MACOS_
 #define _UINT32	
 #define uint32 macuint32
-#endif	
+typedef unsigned long macuint32;	
+#else
+	typedef unsigned int uint32;
+#endif
 /*	Queue:
 	Before we dip into LTP proper, I have used a very simple queue of words for much of
 	my work. This has a very simple API. Lets get over with it here.

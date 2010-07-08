@@ -433,7 +433,7 @@ extern "C" {
 	char *getSupportPage();
 	void UaThreadEnd();
 	void UaThreadBegin();
-	
+	void applicationEnd();
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus
