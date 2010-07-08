@@ -55,7 +55,7 @@ int creditBalance = 0;
 int bandwidth;
 int gnewMails;
 int GthreadTerminate = 0;
-
+int clearProfileB = 0;
 //variable to set the type for incoming call termination setting
 int settingType = -1;  //not assigned state yet
 int oldSetting = -1;
@@ -2042,6 +2042,8 @@ void profileClear()
 	{
 		
 		threadStatus = ThreadTerminate;
+		clearProfileB = 1;
+		TerminateUAThread();
 		return;
 	
 	}
@@ -2051,7 +2053,9 @@ void profileClear()
 	sprintf(pathname, "%s\\profile.xml", myFolder);	
 #endif
 	
+	clearProfileB = 0;
 	unlink(pathname);
+	//printf("shankar %d",er);
 	lastUpdate = 0;
 	myTitle[0] = 0;
 	myDID[0] = 0;
@@ -2925,6 +2929,11 @@ void uaInit()
 	profileLoad();
 	uaUserid[0]=0;
 	gnewMails=0;
+	terminateB = 0;
+	GthreadTerminate = 0;
+	threadStatus = ThreadNotStart ;
+	busy = 0;
+	appTerminateB = 0;
 }
 
 
@@ -3020,6 +3029,11 @@ void UaThreadEnd()
 {
 	if(appTerminateB==0)
 	{	
+		if(clearProfileB)
+		{
+			
+			profileClear();
+		}	
 		uaCallBackObject.alertNotifyP(UA_ALERT,0,END_THREAD,(unsigned long)uaCallBackObject.uData,0);
 	}	
 }
