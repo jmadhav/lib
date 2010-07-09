@@ -678,6 +678,10 @@ struct ltpStack
 	int randVariable;
 	int lport;
 	char* idBlock;
+	#ifdef _PJSIP_LOG_
+		int writeLogB;
+		char logfile[260];
+	#endif
 };
 
 

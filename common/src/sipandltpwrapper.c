@@ -3384,6 +3384,32 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 	
 
 }
+char *getLogFile(struct ltpStack *ps)
+{
+	#ifdef _PJSIP_LOG_
+	return ps->logfile;
+	#endif
+	return NULL;
+	
+}
+void setLog(struct ltpStack *ps, int onB,char *pathP)
+{
+#ifdef _PJSIP_LOG_
+	ps->writeLogB = onB;
+	if(ps->writeLogB)
+	{
+		if(pathP)
+		{	
+			strcpy(ps->logfile,pathP);
+		}
+		else {
+			ps->logfile[0] = 0;
+		}
+
+	}
+#endif
+
+}
 int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 {
 	
@@ -3407,7 +3433,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
-	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	ps->pjpool = pjsua_pool_create("pjsua", 2000, 2000);
 	//pj_str(
 #ifdef SRV_RECORD
 	 pj_strdup2_with_null(ps->pjpool, 
@@ -3419,6 +3445,18 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
 //	log_cfg.cb = callbackpjsip;
+	#ifdef _PJSIP_LOG_
+		
+		if(ps->writeLogB)
+		{
+			log_cfg.console_level = 5;
+			log_cfg.log_filename = pj_strdup3(ps->pjpool, 
+											  ps->logfile);
+			
+		}
+	#endif
+	
+	
 	pjsua_media_config_default(&cfgmedia);
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;

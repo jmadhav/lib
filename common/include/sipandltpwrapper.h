@@ -51,7 +51,9 @@ int sip_spokn_pj_Create(struct ltpStack *ps);
 int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int *p_id);	
 int sip_destroy_transation(struct ltpStack *ps);
 int sip_set_randomVariable(struct ltpStack *ps,int randVariable);	
-	int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring);	
+int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring);	
+void setLog(struct ltpStack *ps, int onB,char *pathP);	
+char *getLogFile(struct ltpStack *ps);
 #ifdef __cplusplus
 }
 #endif 
