@@ -1660,6 +1660,7 @@ static struct Call *LTP_onRing(struct ltpStack *ps, struct ltp *ppack, unsigned 
 		strncpy(pc->remoteUserid, ppack->from, MAX_USERID);
 		strncpy(pc->title, ppack->data, MAX_TITLE);
 		pc->timeStart = ps->now;
+		pc->timeEllapsed = -1;
 		
 		if (ppack->command == CMD_TALK)
 			pc->inTalk = 1;
@@ -1729,6 +1730,7 @@ static void LTP_onAnswer(struct ltpStack *ps, struct ltp *ppack, unsigned int fr
 		LTP_callStopRequest(pc);
 		pc->ltpState = CALL_CONNECTED;
 		pc->timeStart = ps->now;
+		pc->timeEllapsed=0;
 		//Tasvir Rohila, 17/7/2009, bug#21083, latest call to be established should become active.
 		ps->activeLine = pc->lineId;
 		
@@ -2048,6 +2050,7 @@ int LTP_ltpRing(struct ltpStack *ps, char *remoteid, int mode)
 	pc->remotePort = ps->bigEndian ? RTP_PORT : flip16(RTP_PORT);
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	pc->timeStart = ps->now;
+	pc->timeEllapsed = -1;
 	if (mode == CMD_TALK)
 		pc->inTalk = 1;
 	
@@ -2103,6 +2106,7 @@ void LTP_ltpAnswer(struct ltpStack *ps, int lineid)
 	ppack->contactPort = pc->fwdPort;
 	
 	pc->timeStart = ps->now;
+	pc->timeEllapsed = 0;
     pc->ltpState = CALL_CONNECTED;
 	alert(pc->lineId, ALERT_CONNECTED, pc->title);
 	LTP_callStartRequest(ps, pc, NULL);
@@ -2925,14 +2929,11 @@ static void sip_on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
 	pc->kindOfCall = CALLTYPE_IN | CALLTYPE_CALL;
 	#ifdef _MACOS_
-	
 		pstack->now = time(NULL);
-	
-	#ifdef _MAC_OSX_CLIENT_
-		pc->timeEllapsed=-1;
 	#endif
-	
-	#endif
+
+	pc->timeEllapsed=-1;
+
 	if(pstack->now==0)
 	{
 		pstack->now = time(NULL);
@@ -2987,11 +2988,9 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 			case PJSIP_INV_STATE_CONFIRMED:	    /**< After ACK is sent/received.	    */
 				pstack->call[i].ltpState = CALL_CONNECTED;
 				#ifdef _MACOS_
-				pstack->now = time(NULL);
-					#ifdef _MAC_OSX_CLIENT_
-						pstack->call[i].timeEllapsed=0;
-					#endif
-				#endif	
+					pstack->now = time(NULL);
+				#endif  	
+				pstack->call[i].timeEllapsed=0;
 				pstack->call[i].timeStart = pstack->now; /* reset the call timer for the correct duration */
 				alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
 				break;
@@ -3386,6 +3385,32 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 	
 
 }
+char *getLogFile(struct ltpStack *ps)
+{
+	#ifdef _PJSIP_LOG_
+	return ps->logfile;
+	#endif
+	return NULL;
+	
+}
+void setLog(struct ltpStack *ps, int onB,char *pathP)
+{
+#ifdef _PJSIP_LOG_
+	ps->writeLogB = onB;
+	if(ps->writeLogB)
+	{
+		if(pathP)
+		{	
+			strcpy(ps->logfile,pathP);
+		}
+		else {
+			ps->logfile[0] = 0;
+		}
+
+	}
+#endif
+
+}
 int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 {
 	
@@ -3409,7 +3434,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
-	ps->pjpool = pjsua_pool_create("pjsua", 1000, 1000);
+	ps->pjpool = pjsua_pool_create("pjsua", 2000, 2000);
 	//pj_str(
 #ifdef SRV_RECORD
 	 pj_strdup2_with_null(ps->pjpool, 
@@ -3421,6 +3446,18 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
 //	log_cfg.cb = callbackpjsip;
+	#ifdef _PJSIP_LOG_
+		
+		if(ps->writeLogB)
+		{
+			log_cfg.console_level = 5;
+			log_cfg.log_filename = pj_strdup3(ps->pjpool, 
+											  ps->logfile);
+			
+		}
+	#endif
+	
+	
 	pjsua_media_config_default(&cfgmedia);
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
@@ -3991,11 +4028,9 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	}
 	pc->kindOfCall = CALLTYPE_OUT | CALLTYPE_CALL;
 	#ifdef _MACOS_
-	pstack->now = time(NULL);
-		#ifdef	_MAC_OSX_CLIENT_
-			pc->timeEllapsed=-1;
-		#endif
-	#endif
+		pstack->now = time(NULL);
+	#endif  
+	pc->timeEllapsed=-1;
 	pc->timeStart = pstack->now;
 	ps->activeLine =pc->lineId;
 

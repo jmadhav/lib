@@ -392,9 +392,9 @@ struct Call
 		this */
 		int		uiHandle;
 #ifdef  _MAC_OSX_CLIENT_
-	int timeEllapsed;
 	char uniqueId[64];
 #endif
+	int timeEllapsed;
 	/* though, not implemented yet, this will store a private encryption key
 		for encrypting voice between end-points */
 		char	key[128];
@@ -678,6 +678,10 @@ struct ltpStack
 	int randVariable;
 	int lport;
 	char* idBlock;
+	#ifdef _PJSIP_LOG_
+		int writeLogB;
+		char logfile[260];
+	#endif
 };
 
 
