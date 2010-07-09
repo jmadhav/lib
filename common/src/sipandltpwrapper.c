@@ -3436,12 +3436,6 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfg.cb.on_reg_state = &sip_on_reg_state;
 	ps->pjpool = pjsua_pool_create("pjsua", 2000, 2000);
 	//pj_str(
-#ifdef SRV_RECORD
-	 pj_strdup2_with_null(ps->pjpool, 
-	 &(cfg.nameserver[cfg.nameserver_count++]), 
-	 "66.93.87.2");
-	 
-#endif
 	//cfg.stun_ignore_failure	= 0;
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 0;
@@ -3450,7 +3444,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 		
 		if(ps->writeLogB)
 		{
-			log_cfg.console_level = 5;
+			log_cfg.console_level = 4;
 			log_cfg.log_filename = pj_strdup3(ps->pjpool, 
 											  ps->logfile);
 			
