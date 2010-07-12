@@ -2908,6 +2908,10 @@ void profileResync()
 
 void profileSetRedirection(int redirectTo)
 {
+#ifdef _MAC_OSX_CLIENT_
+	profileResync();
+#endif
+	
 #ifdef WIN32
 	CreateThread(NULL, 0, profileDownload, (LPVOID)redirectTo, 0, NULL);
 #endif
