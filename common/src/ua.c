@@ -690,7 +690,7 @@ void cdrLoad() {
 	char	line[1000];
 	ezxml_t	cdr, duration, date, userid, type, abidP,recordidP;
 #ifdef _MAC_OSX_CLIENT_
-	ezxml_t uld;
+	ezxml_t uId;
 #endif	
 #ifdef _MACOS_
 	sprintf(pathname, "%s/calls.txt", myFolder);
