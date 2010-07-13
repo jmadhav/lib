@@ -3270,6 +3270,13 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 		}
 	
 	 }
+	else
+	{
+		#ifndef _MACOS_
+			transcfg.port = 8060;
+			status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+		#endif
+	}
 	if(status!=PJ_SUCCESS)
 	{	
 		range = (10000-dummy_start_port);
