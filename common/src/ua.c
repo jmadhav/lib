@@ -1296,8 +1296,9 @@ static int vmsWrite(FILE *pf, struct VMail *p)
 	#ifdef _MACOS_
 	
 		#ifdef _MAC_OSX_CLIENT_
-			fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid><uniqueId>%s</uniqueId>",
-					(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->uniqueId);
+				
+				fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid><uniqueId>%s</uniqueId>",
+					(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->recordUId,p->isexistRecordID,p->uniqueId);
 		#else
 			fprintf(pf, "<vm><dt>%u</dt><u>%s</u><id>%s</id><hashid>%s</hashid><dir>%s</dir><abid>%d</abid><recordid>%d</recordid>",
 					(unsigned int)p->date, p->userid, p->vmsid, p->hashid, p->direction == VMAIL_OUT ? "out" : "in",p->recordUId,p->isexistRecordID);	
@@ -2907,6 +2908,10 @@ void profileResync()
 
 void profileSetRedirection(int redirectTo)
 {
+#ifdef _MAC_OSX_CLIENT_
+	profileResync();
+#endif
+	
 #ifdef WIN32
 	CreateThread(NULL, 0, profileDownload, (LPVOID)redirectTo, 0, NULL);
 #endif
@@ -2996,10 +3001,10 @@ void  createFolders()
 	//WideCharToMultiByte(CP_UTF8, 0, myPath, -1, myFolder, MAX_PATH, NULL, NULL);
 	myPath = uaCallBackObject.pathFunPtr(uaCallBackObject.uData);
 	newFolder = malloc(strlen(myPath)+100);
-	sprintf(myFolder, _T("%s/spokn"), myPath);
+	sprintf(myFolder, _T("%s/Spokn"), myPath);
 	//strcat(myFolder, "/spokn");
 	
-	sprintf(newFolder, _T("%s/spokn"), myPath);
+	sprintf(newFolder, _T("%s/Spokn"), myPath);
 	//CreateDirectory(newFolder, NULL);
 	uaCallBackObject.creatorDirectoryFunPtr(uaCallBackObject.uData,newFolder);
 	
@@ -3007,14 +3012,14 @@ void  createFolders()
 	strcpy(vmFolder, myFolder);
 	strcat(vmFolder, "/inbox");
 	
-	sprintf(newFolder, _T("%s/spokn/inbox"), myPath);
+	sprintf(newFolder, _T("%s/Spokn/inbox"), myPath);
 	//CreateDirectory(newFolder, NULL);
 	uaCallBackObject.creatorDirectoryFunPtr(uaCallBackObject.uData,newFolder);
 	//create a outbox subfolder within myfolder
 	strcpy(outFolder, myFolder);
 	strcat(outFolder, "/outbox");
 	
-	sprintf(newFolder, _T("%s/spokn/outbox"), myPath);
+	sprintf(newFolder, _T("%s/Spokn/outbox"), myPath);
 	//CreateDirectory(newFolder, NULL);
 	uaCallBackObject.creatorDirectoryFunPtr(uaCallBackObject.uData,newFolder);
 	free(newFolder);
