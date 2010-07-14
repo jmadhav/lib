@@ -3680,7 +3680,7 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
 	 */
 	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
-	/*
+	
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
 	 
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/32000"), 0);
@@ -3690,8 +3690,8 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcma"), 0);
 	 
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "ilbc"), 0);
-	 */
-	pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
+	
+	//pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
 #endif	
 	
 	
@@ -3857,7 +3857,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 	//char	url[128];
 	//char	url1[128];
 	char errorStr[50]={0};
-	char	url[128];
+	//char	url[128];
     /* Register to SIP server by creating SIP account. */
 
 	if (command == CMD_LOGIN){
