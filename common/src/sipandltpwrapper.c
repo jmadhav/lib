@@ -4042,7 +4042,7 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 
 	if(err)
 	{
-		
+		pc->ltpState=CALL_IDLE;
 		alert(pc->lineId, ALERT_CALL_NOT_START, 0);
 		return -1;
 	}
