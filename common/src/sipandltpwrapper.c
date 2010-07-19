@@ -3274,6 +3274,13 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 		}
 	
 	 }
+	else
+	{
+		#ifndef _MACOS_
+			transcfg.port = 8060;
+			status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+		#endif
+	}
 	if(status!=PJ_SUCCESS)
 	{	
 		range = (10000-dummy_start_port);
@@ -3673,7 +3680,7 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	 Use only "speex/8000" or "speex/16000". Set zero priority for others.
 	 */
 	pjsua_codec_set_priority(pj_cstr(&tmp, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST);
-	/*
+	
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
 	 
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "speex/32000"), 0);
@@ -3683,8 +3690,8 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcma"), 0);
 	 
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "ilbc"), 0);
-	 */
-	pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
+	
+	//pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
 #endif	
 	
 	
@@ -3850,7 +3857,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 	//char	url[128];
 	//char	url1[128];
 	char errorStr[50]={0};
-	char	url[128];
+	//char	url[128];
     /* Register to SIP server by creating SIP account. */
 
 	if (command == CMD_LOGIN){
@@ -3890,7 +3897,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 
 		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
 		//acccfg.id = pj_str(url);
-		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
+		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN":8060");
 		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
 		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;
@@ -3905,6 +3912,15 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		
 
 		pjsua_acc_add(&acccfg, PJ_TRUE, &acc_id);
+		/*pjsip_method method;
+		pj_str_t target = pj_str("spokn.com:8060");
+		pjsip_tx_data *p_tdataP;
+		target.ptr = malloc(100);
+		method.id = PJSIP_OPTIONS_METHOD;
+		method.name = pj_str("OPTIONS");
+		int er ;
+		er = pjsua_acc_create_request(acc_id,&method,&target,&p_tdataP);
+	*/	
 	}
 
 	if (command == CMD_LOGOUT) {
