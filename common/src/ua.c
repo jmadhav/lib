@@ -2664,7 +2664,7 @@ THREAD_PROC profileDownload(void *extras)
 		error=1;
 	//	return;
 	}
-	if(error)
+	if(error==0)
 	{
 		timeFinished = ticks();
 		timeTaken = (timeFinished - timeStart);
@@ -2680,11 +2680,14 @@ THREAD_PROC profileDownload(void *extras)
 			vmsDownload();
 			vmsSort();
 			relistVMails();
-			#ifdef _MACOS_
-				relistAll();
-			#endif
 		}	
 	}
+	
+	#ifdef _MACOS_
+	if(terminateB==0)
+		relistAll();
+	#endif
+	
 	busy = 0;
 	//printf("\n download end");
 	//add by mukesh for bug id 20359
