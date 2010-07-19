@@ -2447,6 +2447,7 @@ THREAD_PROC profileDownload(void *extras)
 	struct AddressBook *pc;
 	struct VMail *vm;
 	int	byteCount = 0;
+	int error=0;
 	unsigned long timeStart, timeFinished, timeTaken;
    	if (busy > 0 || GthreadTerminate==1 || !strlen(pstack->ltpUserid))
 	{	
@@ -2660,26 +2661,30 @@ THREAD_PROC profileDownload(void *extras)
 	if (!byteCount)
 	{
 		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
-		//return;
+		error=1;
+	//	return;
 	}
-	timeFinished = ticks();
-	timeTaken = (timeFinished - timeStart);
-	setBandwidth(timeTaken,byteCount);
-	if(terminateB==0)
-	{	
-		profileMerge();
-		profileSave();
-		relistContacts();
-		refreshDisplay();
-		vmsUploadAll();
-	
-		vmsDownload();
-		vmsSort();
-		relistVMails();
-		#ifdef _MACOS_
-			relistAll();
-		#endif
-	}	
+	if(error)
+	{
+		timeFinished = ticks();
+		timeTaken = (timeFinished - timeStart);
+		setBandwidth(timeTaken,byteCount);
+		if(terminateB==0)
+		{	
+			profileMerge();
+			profileSave();
+			relistContacts();
+			refreshDisplay();
+			vmsUploadAll();
+		
+			vmsDownload();
+			vmsSort();
+			relistVMails();
+			#ifdef _MACOS_
+				relistAll();
+			#endif
+		}	
+	}
 	busy = 0;
 	//printf("\n download end");
 	//add by mukesh for bug id 20359
