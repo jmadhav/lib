@@ -181,6 +181,7 @@ extern "C" {
 	struct AddressBook *getContact(int id);
 	void sortContacts();
 	
+	int encode(unsigned s_len, char *src, unsigned d_len, char *dst);
 	/**
 	 Voicemails
 	 

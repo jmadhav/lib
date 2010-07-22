@@ -3466,7 +3466,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
 	//cfgmedia.ec_options = 1;
-	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.snd_auto_close_time = 2;
 	//cfgmedia.ec_tail_len = 0;
 	//cfgmedia.enable_ice=1;
 	//cfgmedia.enable_ice = 1;
