@@ -3255,6 +3255,8 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 	}
 	
 	pjsua_transport_config_default(&transcfg);
+	//transcfg.public_addr = pj_str("192.168.175.102");
+	//transcfg.bound_addr = pj_str(" 127.0.0.1");
 	if(userId)
 	{
 		idUser = atoi(userId);
@@ -3324,6 +3326,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 		}
 	}	
 	ps->lport = transcfg.port;
+//	transcfg.public_addr = pj_str("192.168.175.102");
 	//return 1;
 	pjsua_transport_config_default(&rtp_cfg);
 	{
@@ -3464,7 +3467,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
 	//cfgmedia.ec_options = 1;
-	cfgmedia.snd_auto_close_time = 1;
+	cfgmedia.snd_auto_close_time = 2;
 	//cfgmedia.ec_tail_len = 0;
 	//cfgmedia.enable_ice=1;
 	//cfgmedia.enable_ice = 1;
@@ -3515,12 +3518,17 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 				pj_strdup2_with_null(ps->pjpool, 
 								 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 								 "stun.spokn.com");
+						
 		}
 
 		#else
 				pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 							 "stun.spokn.com");
+			/*	pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.outbound_proxy[cfg.outbound_proxy_cnt++]), 
+							 "sip:192.168.175.102:5060");*/
+		
 		
 		/*pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
@@ -3923,7 +3931,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 
 		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
 		//acccfg.id = pj_str(url);
-		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN":8060");
+		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
 		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
 		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;
