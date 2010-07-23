@@ -3441,6 +3441,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
+	
 	ps->pjpool = pjsua_pool_create("pjsua", 2000, 2000);
 	//pj_str(
 	//cfg.stun_ignore_failure	= 0;
@@ -3463,7 +3464,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
 	//cfgmedia.ec_options = 1;
-	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.snd_auto_close_time = 1;
 	//cfgmedia.ec_tail_len = 0;
 	//cfgmedia.enable_ice=1;
 	//cfgmedia.enable_ice = 1;
@@ -3602,6 +3603,31 @@ int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 	return sip_spokn_pj_config(ps,luserAgentP,errorstring);
 }
 
+int setSoundDev(int input, int output)
+{
+	int in,out;
+	pjsua_get_snd_dev(&in, &out);
+	//pjsua_set_null_snd_dev();
+	//pjmedia_snd_deinit();
+	//pjmedia_snd_init(pjsua_get_pool_factory());
+		
+	pj_status_t status = pjsua_set_snd_dev(input, output);
+	if(status==PJ_SUCCESS)
+		printf("Success");
+	else printf("failed");
+	return (status == PJ_SUCCESS) ? 1 : 0;
+}
+
+void reInitAudio()
+{
+	// Stop sound device and disconnect it from the conference.
+	pjsua_set_null_snd_dev();
+	
+	// Reinit sound device.
+	pjmedia_snd_deinit();
+	pjmedia_snd_init(pjsua_get_pool_factory());
+}
+
 int sip_mac_init(struct ltpStack *ps, char *errorstring)
 {
 	pjsua_config cfg;
@@ -3659,7 +3685,7 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	pjsua_media_config_default(&cfgmedia);
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
-	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.snd_auto_close_time = 2;
 	cfgmedia.enable_ice=1;
 #ifdef _SPEEX_CODEC_	
 	//use speex as the AEC (Acoustic Echo Canceller)
