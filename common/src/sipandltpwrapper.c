@@ -3052,6 +3052,8 @@ static void sip_joinLine(int aline, int bline, int doit)
 	}
 }
 
+
+
 static void sip_connectLineToSoundCard(int aline, int doit)
 {
 	int i;
@@ -3618,7 +3620,8 @@ int setSoundDev(int input, int output)
 	//pjsua_set_null_snd_dev();
 	//pjmedia_snd_deinit();
 	//pjmedia_snd_init(pjsua_get_pool_factory());
-		
+	if(in==input && out==output)
+		return 1;
 	pj_status_t status = pjsua_set_snd_dev(input, output);
 	if(status==PJ_SUCCESS)
 		printf("Success");
