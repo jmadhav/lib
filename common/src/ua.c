@@ -71,6 +71,10 @@ UACallBackType uaCallBackObject;
 //add by mukesh 20359
 ThreadStatusEnum threadStatus;
 char uaUserid[32];
+static char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+"abcdefghijklmnopqrstuvwxyz"
+"0123456789"
+"+/";
 
 /*
  ** Translation Table as described in RFC1113
@@ -2447,6 +2451,7 @@ THREAD_PROC profileDownload(void *extras)
 	struct AddressBook *pc;
 	struct VMail *vm;
 	int	byteCount = 0;
+	int error=0;
 	unsigned long timeStart, timeFinished, timeTaken;
    	if (busy > 0 || GthreadTerminate==1 || !strlen(pstack->ltpUserid))
 	{	
@@ -2660,26 +2665,33 @@ THREAD_PROC profileDownload(void *extras)
 	if (!byteCount)
 	{
 		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
-		//return;
+		error=1;
+	//	return;
 	}
-	timeFinished = ticks();
-	timeTaken = (timeFinished - timeStart);
-	setBandwidth(timeTaken,byteCount);
-	if(terminateB==0)
-	{	
-		profileMerge();
-		profileSave();
-		relistContacts();
-		refreshDisplay();
-		vmsUploadAll();
+	if(error==0)
+	{
+		timeFinished = ticks();
+		timeTaken = (timeFinished - timeStart);
+		setBandwidth(timeTaken,byteCount);
+		if(terminateB==0)
+		{	
+			profileMerge();
+			profileSave();
+			relistContacts();
+			refreshDisplay();
+			vmsUploadAll();
+		
+			vmsDownload();
+			vmsSort();
+			relistVMails();
+		}	
+	}
 	
-		vmsDownload();
-		vmsSort();
-		relistVMails();
-		#ifdef _MACOS_
-			relistAll();
-		#endif
-	}	
+	#ifdef _MACOS_
+	if(terminateB==0)
+		relistAll();
+	#endif
+	
 	busy = 0;
 	//printf("\n download end");
 	//add by mukesh for bug id 20359
@@ -2973,9 +2985,47 @@ void TerminateUAThread()
 {
 	GthreadTerminate = 1;
 }
+int encode(unsigned s_len, char *src, unsigned d_len, char *dst)
+{
+    unsigned triad;
+	
+    for (triad = 0; triad < s_len; triad += 3)
+    {
+		unsigned long int sr;
+		unsigned byte;
+		
+		for (byte = 0; (byte<3)&&(triad+byte<s_len); ++byte)
+		{
+			sr <<= 8;
+			sr |= (*(src+triad+byte) & 0xff);
+		}
+		
+		sr <<= (6-((8*byte)%6))%6; /*shift left to next 6bit alignment*/
+		
+		if (d_len < 4) return 1; /* error - dest too short */
+		
+		*(dst+0) = *(dst+1) = *(dst+2) = *(dst+3) = '=';
+		switch(byte)
+		{
+			case 3:
+				*(dst+3) = base64[sr&0x3f];
+				sr >>= 6;
+			case 2:
+				*(dst+2) = base64[sr&0x3f];
+				sr >>= 6;
+			case 1:
+				*(dst+1) = base64[sr&0x3f];
+				sr >>= 6;
+				*(dst+0) = base64[sr&0x3f];
+		}
+		dst += 4; d_len -= 4;
+    }
+	
+    return 0;
+	
+}
 
-
-
+	
 #ifdef _MACOS_
 UACallBackType uaCallBackObject;
 
@@ -3907,4 +3957,5 @@ void applicationEnd()
 		sleep(1);
 	}
 }
+
 #endif

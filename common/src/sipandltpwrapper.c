@@ -3052,6 +3052,8 @@ static void sip_joinLine(int aline, int bline, int doit)
 	}
 }
 
+
+
 static void sip_connectLineToSoundCard(int aline, int doit)
 {
 	int i;
@@ -3255,6 +3257,8 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 	}
 	
 	pjsua_transport_config_default(&transcfg);
+	//transcfg.public_addr = pj_str("192.168.175.102");
+	//transcfg.bound_addr = pj_str(" 127.0.0.1");
 	if(userId)
 	{
 		idUser = atoi(userId);
@@ -3324,6 +3328,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 		}
 	}	
 	ps->lport = transcfg.port;
+//	transcfg.public_addr = pj_str("192.168.175.102");
 	//return 1;
 	pjsua_transport_config_default(&rtp_cfg);
 	{
@@ -3441,6 +3446,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
+	
 	ps->pjpool = pjsua_pool_create("pjsua", 2000, 2000);
 	//pj_str(
 	//cfg.stun_ignore_failure	= 0;
@@ -3463,7 +3469,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
 	//cfgmedia.ec_options = 1;
-	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.snd_auto_close_time = 2;
 	//cfgmedia.ec_tail_len = 0;
 	//cfgmedia.enable_ice=1;
 	//cfgmedia.enable_ice = 1;
@@ -3514,12 +3520,17 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 				pj_strdup2_with_null(ps->pjpool, 
 								 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 								 "stun.spokn.com");
+						
 		}
 
 		#else
 				pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 							 "stun.spokn.com");
+			/*	pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.outbound_proxy[cfg.outbound_proxy_cnt++]), 
+							 "sip:192.168.175.102:5060");*/
+		
 		
 		/*pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
@@ -3602,6 +3613,48 @@ int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 	return sip_spokn_pj_config(ps,luserAgentP,errorstring);
 }
 
+int setSoundDev(int input, int output,int bVal)
+{
+	if(bVal)
+	{
+		int in,out;
+		pjsua_get_snd_dev(&in, &out);
+		if(in==input && out==output)
+			return 1;
+	}
+	pj_status_t status = pjsua_set_snd_dev(input, output);
+	if(status==PJ_SUCCESS)
+		printf("Success");
+	else
+	{
+		pjsua_set_null_snd_dev();
+		
+		// Reinit sound device.
+		pjmedia_snd_deinit();
+		pjmedia_snd_init(pjsua_get_pool_factory());
+		status = pjsua_set_snd_dev(input, output);
+		if(status!=PJ_SUCCESS)
+			status = pjsua_set_snd_dev(-1, -2);
+	}
+	return (status == PJ_SUCCESS) ? 1 : 0;
+}
+
+void reInitAudio()
+{
+	//pjmedia_aud_dev_info info[4];
+	//unsigned int count=4;
+	// Stop sound device and disconnect it from the conference.
+	//pjsua_set_snd_dev(-1,-2);
+	//
+	//pjsua_enum_aud_devs(info,&count);
+	/*pjsua_set_null_snd_dev();
+		
+	// Reinit sound device.
+	pjmedia_snd_deinit();
+	pjmedia_snd_init(pjsua_get_pool_factory());
+	*/
+}
+
 int sip_mac_init(struct ltpStack *ps, char *errorstring)
 {
 	pjsua_config cfg;
@@ -3659,7 +3712,7 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	pjsua_media_config_default(&cfgmedia);
 	cfgmedia.clock_rate = 8000;
 	cfgmedia.snd_clock_rate = 8000;
-	cfgmedia.snd_auto_close_time = 0;
+	cfgmedia.snd_auto_close_time = 2;
 	cfgmedia.enable_ice=1;
 #ifdef _SPEEX_CODEC_	
 	//use speex as the AEC (Acoustic Echo Canceller)
@@ -3912,6 +3965,15 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		
 
 		pjsua_acc_add(&acccfg, PJ_TRUE, &acc_id);
+		/*pjsip_method method;
+		pj_str_t target = pj_str("spokn.com:8060");
+		pjsip_tx_data *p_tdataP;
+		target.ptr = malloc(100);
+		method.id = PJSIP_OPTIONS_METHOD;
+		method.name = pj_str("OPTIONS");
+		int er ;
+		er = pjsua_acc_create_request(acc_id,&method,&target,&p_tdataP);
+	*/	
 	}
 
 	if (command == CMD_LOGOUT) {
@@ -3944,6 +4006,7 @@ void sip_ltpLoginCancel(struct ltpStack *ps)
 void sip_ltpHangup(struct ltpStack *ps, int lineid)
 {
 	int	i;
+	int er;
 	pjsua_call_id call_id;
 
 	for (i = 0; i < ps->maxSlots; i++)
@@ -3970,7 +4033,12 @@ void sip_ltpHangup(struct ltpStack *ps, int lineid)
 			else
 			{
 				ps->call[i].ltpState = CALL_HANGING;
-				pjsua_call_hangup(call_id, 0, NULL, NULL);
+				er = pjsua_call_hangup(call_id, 0, NULL, NULL);
+				if(er!=PJ_SUCCESS)
+				{
+					ps->call[i].ltpState = CALL_IDLE;
+					alert(pstack->call[i].lineId, ALERT_DISCONNECTED, "");
+				}
 			}
 			return;
 		}

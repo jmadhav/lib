@@ -54,6 +54,9 @@ int sip_set_randomVariable(struct ltpStack *ps,int randVariable);
 int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring);	
 void setLog(struct ltpStack *ps, int onB,char *pathP);	
 char *getLogFile(struct ltpStack *ps);
+int setSoundDev(int input,  int output,int bVal);
+	void reInitAudio();
+
 #ifdef __cplusplus
 }
 #endif 
