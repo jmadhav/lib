@@ -680,7 +680,8 @@ struct ltpStack
 	char* idBlock;
 	char registerUrl[60];
 	int gotOpenPortB;
-	
+	int portCount;
+	int localAccId;
 	#ifdef _PJSIP_LOG_
 		int writeLogB;
 		char logfile[260];

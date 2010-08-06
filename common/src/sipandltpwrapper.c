@@ -3143,6 +3143,12 @@ static void sip_on_call_media_state(pjsua_call_id call_id)
 		}
 	}
 }
+static void sip_on_net_type(const pj_stun_nat_detect_result *res)
+{
+	printf("\n net type %s %s\n",res->status_text,res->nat_type_name);
+
+
+}
 
 static void sip_on_reg_state(pjsua_acc_id acc_id)
 {
@@ -3451,6 +3457,12 @@ void  tsx_callback(void *token, pjsip_event *event)
 		if(tsx->status_code ==408)//mean error
 		{
 			sipOptionP->errorCode = 1;
+			lpsP->portCount--;
+			if(lpsP->portCount==0)
+			{	
+				alert(0,ATTEMPT_LOGIN_ERROR, strdup("sip ports are blocked"));
+			}	
+			//alertNotifyP(ATTEMPT_LOGIN_ERROR,er,0,ltpInterfaceP->userData,strdup(errorstring));
 			return;
 		}
 		lpsP->gotOpenPortB = 1;
@@ -3480,14 +3492,13 @@ void  tsx_callback(void *token, pjsip_event *event)
  * Send arbitrary request to remote host
  */
 extern unsigned int sleep(unsigned int);
-int send_request(char *cstr_method, char *ldst_uriP,void *uDataP)
+int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP)
 {
     pj_str_t str_method;
     pjsip_method method;
     pjsip_tx_data *tdata;
     pjsip_endpoint *endpt;
     pj_status_t status;
-    pjsua_acc_id acc_id;
     pj_str_t dst_uri;
     
     endpt = pjsua_get_pjsip_endpt();
@@ -3497,8 +3508,6 @@ int send_request(char *cstr_method, char *ldst_uriP,void *uDataP)
     dst_uri = pj_str(ldst_uriP);
 	
     pjsip_method_init_np(&method, &str_method);
-	
-    acc_id = pjsua_acc_get_default();
 	
     status = pjsua_acc_create_request(acc_id, &method, &dst_uri, &tdata);
 	
@@ -3512,6 +3521,47 @@ int send_request(char *cstr_method, char *ldst_uriP,void *uDataP)
     }
 	return 0;
 }
+int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
+{
+	static SipOptionDataType sipOptionDataPort1;
+	static SipOptionDataType sipOptionDataPort2;
+	if(ps->localAccId<0)
+	{	
+		pjsua_acc_add_local(ps->tranportID,PJ_TRUE,&ps->localAccId);
+	}
+	ps->gotOpenPortB = 0;
+	sipOptionDataPort1.errorCode = 0;
+	strcpy(sipOptionDataPort1.connectionUrl,"sip:spokn.com:8060");
+	sipOptionDataPort1.dataP = ps;
+	
+	
+	sipOptionDataPort2.errorCode = 0;
+	strcpy(sipOptionDataPort2.connectionUrl,"sip:spokn.com:5060");
+	sipOptionDataPort2.dataP = ps;
+	
+	
+	ps->portCount = 2;
+    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);    
+    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
+	
+	if(blockB==0)
+	{
+		return 0;
+	}
+	while(ps->gotOpenPortB==0) 
+	{
+		if(ps->portCount==0)//mean both port are blocked error
+		{
+			strcpy(errorstring, "port blocked");
+			
+			return 4;
+		}
+		sleep(1);
+	}
+	return 0;
+	
+	
+}
 
 
 int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
@@ -3519,8 +3569,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	
 	
 	//char *hostP;
-	static SipOptionDataType sipOptionDataPort1;
-	static SipOptionDataType sipOptionDataPort2;
+	
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
@@ -3539,6 +3588,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
+	//cfg.cb.on_nat_detect = sip_on_net_type;
 	
 	ps->pjpool = pjsua_pool_create("pjsua", 2000, 2000);
 	//pj_str(
@@ -3686,26 +3736,6 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	}
 	
     pjsua_detect_nat_type();
-	pjsua_acc_add_local(ps->tranportID,PJ_TRUE,0);
-	ps->gotOpenPortB = 0;
-	strcpy(sipOptionDataPort1.connectionUrl,"sip:spokn.com:8060");
-	sipOptionDataPort1.dataP = ps;
-	sipOptionDataPort2.dataP = ps;
-	sipOptionDataPort1.errorCode = 0;
-	sipOptionDataPort2.errorCode = 0;
-	strcpy(sipOptionDataPort2.connectionUrl,"sip:spokn.com:5060");
-    send_request("OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);    
-    send_request("OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
-	while(ps->gotOpenPortB==0) 
-	{
-		if(sipOptionDataPort1.errorCode >0 && sipOptionDataPort2.errorCode>0)//mean both port are blocked error
-		{
-			strcpy(errorstring, "port blocked");
-
-			return 4;
-		}
-		sleep(1);
-	}
 	return 0;
 	
 }
@@ -3961,6 +3991,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->updateTimingAdvance = 0;
 	ps->stunB = 1;
 	ps->tranportID = -1;
+	ps->localAccId = -1;
 	strcpy(ps->registerUrl,"sip:spokn.com"); 
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);

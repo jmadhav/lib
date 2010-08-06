@@ -62,8 +62,9 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 void setLog(struct ltpStack *ps, int onB,char *pathP);	
 char *getLogFile(struct ltpStack *ps);
 int setSoundDev(int input,  int output,int bVal);
-	void reInitAudio();
-
+void reInitAudio();
+int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB);
+	int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP);	
 #ifdef __cplusplus
 }
 #endif 
