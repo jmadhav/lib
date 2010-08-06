@@ -3421,11 +3421,104 @@ void setLog(struct ltpStack *ps, int onB,char *pathP)
 #endif
 
 }
+void  tsx_callback(void *token, pjsip_event *event)
+{
+	
+    //pj_status_t status;
+	SipOptionDataType *sipOptionP;
+	struct ltpStack *lpsP;
+	
+    //pjsip_regc *regc = (pjsip_regc*) token;
+    pjsip_transaction *tsx = event->body.tsx_state.tsx;
+	
+	if (event->type == PJSIP_EVENT_TSX_STATE)
+	{
+		sipOptionP = (SipOptionDataType *)token;
+		printf("\n code=%d",tsx->status_code);
+		
+		if(sipOptionP==0)
+		{
+			return ;
+		}
+		lpsP = sipOptionP->dataP;
+		if(lpsP->gotOpenPortB==1)
+		{
+			return ;
+		}
+		sipOptionP->errorCode = 0;
+		if(tsx->status_code ==408)//mean error
+		{
+			sipOptionP->errorCode = 1;
+			return;
+		}
+		lpsP->gotOpenPortB = 1;
+		strcpy(lpsP->registerUrl,sipOptionP->connectionUrl);
+		printf("url %s",lpsP->registerUrl);
+		/* Ignore provisional response, if any */
+		if (tsx->status_code < 200)
+			return;
+		
+		if (event->body.tsx_state.type == PJSIP_EVENT_RX_MSG &&
+			(tsx->status_code == 501)) 
+		{
+		//	pjsip_rx_data *rdata = event->body.tsx_state.src.rdata;
+			
+			PJ_LOG(4,(THIS_FILE, "Method Not Supported Here"));
+			
+		}
+		alert(0, ATTEMPT_LOGIN_ON_OPEN_PORT, 0);
+		
+	}
+	
+	
+}
+
+
+/*
+ * Send arbitrary request to remote host
+ */
+extern unsigned int sleep(unsigned int);
+int send_request(char *cstr_method, char *ldst_uriP,void *uDataP)
+{
+    pj_str_t str_method;
+    pjsip_method method;
+    pjsip_tx_data *tdata;
+    pjsip_endpoint *endpt;
+    pj_status_t status;
+    pjsua_acc_id acc_id;
+    pj_str_t dst_uri;
+    
+    endpt = pjsua_get_pjsip_endpt();
+	
+    str_method = pj_str(cstr_method);
+	
+    dst_uri = pj_str(ldst_uriP);
+	
+    pjsip_method_init_np(&method, &str_method);
+	
+    acc_id = pjsua_acc_get_default();
+	
+    status = pjsua_acc_create_request(acc_id, &method, &dst_uri, &tdata);
+	
+    status = pjsip_endpt_send_request(endpt, tdata, 200, uDataP, &tsx_callback);
+    
+    if (status != PJ_SUCCESS)
+    {
+		printf("error in port assign");
+		pjsua_perror(THIS_FILE, "Unable to send request", status);
+		return 1;
+    }
+	return 0;
+}
+
+
 int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 {
 	
 	
 	//char *hostP;
+	static SipOptionDataType sipOptionDataPort1;
+	static SipOptionDataType sipOptionDataPort2;
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
@@ -3525,9 +3618,9 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 				pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 							 "stun.spokn.com");
-			/*	pj_strdup2_with_null(ps->pjpool, 
+				/*pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.outbound_proxy[cfg.outbound_proxy_cnt++]), 
-							 "sip:192.168.175.102:5060");*/
+							 "sip:192.168.173.122:5060");*/
 		
 		
 		/*pj_strdup2_with_null(ps->pjpool, 
@@ -3549,14 +3642,14 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");
-		return 0;
+		return 1;
 	}
 	
 	
 	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
 	{
-		
-		return 0;
+		strcpy(errorstring, "Error in sip_set_udp_transport");
+		return 2;
 	}	
 #ifdef _SPEEX_CODEC_
 	{
@@ -3587,11 +3680,31 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
     status = pjsua_start();
 	if (status != PJ_SUCCESS){ 
 		strcpy(errorstring, "Error starting pjsua");
-		return 0;
+		return 3;
 	}
 	
     pjsua_detect_nat_type();
-	return 1;
+	pjsua_acc_add_local(ps->tranportID,PJ_TRUE,0);
+	ps->gotOpenPortB = 0;
+	strcpy(sipOptionDataPort1.connectionUrl,"sip:spokn.com:8060");
+	sipOptionDataPort1.dataP = ps;
+	sipOptionDataPort2.dataP = ps;
+	sipOptionDataPort1.errorCode = 0;
+	sipOptionDataPort2.errorCode = 0;
+	strcpy(sipOptionDataPort2.connectionUrl,"sip:spokn.com:5060");
+    send_request("OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);    
+    send_request("OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
+	while(ps->gotOpenPortB==0) 
+	{
+		if(sipOptionDataPort1.errorCode >0 && sipOptionDataPort2.errorCode>0)//mean both port are blocked error
+		{
+			strcpy(errorstring, "port blocked");
+
+			return 4;
+		}
+		sleep(1);
+	}
+	return 0;
 	
 }
 int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
@@ -3829,6 +3942,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->updateTimingAdvance = 0;
 	ps->stunB = 1;
 	ps->tranportID = -1;
+	strcpy(ps->registerUrl,"sip:spokn.com"); 
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
@@ -3931,7 +4045,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 
 		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
 		//acccfg.id = pj_str(url);
-		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
+		acccfg.reg_uri = pj_str(ps->registerUrl);
 		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
 		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;

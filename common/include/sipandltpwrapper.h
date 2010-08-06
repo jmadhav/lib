@@ -21,11 +21,18 @@
 #define _SPEEX_CODEC_
 //#define SRV_RECORD
 #define ATTEMPT_LOGIN_ERROR      6015 
+#define ATTEMPT_LOGIN_ON_OPEN_PORT 6016
 #define MAXTIMEOUT 300
 #include "ltpmobile.h"
 #ifdef __cplusplus
 extern "C" {
 #endif 
+typedef struct SipOptionDataType
+	{
+		char connectionUrl[100];
+		void *dataP;
+		int errorCode;
+	}SipOptionDataType;
 int sip_spokn_pj_init(struct ltpStack *ps,char* luserAgentP,char *errorstring);
 void LTP_ltpHangup(struct ltpStack *ps, int lineid);
 void LTP_ltpRefuse(struct ltpStack *ps, int lineid, char *msg);

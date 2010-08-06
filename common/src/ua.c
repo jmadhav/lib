@@ -2210,8 +2210,11 @@ void profileMerge(){
 		}
 	}	credit = ezxml_child(xml, "cr");
 	if (credit)
+	{	
 		creditBalance = atoi(credit->txt);
+		printf("\n bal =%s ,vbal= %d",credit->txt,creditBalance);
 	
+	}
 	dated = ezxml_child(xml, "dt");
 	if (dated)
 		lastUpdate = (unsigned long)atol(dated->txt);
@@ -3930,6 +3933,7 @@ struct CDR * getCallList()
 
 int getCreditBalance()
 {
+	printf("\n credit %d",creditBalance);
 	return creditBalance;
 }
 
