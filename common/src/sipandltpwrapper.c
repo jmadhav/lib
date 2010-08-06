@@ -3052,6 +3052,8 @@ static void sip_joinLine(int aline, int bline, int doit)
 	}
 }
 
+
+
 static void sip_connectLineToSoundCard(int aline, int doit)
 {
 	int i;
@@ -3724,29 +3726,46 @@ int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 	return sip_spokn_pj_config(ps,luserAgentP,errorstring);
 }
 
-int setSoundDev(int input, int output)
+int setSoundDev(int input, int output,int bVal)
 {
-	int in,out;
-	pjsua_get_snd_dev(&in, &out);
-	//pjsua_set_null_snd_dev();
-	//pjmedia_snd_deinit();
-	//pjmedia_snd_init(pjsua_get_pool_factory());
-		
+	if(bVal)
+	{
+		int in,out;
+		pjsua_get_snd_dev(&in, &out);
+		if(in==input && out==output)
+			return 1;
+	}
 	pj_status_t status = pjsua_set_snd_dev(input, output);
 	if(status==PJ_SUCCESS)
 		printf("Success");
-	else printf("failed");
+	else
+	{
+		pjsua_set_null_snd_dev();
+		
+		// Reinit sound device.
+		pjmedia_snd_deinit();
+		pjmedia_snd_init(pjsua_get_pool_factory());
+		status = pjsua_set_snd_dev(input, output);
+		if(status!=PJ_SUCCESS)
+			status = pjsua_set_snd_dev(-1, -2);
+	}
 	return (status == PJ_SUCCESS) ? 1 : 0;
 }
 
 void reInitAudio()
 {
+	//pjmedia_aud_dev_info info[4];
+	//unsigned int count=4;
 	// Stop sound device and disconnect it from the conference.
-	pjsua_set_null_snd_dev();
-	
+	//pjsua_set_snd_dev(-1,-2);
+	//
+	//pjsua_enum_aud_devs(info,&count);
+	/*pjsua_set_null_snd_dev();
+		
 	// Reinit sound device.
 	pjmedia_snd_deinit();
 	pjmedia_snd_init(pjsua_get_pool_factory());
+	*/
 }
 
 int sip_mac_init(struct ltpStack *ps, char *errorstring)
@@ -4101,6 +4120,7 @@ void sip_ltpLoginCancel(struct ltpStack *ps)
 void sip_ltpHangup(struct ltpStack *ps, int lineid)
 {
 	int	i;
+	int er;
 	pjsua_call_id call_id;
 
 	for (i = 0; i < ps->maxSlots; i++)
@@ -4127,7 +4147,12 @@ void sip_ltpHangup(struct ltpStack *ps, int lineid)
 			else
 			{
 				ps->call[i].ltpState = CALL_HANGING;
-				pjsua_call_hangup(call_id, 0, NULL, NULL);
+				er = pjsua_call_hangup(call_id, 0, NULL, NULL);
+				if(er!=PJ_SUCCESS)
+				{
+					ps->call[i].ltpState = CALL_IDLE;
+					alert(pstack->call[i].lineId, ALERT_DISCONNECTED, "");
+				}
 			}
 			return;
 		}
