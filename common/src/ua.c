@@ -3979,7 +3979,7 @@ char* getencryptedPassword()
 	unsigned char	digest[16];
 	char password[40];
 	char hex[33];
-	char newpass[5];
+	char newpass[6];
 	memset(newpass, 0, sizeof(newpass));
 	memset(hex, 0, sizeof(hex));
 	memset(digest, 0, sizeof(digest));
@@ -3995,34 +3995,17 @@ char* getencryptedPassword()
 	for(i=0;i<5;i++)
 	{
 		newpass[i]=hex[i];
-		/*		if( newpass[i] > 9 )
+				if( newpass[i] > '9' )
 		 {
-		 newpass[i] = 16 - newpass[i];
-		 }									*/
-		if(newpass[i]=='a')
-		{
-			newpass[i]='6';
-		}
-		else if(newpass[i]=='b')
-		{
-			newpass[i]='5';
-		}
-		else if(newpass[i]=='c')
-		{
-			newpass[i]='4';
-		}
-		else if(newpass[i]=='d')
-		{
-			newpass[i]='3';
-		}
-		else if(newpass[i]=='e')
-		{
-			newpass[i]='2';
-		}
-		else if(newpass[i]=='f')
-		{
-			newpass[i]='1';
-		}
+			 if( newpass[i]<'a')
+			 {	 
+				 newpass[i] = 6 - (newpass[i]-65);//ascii value of A
+			 }
+			 else {
+				  newpass[i] = 6 - (newpass[i]-97);//ascii value of a
+			 }
+
+		 }									
 	}
 	return strdup(newpass);
 	// printf("\n%s\n",newpass);
