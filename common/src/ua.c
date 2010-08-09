@@ -3961,5 +3961,75 @@ void applicationEnd()
 		sleep(1);
 	}
 }
+char* getencryptedPassword()
+{
+	/*
+	 spoknid*pin*bpartyno.
+	 where
+	 spoknid : seven digit spokn id
+	 e.g. 1234567
+	 pin : 1st 5 digit(md5(pwd))
+	 e.g. md5(vel) = d41d8cd98f00b204e9800998ecf8427e
+	 1st 5 digit of md5 = d41d8
+	 replace a = 6, b = 5, c = 4, d = 3, e = 2, f = 1(digit more than 9 subtract it with 16)
+	 so the pin = 34138
+	 bpartyno = 919821988975
+	 */ 
+	struct	MD5Context	md5;
+	unsigned char	digest[16];
+	char password[40];
+	char hex[33];
+	char newpass[5];
+	memset(newpass, 0, sizeof(newpass));
+	memset(hex, 0, sizeof(hex));
+	memset(digest, 0, sizeof(digest));
+	memset(password, '\0', sizeof(password));
+	memset(&md5, 0, sizeof(md5));
+	strcpy((char*)password,pstack->ltpPassword);
+	MD5Init(&md5);
+	MD5Update(&md5, (char unsigned *)password, strlen(password), 0);
+	MD5Final(digest,&md5);
+	md5ToHex(digest,hex);
+	printf("\n%s\n\n",hex);
+	int i;	
+	for(i=0;i<5;i++)
+	{
+		newpass[i]=hex[i];
+		/*		if( newpass[i] > 9 )
+		 {
+		 newpass[i] = 16 - newpass[i];
+		 }									*/
+		if(newpass[i]=='a')
+		{
+			newpass[i]='6';
+		}
+		else if(newpass[i]=='b')
+		{
+			newpass[i]='5';
+		}
+		else if(newpass[i]=='c')
+		{
+			newpass[i]='4';
+		}
+		else if(newpass[i]=='d')
+		{
+			newpass[i]='3';
+		}
+		else if(newpass[i]=='e')
+		{
+			newpass[i]='2';
+		}
+		else if(newpass[i]=='f')
+		{
+			newpass[i]='1';
+		}
+	}
+	return strdup(newpass);
+	// printf("\n%s\n",newpass);
+	//char *retVal;
+	//retVal=malloc(sizeof(newpass));
+	//strcpy(retVal,newpass);
+	//return retVal;
+}
 
 #endif
