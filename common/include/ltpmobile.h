@@ -679,6 +679,7 @@ struct ltpStack
 	int lport;
 	char* idBlock;
 	char registerUrl[60];
+	char registerURI[60];
 	int gotOpenPortB;
 	int portCount;
 	int localAccId;

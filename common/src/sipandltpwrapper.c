@@ -2580,6 +2580,10 @@ int bMissedCallReported = 0;
 
 extern struct ltpStack *pstack;
 #define THIS_FILE	"APP"
+#define SIP_PORT1   "8060"
+#define SIP_PORT2   "9060"
+#define SIP_PORT3   "5062"
+#define SIP_PORT4   "5060"
 #define SIP_DOMAIN	"spokn.com"
 
 pjsua_acc_config acccfg;
@@ -3435,6 +3439,7 @@ void  tsx_callback(void *token, pjsip_event *event)
     //pj_status_t status;
 	SipOptionDataType *sipOptionP;
 	struct ltpStack *lpsP;
+	char *tmpPtr = 0;
 	
     //pjsip_regc *regc = (pjsip_regc*) token;
     pjsip_transaction *tsx = event->body.tsx_state.tsx;
@@ -3466,7 +3471,15 @@ void  tsx_callback(void *token, pjsip_event *event)
 			return;
 		}
 		lpsP->gotOpenPortB = 1;
-		strcpy(lpsP->registerUrl,sipOptionP->connectionUrl);
+		tmpPtr = strstr(sipOptionP->connectionUrl,":");
+		if(tmpPtr)
+		{	
+			strcpy(lpsP->registerUrl,tmpPtr+1);//remove sip:
+		}
+		else {
+			strcpy(lpsP->registerUrl,sipOptionP->connectionUrl);//remove sip:
+		}
+
 		printf("url %s",lpsP->registerUrl);
 		/* Ignore provisional response, if any */
 		if (tsx->status_code < 200)
@@ -3525,24 +3538,38 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 {
 	static SipOptionDataType sipOptionDataPort1;
 	static SipOptionDataType sipOptionDataPort2;
+	static SipOptionDataType sipOptionDataPort3;
+	static SipOptionDataType sipOptionDataPort4;
+	
 	if(ps->localAccId<0)
 	{	
 		pjsua_acc_add_local(ps->tranportID,PJ_TRUE,&ps->localAccId);
 	}
 	ps->gotOpenPortB = 0;
 	sipOptionDataPort1.errorCode = 0;
-	strcpy(sipOptionDataPort1.connectionUrl,"sip:spokn.com:8060");
+	strcpy(sipOptionDataPort1.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT1);
 	sipOptionDataPort1.dataP = ps;
 	
 	
 	sipOptionDataPort2.errorCode = 0;
-	strcpy(sipOptionDataPort2.connectionUrl,"sip:spokn.com:5060");
+	strcpy(sipOptionDataPort2.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT2);
 	sipOptionDataPort2.dataP = ps;
 	
+	sipOptionDataPort3.errorCode = 0;
+	strcpy(sipOptionDataPort3.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT3);
+	sipOptionDataPort3.dataP = ps;
 	
-	ps->portCount = 2;
+	
+	sipOptionDataPort4.errorCode = 0;
+	strcpy(sipOptionDataPort4.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT4);
+	sipOptionDataPort4.dataP = ps;
+	
+	ps->portCount = 4;
     send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);    
     send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
+	send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
+    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
+
 	
 	if(blockB==0)
 	{
@@ -3992,7 +4019,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->stunB = 1;
 	ps->tranportID = -1;
 	ps->localAccId = -1;
-	strcpy(ps->registerUrl,"sip:spokn.com"); 
+	strcpy(ps->registerUrl,"spokn.com"); 
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
@@ -4095,7 +4122,8 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 
 		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
 		//acccfg.id = pj_str(url);
-		acccfg.reg_uri = pj_str(ps->registerUrl);
+		sprintf(ps->registerURI,"sip:%s",ps->registerUrl);	
+		acccfg.reg_uri = pj_str(ps->registerURI);
 		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
 		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;
@@ -4210,17 +4238,17 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	{	
 		if(strstr(remoteid,"+"))
 		{
-			sprintf(struri, "sip:%s@spokn.com", remoteid);
+			sprintf(struri, "sip:%s@%s", remoteid,ps->registerUrl);
 		}
 		else
 		{	
 			if(strlen(remoteid)<6)//this changes is temp
 			{
-				sprintf(struri, "sip:%s@spokn.com", remoteid);
+				sprintf(struri, "sip:%s@%s", remoteid,ps->registerUrl);
 			}
 			else
 			{	
-				sprintf(struri, "sip:+%s@spokn.com", remoteid);
+				sprintf(struri, "sip:+%s@%s",remoteid, ps->registerUrl);
 			}	
 		}	
 	}
