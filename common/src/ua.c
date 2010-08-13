@@ -3980,6 +3980,7 @@ char* getencryptedPassword()
 	char password[40];
 	char hex[33];
 	char newpass[6];
+	int ch;
 	memset(newpass, 0, sizeof(newpass));
 	memset(hex, 0, sizeof(hex));
 	memset(digest, 0, sizeof(digest));
@@ -3990,7 +3991,7 @@ char* getencryptedPassword()
 	MD5Update(&md5, (char unsigned *)password, strlen(password), 0);
 	MD5Final(digest,&md5);
 	md5ToHex(digest,hex);
-	printf("\n%s\n\n",hex);
+	//printf("\n%s\n\n",hex);
 	int i;	
 	for(i=0;i<5;i++)
 	{
@@ -3999,11 +4000,12 @@ char* getencryptedPassword()
 		 {
 			 if( newpass[i]<'a')
 			 {	 
-				 newpass[i] = 6 - (newpass[i]-65);//ascii value of A
+				 ch = 6 - (newpass[i]-65);//ascii value of A
 			 }
 			 else {
-				  newpass[i] = 6 - (newpass[i]-97);//ascii value of a
+				  ch = 6 - (newpass[i]-97);//ascii value of a
 			 }
+			 newpass[i] = ch + 48;
 
 		 }									
 	}
