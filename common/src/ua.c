@@ -1805,8 +1805,8 @@ void profileSave(){
 	
 	fputs("<?xml version=\"1.0\"?>\n", pf);
 	//Now that password is stored encrypted, <password> tag is replaced by <encpassword>
-	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <encpassword>%s</encpassword>\n <server>%s</server>\n",
-			pstack->ltpUserid, lastUpdate, szEncPass, pstack->ltpServerName);
+	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <encpassword>%s</encpassword>\n <server>%s</server><t>%s</t>\n",
+			pstack->ltpUserid, lastUpdate, szEncPass, pstack->ltpServerName,myTitle);
 	
 	if (strlen(fwdnumber))
 		fprintf(pf, "<fwd>%s</fwd>\n", fwdnumber);
@@ -1967,7 +1967,9 @@ void profileLoad()
 			strcpy(pstack->ltpPassword, (char*)szData); 
 		}
 	}
-	
+	title = ezxml_child(xml, "t");
+	if (title)
+		strcpy(myTitle, title->txt);
 	server = ezxml_child(xml,"server");
 	if(server && strlen(server->txt))
 		strcpy(pstack->ltpServerName, server->txt);
