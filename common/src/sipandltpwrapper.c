@@ -3221,7 +3221,8 @@ void       callbackpjsip(int level, const char *data, int len)
 int sip_spokn_pj_Create(struct ltpStack *ps)
 {
 	pj_status_t status;
-		
+	
+	pjsua_destroy();
 	status = pjsua_create();
 	
 	if (status != PJ_SUCCESS){
@@ -3447,7 +3448,7 @@ void  tsx_callback(void *token, pjsip_event *event)
 	if (event->type == PJSIP_EVENT_TSX_STATE)
 	{
 		sipOptionP = (SipOptionDataType *)token;
-		printf("\n code=%d",tsx->status_code);
+		//printf("\n code=%d",tsx->status_code);
 		
 		if(sipOptionP==0)
 		{

@@ -2214,7 +2214,7 @@ void profileMerge(){
 	if (credit)
 	{	
 		creditBalance = atoi(credit->txt);
-		printf("\n bal =%s ,vbal= %d",credit->txt,creditBalance);
+		//printf("\n bal =%s ,vbal= %d",credit->txt,creditBalance);
 	
 	}
 	dated = ezxml_child(xml, "dt");
@@ -3935,7 +3935,7 @@ struct CDR * getCallList()
 
 int getCreditBalance()
 {
-	printf("\n credit %d",creditBalance);
+	//printf("\n credit %d",creditBalance);
 	return creditBalance;
 }
 
