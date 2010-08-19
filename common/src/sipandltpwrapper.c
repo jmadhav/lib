@@ -2580,11 +2580,11 @@ int bMissedCallReported = 0;
 
 extern struct ltpStack *pstack;
 #define THIS_FILE	"APP"
-#define SIP_PORT1   "8060"
+#define SIP_PORT1   "9064"
 #define SIP_PORT2   "9060"
 #define SIP_PORT3   "5062"
 #define SIP_PORT4   "5060"
-#define SIP_DOMAIN	"spokn.com"
+#define SIP_DOMAIN	"sandbox.spokn.com"
 
 pjsua_acc_config acccfg;
 
@@ -3564,11 +3564,11 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	strcpy(sipOptionDataPort4.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT4);
 	sipOptionDataPort4.dataP = ps;
 	
-	ps->portCount = 4;
+	ps->portCount = 1;
     send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);    
-    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
-	send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
-    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
+   // send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
+	//send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
+   // send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
 
 	
 	if(blockB==0)
@@ -4019,7 +4019,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->stunB = 1;
 	ps->tranportID = -1;
 	ps->localAccId = -1;
-	strcpy(ps->registerUrl,"spokn.com"); 
+	strcpy(ps->registerUrl,SIP_DOMAIN); 
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
