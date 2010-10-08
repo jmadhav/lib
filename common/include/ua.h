@@ -55,11 +55,12 @@ extern "C" {
 	
 #define THREAD_PROC void * 
 	#define START_THREAD(a) {  pthread_t pt; pthread_create(&pt, 0,a,0);	 }
-
+#define THREAD_EXIT(X)        pthread_exit(X)
 #else	
 
 #define THREAD_PROC DWORD WINAPI
 #define START_THREAD(a) CreateThread(NULL, 0, (a), NULL, 0, NULL)
+#define THREAD_EXIT(X)        ExitThread(X)
 	
 #endif	
 	typedef struct LogoutStructType
@@ -273,7 +274,7 @@ extern "C" {
 	void profileSave();
 	void profileSetRedirection(int redirectTo);
 	THREAD_PROC profileReloadEverything(void *something);
-	
+	void UaThreadEnd();
 	//
 	//	Hash Key & length used by Encryption / Decryption functions
 	//
@@ -432,7 +433,6 @@ extern "C" {
 	
 	void stopAnimation();
 	char *getSupportPage();
-	void UaThreadEnd();
 	void UaThreadBegin();
 	void applicationEnd();
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
