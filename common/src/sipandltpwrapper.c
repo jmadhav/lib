@@ -23,6 +23,12 @@
 #include "sipandltpwrapper.h"
 #include <stdlib.h>
 #include <string.h>
+#ifdef _OPEN_VPN_
+#include <pthread.h>
+#endif
+
+//#include "openvpn.h"
+#define VPNMAXPATH 355 
 
 #define USERAGENT "spokn-iphone-1.0.0"
 //#define USERAGENT "ltpmobile"
@@ -2576,15 +2582,9 @@ int bMissedCallReported = 0;
 #else
 #define stricmp strcasecmp
 #endif 
-
+#define THIS_FILE	"APP"
 
 extern struct ltpStack *pstack;
-#define THIS_FILE	"APP"
-#define SIP_PORT1   "9064"
-#define SIP_PORT2   "9060"
-#define SIP_PORT3   "5062"
-#define SIP_PORT4   "5060"
-#define SIP_DOMAIN	"sandbox.spokn.com"
 
 pjsua_acc_config acccfg;
 
@@ -3514,7 +3514,10 @@ int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP)
     pjsip_endpoint *endpt;
     pj_status_t status;
     pj_str_t dst_uri;
-    
+	pj_timer_entry entry = {0};
+    pj_time_val timedel;
+	timedel.sec = 1;
+	timedel.msec = 1000;
     endpt = pjsua_get_pjsip_endpt();
 	
     str_method = pj_str(cstr_method);
@@ -3524,8 +3527,7 @@ int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP)
     pjsip_method_init_np(&method, &str_method);
 	
     status = pjsua_acc_create_request(acc_id, &method, &dst_uri, &tdata);
-	
-    status = pjsip_endpt_send_request(endpt, tdata, 200, uDataP, &tsx_callback);
+	status = pjsip_endpt_send_request(endpt, tdata, 2, uDataP, &tsx_callback);
     
     if (status != PJ_SUCCESS)
     {
@@ -3533,6 +3535,17 @@ int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP)
 		pjsua_perror(THIS_FILE, "Unable to send request", status);
 		return 1;
     }
+	/*pjsip_endpt_cancel_timer( endpt, 
+							 &entry );
+	
+	printf("\n time %d %d",entry._timer_value.sec,entry._timer_value.msec);
+	entry._timer_value.sec = 10;
+	entry._timer_value.msec = 10*1000;
+	entry._timer_id = 1;
+	pjsip_endpt_schedule_timer( endpt, 
+							   &entry,&timedel );*/
+	
+	
 	return 0;
 }
 int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
@@ -3544,33 +3557,50 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	
 	if(ps->localAccId<0)
 	{	
+		
 		pjsua_acc_add_local(ps->tranportID,PJ_TRUE,&ps->localAccId);
+		
 	}
 	ps->gotOpenPortB = 0;
+	#ifdef  _ENCRIPTION_
+	sipOptionDataPort1.errorCode = 0;
+	strcpy(sipOptionDataPort1.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT1);
+	sipOptionDataPort1.dataP = ps;
+	ps->portCount = 1;
+	send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);  
+	
+	
+	#else
+	//send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
+	//send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
+    //send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
 	sipOptionDataPort1.errorCode = 0;
 	strcpy(sipOptionDataPort1.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT1);
 	sipOptionDataPort1.dataP = ps;
 	
 	
-	sipOptionDataPort2.errorCode = 0;
-	strcpy(sipOptionDataPort2.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT2);
-	sipOptionDataPort2.dataP = ps;
+		sipOptionDataPort2.errorCode = 0;
+		strcpy(sipOptionDataPort2.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT2);
+		sipOptionDataPort2.dataP = ps;
+		
+		sipOptionDataPort3.errorCode = 0;
+		strcpy(sipOptionDataPort3.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT3);
+		sipOptionDataPort3.dataP = ps;
+		
+		
+		sipOptionDataPort4.errorCode = 0;
+		strcpy(sipOptionDataPort4.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT4);
+		sipOptionDataPort4.dataP = ps;
+		
+		ps->portCount = 4;
+		send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);  
+	    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
+		send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
+       send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
 	
-	sipOptionDataPort3.errorCode = 0;
-	strcpy(sipOptionDataPort3.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT3);
-	sipOptionDataPort3.dataP = ps;
+	#endif
 	
 	
-	sipOptionDataPort4.errorCode = 0;
-	strcpy(sipOptionDataPort4.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT4);
-	sipOptionDataPort4.dataP = ps;
-	
-	ps->portCount = 1;
-    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);    
-   // send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
-	//send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
-   // send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
-
 	
 	if(blockB==0)
 	{
@@ -3659,7 +3689,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	 cfgmedia.turn_auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
 	 cfgmedia.turn_auth_cred.data.static_cred.data = pj_str(pstack->ltpPassword);;
 	 */
-	//ps->stunB = 0;
+	ps->stunB = 0;
 //	pjsip_cfg()->regc.add_xuid_param = 1;
 
 	if(ps->stunB)
@@ -4715,5 +4745,272 @@ void Unconference(struct ltpStack *pstackP)
 	for (i=0; i < pstackP->maxSlots; ++i)
 		pstackP->call[i].InConference = 0;
 }	
+#ifdef _OPEN_VPN_
+
+vpnDataStructureType *startVpnObj;
+vpnDataStructureType *endVpnObj;
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include<arpa/inet.h>
+#include <stdio.h>
+int sockfd;//,n;
+int  sendSoc,recvSoc;
+int mymain(int port,unsigned char *data,int len)
+{
+	
+	struct sockaddr_in servaddr;//,cliaddr;
+	int er;
+	if(sockfd==0)
+	sockfd=socket(AF_INET,SOCK_DGRAM,0);
+	bzero(&servaddr,sizeof(servaddr));
+	servaddr.sin_family = AF_INET;
+	servaddr.sin_addr.s_addr=inet_addr("127.0.0.1");
+	servaddr.sin_port=port;//htons(port);
+	er = sendto(sockfd,data,len,0,(struct sockaddr *)&servaddr,sizeof(servaddr));
+	sendSoc++;
+	//close(sockfd);
+	//sockfd = 0;
+	return 0;
+	
+}
+
+unsigned int mywriteDataCallbackL (void *uData,unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,unsigned char *data,int *lenP)
+{
+	
+	char sip[32],dip[32];
+	struct in_addr x,y;
+	x.s_addr = *srchostP;
+	y.s_addr = *dsthostP;
+	//strcpy(sip,inet_ntoa(x));
+	//strcpy(dip,inet_ntoa(y));
+	//printf("\n recv %d %d %s %s   \n data= %s\n\n",ntohs(*srcportP),ntohs(*dstportP),sip,dip,data);	   
+	mymain(*dstportP,data,*lenP);
+	
+	return *lenP;
+}
+/*char 	datasend1[] ={69,0,1,157,172,154,0,0,128,17,242,158,192,168,150,6,64,39,3,65,31,124,19,196,1,137,65,101,82,69,71,73,83,84,69,82,32,115,105,112,58,115,112,111,107,110,46,99,111,109,32,83,73,80,47,50,46,48,13,10,86,105,97,58,32,83,73,80,47,50,46,48,47
+	,85,68,80,32,49,57,50,46,49,54,56,46,49,55,51,46,49,51,58,56,48,54,48,59,114,112,111,114,116,59,98,114,97,110,99,104,61,122,57,104,71,52,98,75,80,106,101,57,56,53,48,49,97,97,101,99,55,57,52,55,55,49,97,49,99,56,48,50,53,100,55,55,56,101
+	,57,97,99,51,13,10,77,97,120,45,70,111,114,119,97,114,100,115,58,32,55,48,13,10,70,114,111,109,58,32,60,115,105,112,58,49,49,50,50,51,51,52,64,115,112,111,107,110,46,99,111,109,62,59,116,97,103,61,98,51,54,97,49,52,99,55,52,101,50,56
+	,52,50,100,99,57,99,48,53,99,100,51,97,51,54,55,54,56,99,49,100,13,10,84,111,58,32,60,115,105,112,58,49,49,50,50,51,51,52,64,115,112,111,107,110,46,99,111,109,62,13,10,67,97,108,108,45,73,68,58,32,50,55,49,48,50,48,102,48,53,98,100,97,
+	52,51,49,50,98,50,100,100,52,49,53,57,57,101,56,52,101,50,100,101,13,10,67,83,101,113,58,32,51,51,55,54,53,32,82,69,71,73,83,84,69,82,13,10,67,111,110,116,97,99,116,58,32,60,115,105,112,58,49,49,50,50,51,51,52,64,49,57,50,46,49,54,56,46,
+	49,55,51,46,49,51,58,56,48,54,48,62,13,10,69,120,112,105,114,101,115,58,32,51,48,48,13,10,67,111,110,116,101,110,116,45,76,101,110,103,116,104,58,32,32,48,13,10,13,10
+};		*/		
+int globlex;
+unsigned int myreadDataCallbackL (void *uData,unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,unsigned char *data,int *lenP)
+{
+	//char *dataP;
+	vpnDataStructureType *tmpVpn;
+	//char sip[32],dip[32];
+	//struct in_addr x,y;
+	tmpVpn = startVpnObj;
+	if(tmpVpn)
+	{
+		//while(globlex) ;
+		//globlex =1;
+		startVpnObj = startVpnObj->next;
+		//printf("\nmadan");
+		if(startVpnObj==0)
+		{
+			while(globlex){ printf("\nsdbarman");sleep(1);}
+			globlex = 1;
+			endVpnObj = 0;
+			globlex = 0;
+		}
+		//globlex = 0;
+		*srchostP = tmpVpn->ipAddressSrc;
+		*srcportP = tmpVpn->portSrc;
+		*dsthostP = tmpVpn->ipAddressDst;
+		*dstportP = tmpVpn->portDst;
+		*lenP = tmpVpn->length;
+		memmove(data,tmpVpn->data,tmpVpn->length);
+		free(tmpVpn);
+		/*
+		x.s_addr = *srchostP;
+		y.s_addr = *dsthostP;
+		strcpy(sip,inet_ntoa(x));
+		strcpy(dip,inet_ntoa(y));
+		
+		printf("\n send %d %d %s %s   \n data= %s\n\n",ntohs(*srcportP),ntohs(*dstportP),sip,dip,data);
+	*/
+	}
+	//*host = inet_addr("64.39.3.65");
+	
+	//*portP = 8060;
+	//dataP = datasend1 + sizeof(struct openvpn_iphdr)+sizeof(struct openvpn_udphdr);
+	//*lenP = sizeof(datasend1) - (sizeof(struct openvpn_iphdr)+sizeof(struct openvpn_udphdr));
+	//memmove(data,dataP,*lenP);
+	
+	return *lenP;
+}
+
+int statusCallbackL(void *udata,int status)
+{
+	//printf("\n openvpn Start %d",status);
+	if(status)
+	{
+		setReadWriteCallback(0,0);
+	}
+	if(status==0)//mean success
+	{	
+		alert(0,ATTEMPT_VPN_CONNECT_SUCCESS+status,0);
+	}
+	else
+	{
+		alert(0,ATTEMPT_VPN_CONNECT_SUCCESS+status,strdup("can not connect to open vpn"));
+	}
+	return 0;
+	
+}
+//pjsip call back
+int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,unsigned char *data,int *lenP)
+{
+	unsigned char *sipP;
+	//char sip[32],dip[32];
+	//struct in_addr x,y;
+	unsigned int lsrchost;
+	unsigned short lsrcport;
+	//printf("\nshankarjaikishan");
+	if(srchostP==0)
+	{
+		srchostP = &lsrchost;
+	}
+	if(srcportP==0)
+	{
+		srcportP = &lsrcport;
+	}
+	if(dsthostP==0)
+	{
+		dsthostP = &lsrchost;
+	}
+	if(dstportP==0)
+	{
+		dstportP = &lsrcport;
+	}
+	
+	sipP = readDataInterface(data,*lenP,srchostP,srcportP,dsthostP,dstportP,lenP);
+	if(sipP)
+	{
+		memmove(data,sipP,*lenP);
+		free(sipP);
+		recvSoc++;
+	}	
+	/*else
+	{
+		*lenP = -1;
+	}*/
+	//x.s_addr = *srchostP;
+	//y.s_addr = *dsthostP;
+	//strcpy(sip,inet_ntoa(x));
+	//strcpy(dip,inet_ntoa(y));
+	//printf("\n recv %d %d %s %s    ",ntohs(*srcportP),ntohs(*dstportP),sip,dip);	   
+	
+	//printf("\nsdbarman");
+	//*lenP= -1;
+	return *lenP;
+	
+}
+int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP)
+{
+	vpnDataStructureType *tmpVpn;
+	tmpVpn = malloc(sizeof(vpnDataStructureType));
+	memmove(tmpVpn->data,data,*lenP);
+	tmpVpn->ipAddressSrc = *srchostP;
+	tmpVpn->portSrc = *srcportP;
+	tmpVpn->ipAddressDst = *dsthostP;
+	tmpVpn->portDst = *dstportP;
+	tmpVpn->length = *lenP;
+	tmpVpn->next = 0;
+	//while(startVpnObj)sleep(1);
+	if(startVpnObj==0)
+	{
+		while(globlex){ printf("\ndilip");sleep(1);}
+		globlex = 1;
+		startVpnObj = endVpnObj = tmpVpn;
+		globlex = 0;
+		
+	}
+	else {
+		//printf("\n test 123");
+		if(endVpnObj==0)
+		{
+			while(globlex){ printf("\nmukesh");sleep(1);}
+			globlex = 1;
+			startVpnObj = endVpnObj = tmpVpn;
+			globlex = 0;
+		}
+		else
+		{	
+			endVpnObj->next =  tmpVpn;
+			endVpnObj = tmpVpn;
+		}	
+		
+	}
+	
+	//genrateReadSignalInterface();
+	return 0;
+	
+	//vpnDataStructureP
+}
+
+int mytestVPN(void *uDataP)
+{
+	char *pathP = 0;//(char*)uDataP;
+	struct ltpStack *pstackP;
+	pstackP = (struct ltpStack *)uDataP;
+	//OpenvpnInterfaceType openVpn;
+	//strcpy(openVpn.confFile,"/Users/mukesh/mygit/myvpnlibrary/staticopenvpnssl/sandbox.ovpn");
+	//printf("\n path %s\n",pathP);
+	vpnInitAndCallInterface(pstackP->openopvnFileP,uDataP,myreadDataCallbackL,mywriteDataCallbackL,statusCallbackL);
+	return 0;
+	
+	
+}
+
+#define OPVN_SERVER "sandbox.spokn.com"
+#define OPVN_PORT 1935
+#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
+
+void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
+{
+	
+	
+	pthread_t pt;
+	FILE *fp;
+	char *opvnData,*sendpathP;
+	setReadWriteCallback(readSipDataCallback,writeSipDataCallback);
+	opvnData = malloc(2000);
+	memset(opvnData,0,2000);
+	sprintf(opvnData,OPVNFILE,OPVN_SERVER,OPVN_PORT,rscPath,rscPath,rscPath);
+	sendpathP =(char*) malloc(strlen(pathP)+10);
+	strcpy(sendpathP,pathP);
+	strcat(sendpathP,"/sandbox.opvn");
+	fp = fopen(sendpathP,"w");
+	if(fp)
+	{
+		fwrite(opvnData,strlen(opvnData)+1,1,fp);
+		//printf("\n%s\n",opvnData);
+		fclose(fp);
+	}
+	
+	free(opvnData);
+	pstackP->openopvnFileP = sendpathP;
+	pthread_create(&pt, 0,mytestVPN,pstackP);
+		
+	
 
 
+}
+
+void setDevPath(unsigned char *pathP)
+{
+	setTurnPathInterface(pathP);
+}
+#else
+void setDevPath(unsigned char *pathP)
+{
+}
+void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
+{
+}
+#endif

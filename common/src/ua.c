@@ -1674,7 +1674,7 @@ static void vmsDownload()
 			if (!strcmp(data, "\r\n"))
 				break;
 		}
-		
+		printf("\npath=%s\n\n",pathname);
 		//prepare to download gsm
 		pfIn = fopen(pathname, "wb");
 		if (!pfIn){
@@ -1710,8 +1710,12 @@ static void vmsDownload()
 				count += 2;
 			}
 			else{ // read it in fixed blocks of data
+				int szcount = 0;
 				while (1){
+					printf("\n resv st  ");
 					length = recv(sock, data, sizeof(data), 0);
+					szcount = szcount +length;
+					printf(" size = %d	end  ",szcount);
 					if (length > 0)
 						fwrite(data, length, 1, pfIn);
 					else 
@@ -2458,6 +2462,7 @@ THREAD_PROC profileDownload(void *extras)
 	int	byteCount = 0;
 	int error=0;
 	unsigned long timeStart, timeFinished, timeTaken;
+	printf("\n thread start");
    	if (busy > 0 || GthreadTerminate==1 || !strlen(pstack->ltpUserid))
 	{	
 	/*#ifdef _MACOS_
@@ -2720,7 +2725,7 @@ THREAD_PROC profileDownload(void *extras)
 	#ifdef _MACOS_
 		UaThreadEnd();
 	#endif
-	
+	printf("\n thread end");
 
 	return 0;
 }

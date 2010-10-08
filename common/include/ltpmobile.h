@@ -688,6 +688,7 @@ struct ltpStack
 		int writeLogB;
 		char logfile[260];
 	#endif
+	char *openopvnFileP;
 };
 
 

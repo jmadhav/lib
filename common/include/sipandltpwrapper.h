@@ -22,11 +22,44 @@
 //#define SRV_RECORD
 #define ATTEMPT_LOGIN_ERROR      6015 
 #define ATTEMPT_LOGIN_ON_OPEN_PORT 6016
+#define ATTEMPT_VPN_CONNECT_SUCCESS 6017
+#define ATTEMPT_VPN_CONNECT_UNSUCCESS 6018
+#define ATTEMPT_VPN_CONNECT_EXIT 6019
+
 #define MAXTIMEOUT 300
 #include "ltpmobile.h"
+#ifdef _OPEN_VPN_
+#include "openvpninterface.h"
+#endif
+//#define _ENCRIPTION_
+#ifdef _ENCRIPTION_
+#define SIP_PORT1   "9065"
+#define SIP_DOMAIN	"174.143.168.31"
+#else
+
+
+#define SIP_PORT1   "8060"
+#define SIP_PORT2   "9060"
+#define SIP_PORT3   "5062"
+#define SIP_PORT4   "5060"
+#define SIP_DOMAIN	"spokn.com"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif 
+typedef struct vpnDataStructureType
+	{
+		unsigned char data[1500];
+		int  length;
+		int ipAddressSrc;
+		int portSrc;
+
+		int ipAddressDst;
+		int portDst;
+		struct vpnDataStructureType *next;
+		
+	}vpnDataStructureType;
 typedef struct SipOptionDataType
 	{
 		char connectionUrl[100];
@@ -64,7 +97,15 @@ char *getLogFile(struct ltpStack *ps);
 int setSoundDev(int input,  int output,int bVal);
 void reInitAudio();
 int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB);
-	int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP);	
+int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP);	
+typedef unsigned int (*readwriteSipDataCallback1 )(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dstHostP,unsigned short *dstPortP ,unsigned char *data,int *lenP);
+extern void setReadWriteCallback(readwriteSipDataCallback1 readSipDataCallbackP,readwriteSipDataCallback1 writeDataCallP );
+
+int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
+void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath);
+int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
+	void setDevPath(unsigned char *pathP);
+	
 #ifdef __cplusplus
 }
 #endif 
