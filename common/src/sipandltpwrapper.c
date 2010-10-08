@@ -3815,7 +3815,7 @@ int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 }
 
 int setSoundDev(int input, int output,int bVal)
-{
+{	pj_status_t status ;
 	if(bVal)
 	{
 		int in,out;
@@ -3823,7 +3823,7 @@ int setSoundDev(int input, int output,int bVal)
 		if(in==input && out==output)
 			return 1;
 	}
-	pj_status_t status = pjsua_set_snd_dev(input, output);
+	 status = pjsua_set_snd_dev(input, output);
 	if(status==PJ_SUCCESS)
 		printf("Success");
 	else
@@ -4256,8 +4256,9 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	
 	char	struri[128];
 	pj_str_t uri;
+	int ercode = PJ_SUCCESS;
 	struct Call *pc;
-	pjsua_call_id call_id;
+	pjsua_call_id call_id=0;
 	err = 0;
 	pc = sip_callFindIdle(pstack);
 	if (!pc){
@@ -4287,7 +4288,9 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 		strcpy(struri, remoteid);
 
 	uri = pj_str(struri);
-	if (pjsua_call_make_call(pjsua_acc_get_default(), &uri, 0, NULL, NULL, &call_id) == PJ_SUCCESS){
+	ercode = pjsua_call_make_call(pjsua_acc_get_default(), &uri, 0, NULL, NULL, &call_id);
+	//ercode = 12345;
+	if (ercode == PJ_SUCCESS){
 		strcpy(pc->remoteUserid, remoteid);
 		pc->ltpSession = (unsigned int) call_id;
 		pc->ltpState = CALL_RING_SENT;
@@ -4314,8 +4317,8 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 
 	if(err)
 	{
-		
-		alert(pc->lineId, ALERT_CALL_NOT_START, 0);
+		pc->ltpState=CALL_IDLE;
+		alert(ercode, ALERT_CALL_NOT_START, 0);
 		return -1;
 	}
 	

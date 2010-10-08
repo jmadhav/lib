@@ -62,6 +62,9 @@ int oldSetting = -1;
 int bkupsettingType = -1; //backup of last known settingType;
 #ifdef _MACOS_
 int uniqueIDContact,uniqueIDVmail,uniqueIDCalllog;
+
+UACallBackType uaCallBackObject;
+
 #endif
 
 #ifdef _MAC_OSX_CLIENT_
@@ -440,10 +443,10 @@ end:
 		threadStopped();
 	#endif
 		busy = 0;
-	#ifdef _MACOS_
+	//#ifdef _MACOS_
 		UaThreadEnd();
-		pthread_exit(0);
-	#endif
+		THREAD_EXIT(0);
+	//#endif
 		//GthreadTerminate = 0;
 	}
 	return byteCount;
@@ -1710,14 +1713,18 @@ static void vmsDownload()
 				count += 2;
 			}
 			else{ // read it in fixed blocks of data
-				int szcount = 0;
 				while (1){
-					printf("\n resv st  ");
+					
 					length = recv(sock, data, sizeof(data), 0);
-					szcount = szcount +length;
-					printf(" size = %d	end  ",szcount);
 					if (length > 0)
+					{
 						fwrite(data, length, 1, pfIn);
+						if(length<sizeof(data))
+						{
+							count += length;
+							goto end;
+						}
+					}
 					else 
 						goto end;
 					count += length;
@@ -1746,10 +1753,10 @@ static void vmsDownload()
 		threadStopped();
 	#endif
 		busy = 0;
-		#ifdef _MACOS_
+		//#ifdef _MACOS_
 			UaThreadEnd();
-			pthread_exit(0); 
-		#endif
+			THREAD_EXIT(0); 
+		//#endif
 		//GthreadTerminate = 0;
 	}
 	
@@ -2722,12 +2729,27 @@ THREAD_PROC profileDownload(void *extras)
 	#ifdef _MAC_OSX_CLIENT_
 			threadStopped();
 	#endif
-	#ifdef _MACOS_
+	//#ifdef _MACOS_
 		UaThreadEnd();
-	#endif
-	printf("\n thread end");
+	//#endif
+	
+
 
 	return 0;
+}
+void UaThreadEnd()
+{
+	if(appTerminateB==0)
+	{	
+		if(clearProfileB)
+		{
+			
+			profileClear();
+		}	
+		#ifdef _MACOS_
+			uaCallBackObject.alertNotifyP(UA_ALERT,0,END_THREAD,(unsigned long)uaCallBackObject.uData,0);
+		#endif
+	}	
 }
 void loggedOut()
 {
@@ -3003,7 +3025,7 @@ int encode(unsigned s_len, char *src, unsigned d_len, char *dst)
     {
 		unsigned long int sr;
 		unsigned byte;
-		
+		sr=0;
 		for (byte = 0; (byte<3)&&(triad+byte<s_len); ++byte)
 		{
 			sr <<= 8;
@@ -3037,7 +3059,7 @@ int encode(unsigned s_len, char *src, unsigned d_len, char *dst)
 
 	
 #ifdef _MACOS_
-UACallBackType uaCallBackObject;
+//UACallBackType uaCallBackObject;
 
 	#ifdef	_MAC_OSX_CLIENT_
 	int getThreadState()
@@ -3089,18 +3111,7 @@ void UaThreadBegin()
 {
 	uaCallBackObject.alertNotifyP(UA_ALERT,0,BEGIN_THREAD,(unsigned long)uaCallBackObject.uData,0);
 }
-void UaThreadEnd()
-{
-	if(appTerminateB==0)
-	{	
-		if(clearProfileB)
-		{
-			
-			profileClear();
-		}	
-		uaCallBackObject.alertNotifyP(UA_ALERT,0,END_THREAD,(unsigned long)uaCallBackObject.uData,0);
-	}	
-}
+
 void stopAnimation()
 {
 	uaCallBackObject.alertNotifyP(UA_ALERT,0,STOP_ANIMATION,(unsigned long)uaCallBackObject.uData,0);
