@@ -2580,6 +2580,10 @@ int bMissedCallReported = 0;
 
 extern struct ltpStack *pstack;
 #define THIS_FILE	"APP"
+#define SIP_PORT1   "8060"
+#define SIP_PORT2   "9060"
+#define SIP_PORT3   "5062"
+#define SIP_PORT4   "5060"
 #define SIP_DOMAIN	"spokn.com"
 
 pjsua_acc_config acccfg;
@@ -3143,6 +3147,12 @@ static void sip_on_call_media_state(pjsua_call_id call_id)
 		}
 	}
 }
+static void sip_on_net_type(const pj_stun_nat_detect_result *res)
+{
+	printf("\n net type %s %s\n",res->status_text,res->nat_type_name);
+
+
+}
 
 static void sip_on_reg_state(pjsua_acc_id acc_id)
 {
@@ -3211,7 +3221,8 @@ void       callbackpjsip(int level, const char *data, int len)
 int sip_spokn_pj_Create(struct ltpStack *ps)
 {
 	pj_status_t status;
-		
+	
+	pjsua_destroy();
 	status = pjsua_create();
 	
 	if (status != PJ_SUCCESS){
@@ -3423,11 +3434,170 @@ void setLog(struct ltpStack *ps, int onB,char *pathP)
 #endif
 
 }
+void  tsx_callback(void *token, pjsip_event *event)
+{
+	
+    //pj_status_t status;
+	SipOptionDataType *sipOptionP;
+	struct ltpStack *lpsP;
+	char *tmpPtr = 0;
+	
+    //pjsip_regc *regc = (pjsip_regc*) token;
+    pjsip_transaction *tsx = event->body.tsx_state.tsx;
+	
+	if (event->type == PJSIP_EVENT_TSX_STATE)
+	{
+		sipOptionP = (SipOptionDataType *)token;
+		//printf("\n code=%d",tsx->status_code);
+		
+		if(sipOptionP==0)
+		{
+			return ;
+		}
+		lpsP = sipOptionP->dataP;
+		if(lpsP->gotOpenPortB==1)
+		{
+			return ;
+		}
+		sipOptionP->errorCode = 0;
+		if(tsx->status_code ==408)//mean error
+		{
+			sipOptionP->errorCode = 1;
+			lpsP->portCount--;
+			if(lpsP->portCount==0)
+			{	
+				alert(0,ATTEMPT_LOGIN_ERROR, strdup("sip ports are blocked"));
+			}	
+			//alertNotifyP(ATTEMPT_LOGIN_ERROR,er,0,ltpInterfaceP->userData,strdup(errorstring));
+			return;
+		}
+		lpsP->gotOpenPortB = 1;
+		tmpPtr = strstr(sipOptionP->connectionUrl,":");
+		if(tmpPtr)
+		{	
+			strcpy(lpsP->registerUrl,tmpPtr+1);//remove sip:
+		}
+		else {
+			strcpy(lpsP->registerUrl,sipOptionP->connectionUrl);//remove sip:
+		}
+
+		printf("url %s",lpsP->registerUrl);
+		/* Ignore provisional response, if any */
+		if (tsx->status_code < 200)
+			return;
+		
+		if (event->body.tsx_state.type == PJSIP_EVENT_RX_MSG &&
+			(tsx->status_code == 501)) 
+		{
+		//	pjsip_rx_data *rdata = event->body.tsx_state.src.rdata;
+			
+			PJ_LOG(4,(THIS_FILE, "Method Not Supported Here"));
+			
+		}
+		alert(0, ATTEMPT_LOGIN_ON_OPEN_PORT, 0);
+		
+	}
+	
+	
+}
+
+
+/*
+ * Send arbitrary request to remote host
+ */
+extern unsigned int sleep(unsigned int);
+int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP)
+{
+    pj_str_t str_method;
+    pjsip_method method;
+    pjsip_tx_data *tdata;
+    pjsip_endpoint *endpt;
+    pj_status_t status;
+    pj_str_t dst_uri;
+    
+    endpt = pjsua_get_pjsip_endpt();
+	
+    str_method = pj_str(cstr_method);
+	
+    dst_uri = pj_str(ldst_uriP);
+	
+    pjsip_method_init_np(&method, &str_method);
+	
+    status = pjsua_acc_create_request(acc_id, &method, &dst_uri, &tdata);
+	
+    status = pjsip_endpt_send_request(endpt, tdata, 200, uDataP, &tsx_callback);
+    
+    if (status != PJ_SUCCESS)
+    {
+		printf("error in port assign");
+		pjsua_perror(THIS_FILE, "Unable to send request", status);
+		return 1;
+    }
+	return 0;
+}
+int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
+{
+	static SipOptionDataType sipOptionDataPort1;
+	static SipOptionDataType sipOptionDataPort2;
+	static SipOptionDataType sipOptionDataPort3;
+	static SipOptionDataType sipOptionDataPort4;
+	
+	if(ps->localAccId<0)
+	{	
+		pjsua_acc_add_local(ps->tranportID,PJ_TRUE,&ps->localAccId);
+	}
+	ps->gotOpenPortB = 0;
+	sipOptionDataPort1.errorCode = 0;
+	strcpy(sipOptionDataPort1.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT1);
+	sipOptionDataPort1.dataP = ps;
+	
+	
+	sipOptionDataPort2.errorCode = 0;
+	strcpy(sipOptionDataPort2.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT2);
+	sipOptionDataPort2.dataP = ps;
+	
+	sipOptionDataPort3.errorCode = 0;
+	strcpy(sipOptionDataPort3.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT3);
+	sipOptionDataPort3.dataP = ps;
+	
+	
+	sipOptionDataPort4.errorCode = 0;
+	strcpy(sipOptionDataPort4.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT4);
+	sipOptionDataPort4.dataP = ps;
+	
+	ps->portCount = 4;
+    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);    
+    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
+	send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
+    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
+
+	
+	if(blockB==0)
+	{
+		return 0;
+	}
+	while(ps->gotOpenPortB==0) 
+	{
+		if(ps->portCount==0)//mean both port are blocked error
+		{
+			strcpy(errorstring, "port blocked");
+			
+			return 4;
+		}
+		sleep(1);
+	}
+	return 0;
+	
+	
+}
+
+
 int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 {
 	
 	
 	//char *hostP;
+	
 	pjsua_config cfg;
 	pjsua_logging_config log_cfg;
 	pj_status_t status;
@@ -3446,6 +3616,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	cfg.cb.on_call_media_state = &sip_on_call_media_state;
 	cfg.cb.on_call_state = &sip_on_call_state;
 	cfg.cb.on_reg_state = &sip_on_reg_state;
+	//cfg.cb.on_nat_detect = sip_on_net_type;
 	
 	ps->pjpool = pjsua_pool_create("pjsua", 2000, 2000);
 	//pj_str(
@@ -3527,9 +3698,9 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 				pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 							 "stun.spokn.com");
-			/*	pj_strdup2_with_null(ps->pjpool, 
+				/*pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.outbound_proxy[cfg.outbound_proxy_cnt++]), 
-							 "sip:192.168.175.102:5060");*/
+							 "sip:192.168.173.122:5060");*/
 		
 		
 		/*pj_strdup2_with_null(ps->pjpool, 
@@ -3551,14 +3722,14 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	status = pjsua_init(&cfg, &log_cfg, &cfgmedia);
 	if (status != PJ_SUCCESS){
 		strcpy(errorstring, "Error in pjsua_init()");
-		return 0;
+		return 1;
 	}
 	
 	
 	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
 	{
-		
-		return 0;
+		strcpy(errorstring, "Error in sip_set_udp_transport");
+		return 2;
 	}	
 #ifdef _SPEEX_CODEC_
 	{
@@ -3589,11 +3760,11 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
     status = pjsua_start();
 	if (status != PJ_SUCCESS){ 
 		strcpy(errorstring, "Error starting pjsua");
-		return 0;
+		return 3;
 	}
 	
     pjsua_detect_nat_type();
-	return 1;
+	return 0;
 	
 }
 int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
@@ -3848,6 +4019,8 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->updateTimingAdvance = 0;
 	ps->stunB = 1;
 	ps->tranportID = -1;
+	ps->localAccId = -1;
+	strcpy(ps->registerUrl,"spokn.com"); 
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
@@ -3950,7 +4123,8 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 
 		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
 		//acccfg.id = pj_str(url);
-		acccfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
+		sprintf(ps->registerURI,"sip:%s",ps->registerUrl);	
+		acccfg.reg_uri = pj_str(ps->registerURI);
 		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
 		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;
@@ -4066,17 +4240,17 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 	{	
 		if(strstr(remoteid,"+"))
 		{
-			sprintf(struri, "sip:%s@spokn.com", remoteid);
+			sprintf(struri, "sip:%s@%s", remoteid,ps->registerUrl);
 		}
 		else
 		{	
 			if(strlen(remoteid)<6)//this changes is temp
 			{
-				sprintf(struri, "sip:%s@spokn.com", remoteid);
+				sprintf(struri, "sip:%s@%s", remoteid,ps->registerUrl);
 			}
 			else
 			{	
-				sprintf(struri, "sip:+%s@spokn.com", remoteid);
+				sprintf(struri, "sip:+%s@%s",remoteid, ps->registerUrl);
 			}	
 		}	
 	}

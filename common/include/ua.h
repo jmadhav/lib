@@ -435,6 +435,7 @@ extern "C" {
 	char *getSupportPage();
 	void UaThreadBegin();
 	void applicationEnd();
+	char* getencryptedPassword();
 #define	IDS_LTP_SERVERIP	"www.spokn.com"
 #define _FORWARD_VMS_
 #ifdef __cplusplus

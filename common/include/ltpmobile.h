@@ -562,6 +562,7 @@ struct Contact{
 #define LOGIN_STATUS_TRYING_LOGOUT 105
 #define LOGIN_STATUS_BUSY_OTHERDEVICE 106
 #define LOGIN_STATUS_TIMEDOUT	107
+#define LOGIN_STATUS_SIP_BLOCKED 108
 #else
 	
 #define LOGIN_STATUS_OFFLINE 0
@@ -678,6 +679,11 @@ struct ltpStack
 	int randVariable;
 	int lport;
 	char* idBlock;
+	char registerUrl[60];
+	char registerURI[60];
+	int gotOpenPortB;
+	int portCount;
+	int localAccId;
 	#ifdef _PJSIP_LOG_
 		int writeLogB;
 		char logfile[260];
@@ -732,7 +738,7 @@ struct Message{
 #define ALERT_SERVERMSG 19
 #define ALERT_LOGIN_STATUS_CHANGED 20
 #define ALERT_CALL_STATUS_CHANGED 21
-
+#define ALERT_SIP_INTIALIZED 22
 /* sub versions by date */
 #define UA_SUBVERSION 010000x
 #define LTP_MAX_RETRY 3

@@ -1815,8 +1815,8 @@ void profileSave(){
 	
 	fputs("<?xml version=\"1.0\"?>\n", pf);
 	//Now that password is stored encrypted, <password> tag is replaced by <encpassword>
-	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <encpassword>%s</encpassword>\n <server>%s</server>\n",
-			pstack->ltpUserid, lastUpdate, szEncPass, pstack->ltpServerName);
+	fprintf(pf, "<profile>\n <u>%s</u>\n <dt>%lu</dt>\n <encpassword>%s</encpassword>\n <server>%s</server><t>%s</t>\n",
+			pstack->ltpUserid, lastUpdate, szEncPass, pstack->ltpServerName,myTitle);
 	
 	if (strlen(fwdnumber))
 		fprintf(pf, "<fwd>%s</fwd>\n", fwdnumber);
@@ -1977,7 +1977,9 @@ void profileLoad()
 			strcpy(pstack->ltpPassword, (char*)szData); 
 		}
 	}
-	
+	title = ezxml_child(xml, "t");
+	if (title)
+		strcpy(myTitle, title->txt);
 	server = ezxml_child(xml,"server");
 	if(server && strlen(server->txt))
 		strcpy(pstack->ltpServerName, server->txt);
@@ -2220,8 +2222,11 @@ void profileMerge(){
 		}
 	}	credit = ezxml_child(xml, "cr");
 	if (credit)
+	{	
 		creditBalance = atoi(credit->txt);
+		//printf("\n bal =%s ,vbal= %d",credit->txt,creditBalance);
 	
+	}
 	dated = ezxml_child(xml, "dt");
 	if (dated)
 		lastUpdate = (unsigned long)atol(dated->txt);
@@ -3943,6 +3948,7 @@ struct CDR * getCallList()
 
 int getCreditBalance()
 {
+	//printf("\n credit %d",creditBalance);
 	return creditBalance;
 }
 
@@ -3969,6 +3975,61 @@ void applicationEnd()
 	{
 		sleep(1);
 	}
+}
+char* getencryptedPassword()
+{
+	/*
+	 spoknid*pin*bpartyno.
+	 where
+	 spoknid : seven digit spokn id
+	 e.g. 1234567
+	 pin : 1st 5 digit(md5(pwd))
+	 e.g. md5(vel) = d41d8cd98f00b204e9800998ecf8427e
+	 1st 5 digit of md5 = d41d8
+	 replace a = 6, b = 5, c = 4, d = 3, e = 2, f = 1(digit more than 9 subtract it with 16)
+	 so the pin = 34138
+	 bpartyno = 919821988975
+	 */ 
+	struct	MD5Context	md5;
+	unsigned char	digest[16];
+	char password[40];
+	char hex[33];
+	char newpass[6];
+	int ch;
+	memset(newpass, 0, sizeof(newpass));
+	memset(hex, 0, sizeof(hex));
+	memset(digest, 0, sizeof(digest));
+	memset(password, '\0', sizeof(password));
+	memset(&md5, 0, sizeof(md5));
+	strcpy((char*)password,pstack->ltpPassword);
+	MD5Init(&md5);
+	MD5Update(&md5, (char unsigned *)password, strlen(password), 0);
+	MD5Final(digest,&md5);
+	md5ToHex(digest,hex);
+	//printf("\n%s\n\n",hex);
+	int i;	
+	for(i=0;i<5;i++)
+	{
+		newpass[i]=hex[i];
+				if( newpass[i] > '9' )
+		 {
+			 if( newpass[i]<'a')
+			 {	 
+				 ch = 6 - (newpass[i]-65);//ascii value of A
+			 }
+			 else {
+				  ch = 6 - (newpass[i]-97);//ascii value of a
+			 }
+			 newpass[i] = ch + 48;
+
+		 }									
+	}
+	return strdup(newpass);
+	// printf("\n%s\n",newpass);
+	//char *retVal;
+	//retVal=malloc(sizeof(newpass));
+	//strcpy(retVal,newpass);
+	//return retVal;
 }
 
 #endif
