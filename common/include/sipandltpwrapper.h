@@ -33,11 +33,12 @@
 #endif
 //#define _ENCRIPTION_
 #ifdef _ENCRIPTION_
-#define SIP_PORT1   "9065"
+#define DEFAULT_SIP_PORT  "9065"
+#define SIP_PORT1   DEFAULT_SIP_PORT
 #define SIP_DOMAIN	"174.143.168.31"
 #else
 
-
+#define DEFAULT_SIP_PORT  "5060"
 #define SIP_PORT1   "8060"
 #define SIP_PORT2   "9060"
 #define SIP_PORT3   "5062"

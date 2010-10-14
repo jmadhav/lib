@@ -3614,7 +3614,9 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 			
 			return 4;
 		}
-		sleep(1);
+		#ifdef _MACOS_	
+			sleep(1);
+		#endif
 	}
 	return 0;
 	
@@ -3689,7 +3691,7 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 	 cfgmedia.turn_auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
 	 cfgmedia.turn_auth_cred.data.static_cred.data = pj_str(pstack->ltpPassword);;
 	 */
-	ps->stunB = 0;
+	//ps->stunB = 0;
 //	pjsip_cfg()->regc.add_xuid_param = 1;
 
 	if(ps->stunB)
@@ -3770,19 +3772,20 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 		 
 		 */
 		//int x;
+		
 		pj_str_t tmp1;
 		//pjsua_codec_set_priority(pj_cstr(&tmp1, "speex"), PJMEDIA_CODEC_PRIO_HIGHEST);
 		
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/8000"), PJMEDIA_CODEC_PRIO_HIGHEST );
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/16000"), PJMEDIA_CODEC_PRIO_NEXT_HIGHER);
-		//pjsua_codec_set_priority(pj_cstr(&tmp1, "ilbc"), 250);
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "ilbc"), 0);
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "speex/32000"), 0);
 		
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcmu"), 0);
 		
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcma"), 0);
 		
-		//pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "G722"), 0);
 	}
 #endif	
 	
@@ -3944,6 +3947,7 @@ int sip_mac_init(struct ltpStack *ps, char *errorstring)
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "pcma"), 0);
 	 
 	 pjsua_codec_set_priority(pj_cstr(&tmp, "ilbc"), 0);
+	  pjsua_codec_set_priority(pj_cstr(&tmp, "g722"), 0);
 	
 	//pjsua_codec_set_priority(pj_cstr(&tmp, "gsm"), 0);
 #endif	
@@ -4050,7 +4054,8 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->stunB = 1;
 	ps->tranportID = -1;
 	ps->localAccId = -1;
-	strcpy(ps->registerUrl,SIP_DOMAIN); 
+	sprintf(ps->registerUrl,"%s:%s",SIP_DOMAIN,DEFAULT_SIP_PORT);
+	//strcpy(ps->registerUrl,SIP_DOMAIN); 
 	ps->maxSlots = maxslots;
 	ps->call = (struct Call *) malloc(sizeof(struct Call) * maxslots);
 	if (!ps->call)
@@ -4151,7 +4156,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		}	
 		acccfg.id.ptr = (char*) ps->idBlock;
 
-		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, SIP_DOMAIN);
+		acccfg.id.slen = sprintf(acccfg.id.ptr, "sip:%s@%s", ps->ltpUserid, ps->registerUrl);
 		//acccfg.id = pj_str(url);
 		sprintf(ps->registerURI,"sip:%s",ps->registerUrl);	
 		acccfg.reg_uri = pj_str(ps->registerURI);
@@ -4280,7 +4285,8 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 			}
 			else
 			{	
-				sprintf(struri, "sip:+%s@%s",remoteid, ps->registerUrl);
+				//sprintf(struri, "sip:+%s@%s",remoteid, ps->registerUrl);
+				sprintf(struri, "sip:%s@%s",remoteid, ps->registerUrl);
 			}	
 		}	
 	}
