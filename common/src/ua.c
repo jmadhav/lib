@@ -1719,11 +1719,7 @@ static void vmsDownload()
 					if (length > 0)
 					{
 						fwrite(data, length, 1, pfIn);
-						if(length<sizeof(data))
-						{
-							count += length;
-							goto end;
-						}
+						
 					}
 					else 
 						goto end;
