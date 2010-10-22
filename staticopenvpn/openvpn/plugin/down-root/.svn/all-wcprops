@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/down-root
+END
+down-root.c
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/down-root/down-root.c
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/down-root/README
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/down-root/Makefile
+END

@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/examples
+END
+build
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/examples/build
+END
+log.c
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/examples/log.c
+END
+simple.def
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/examples/simple.def
+END
+simple.c
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/examples/simple.c
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/examples/README
+END
+winbuild
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/plugin/examples/winbuild
+END

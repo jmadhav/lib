@@ -1,0 +1,101 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo
+END
+lzo1f.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1f.h
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/Makefile.in
+END
+lzoutil.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzoutil.h
+END
+lzo_asm.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo_asm.h
+END
+lzodefs.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzodefs.h
+END
+lzoconf.h
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzoconf.h
+END
+lzo1x.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1x.h
+END
+lzo1y.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1y.h
+END
+lzo1z.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1z.h
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/Makefile.am
+END
+lzo1.h
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1.h
+END
+lzo1a.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1a.h
+END
+lzo2a.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo2a.h
+END
+lzo1b.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1b.h
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/Makefile
+END
+lzo1c.h
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/lzo/lzo1c.h
+END

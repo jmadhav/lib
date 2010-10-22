@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/openssl
+END
+openssl097.patch
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/openssl/openssl097.patch
+END
+openssl098.patch
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/openssl/openssl098.patch
+END
+README.txt
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/openssl/README.txt
+END

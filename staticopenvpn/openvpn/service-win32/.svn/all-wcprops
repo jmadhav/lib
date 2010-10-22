@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/212/trunk/third_party/openvpn/service-win32
+END
+service.c
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/212/trunk/third_party/openvpn/service-win32/service.c
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/service-win32/Makefile.in
+END
+openvpnserv.c
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/212/trunk/third_party/openvpn/service-win32/openvpnserv.c
+END
+service.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/212/trunk/third_party/openvpn/service-win32/service.h
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/service-win32/Makefile.am
+END

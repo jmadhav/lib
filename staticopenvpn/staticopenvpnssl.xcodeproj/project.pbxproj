@@ -1,0 +1,1169 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8B1CD683124A51AF005BD799 /* staticopenvpnssl_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* staticopenvpnssl_Prefix.pch */; };
+		8B1CD684124A51AF005BD799 /* base64.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D586F12422B1500924DA5 /* base64.h */; };
+		8B1CD685124A51AF005BD799 /* basic.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587012422B1500924DA5 /* basic.h */; };
+		8B1CD686124A51AF005BD799 /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587212422B1500924DA5 /* buffer.h */; };
+		8B1CD687124A51AF005BD799 /* circ_list.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587312422B1500924DA5 /* circ_list.h */; };
+		8B1CD688124A51AF005BD799 /* common.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587412422B1500924DA5 /* common.h */; };
+		8B1CD689124A51AF005BD799 /* config-win32.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587512422B1500924DA5 /* config-win32.h */; };
+		8B1CD68A124A51AF005BD799 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587612422B1500924DA5 /* config.h */; };
+		8B1CD68B124A51AF005BD799 /* crypto.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587812422B1500924DA5 /* crypto.h */; };
+		8B1CD68C124A51AF005BD799 /* cryptoapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D589D12422BDC00924DA5 /* cryptoapi.h */; };
+		8B1CD68D124A51AF005BD799 /* dhcp.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A012422BDC00924DA5 /* dhcp.h */; };
+		8B1CD68E124A51AF005BD799 /* errlevel.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A112422BDC00924DA5 /* errlevel.h */; };
+		8B1CD68F124A51AF005BD799 /* error.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A312422BDC00924DA5 /* error.h */; };
+		8B1CD690124A51AF005BD799 /* event.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A512422BDC00924DA5 /* event.h */; };
+		8B1CD691124A51AF005BD799 /* fdmisc.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A712422BDC00924DA5 /* fdmisc.h */; };
+		8B1CD692124A51AF005BD799 /* forward-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A812422BDC00924DA5 /* forward-inline.h */; };
+		8B1CD693124A51AF005BD799 /* forward.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58AA12422BDC00924DA5 /* forward.h */; };
+		8B1CD694124A51AF005BD799 /* fragment.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58AC12422BDC00924DA5 /* fragment.h */; };
+		8B1CD695124A51AF005BD799 /* gremlin.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58AE12422BDC00924DA5 /* gremlin.h */; };
+		8B1CD696124A51AF005BD799 /* helper.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B012422BDC00924DA5 /* helper.h */; };
+		8B1CD697124A51AF005BD799 /* ieproxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B212422BDC00924DA5 /* ieproxy.h */; };
+		8B1CD698124A51AF005BD799 /* init.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B412422BDC00924DA5 /* init.h */; };
+		8B1CD699124A51AF005BD799 /* integer.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B512422BDC00924DA5 /* integer.h */; };
+		8B1CD69A124A51AF005BD799 /* interval.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B712422BDC00924DA5 /* interval.h */; };
+		8B1CD69B124A51AF005BD799 /* list.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B912422BDC00924DA5 /* list.h */; };
+		8B1CD69C124A51AF005BD799 /* lladdr.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58BB12422BDC00924DA5 /* lladdr.h */; };
+		8B1CD69D124A51AF005BD799 /* lzo.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58BD12422BDC00924DA5 /* lzo.h */; };
+		8B1CD69E124A51AF005BD799 /* manage.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C012422BDC00924DA5 /* manage.h */; };
+		8B1CD69F124A51AF005BD799 /* mbuf.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C212422BDC00924DA5 /* mbuf.h */; };
+		8B1CD6A0124A51AF005BD799 /* memdbg.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C412422BDC00924DA5 /* memdbg.h */; };
+		8B1CD6A1124A51AF005BD799 /* misc.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C612422BDC00924DA5 /* misc.h */; };
+		8B1CD6A2124A51AF005BD799 /* mroute.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C912422BDC00924DA5 /* mroute.h */; };
+		8B1CD6A3124A51AF005BD799 /* mss.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58CB12422BDC00924DA5 /* mss.h */; };
+		8B1CD6A4124A51AF005BD799 /* mtcp.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58CD12422BDC00924DA5 /* mtcp.h */; };
+		8B1CD6A5124A51AF005BD799 /* mtu.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58CF12422BDC00924DA5 /* mtu.h */; };
+		8B1CD6A6124A51AF005BD799 /* mudp.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D112422BDC00924DA5 /* mudp.h */; };
+		8B1CD6A7124A51AF005BD799 /* multi.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D312422BDC00924DA5 /* multi.h */; };
+		8B1CD6A8124A51AF005BD799 /* ntlm.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D612422BDC00924DA5 /* ntlm.h */; };
+		8B1CD6A9124A51AF005BD799 /* occ-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D712422BDC00924DA5 /* occ-inline.h */; };
+		8B1CD6AA124A51AF005BD799 /* occ.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D912422BDC00924DA5 /* occ.h */; };
+		8B1CD6AB124A51AF005BD799 /* openvpn-plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58DB12422BDC00924DA5 /* openvpn-plugin.h */; };
+		8B1CD6AC124A51AF005BD799 /* openvpn.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58DE12422BDC00924DA5 /* openvpn.h */; };
+		8B1CD6AD124A51AF005BD799 /* options.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E212422BDC00924DA5 /* options.h */; };
+		8B1CD6AE124A51AF005BD799 /* otime.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E412422BDC00924DA5 /* otime.h */; };
+		8B1CD6AF124A51AF005BD799 /* packet_id.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E612422BDC00924DA5 /* packet_id.h */; };
+		8B1CD6B0124A51AF005BD799 /* perf.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E812422BDC00924DA5 /* perf.h */; };
+		8B1CD6B1124A51AF005BD799 /* pf-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E912422BDC00924DA5 /* pf-inline.h */; };
+		8B1CD6B2124A51AF005BD799 /* pf.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58EB12422BDC00924DA5 /* pf.h */; };
+		8B1CD6B3124A51AF005BD799 /* ping-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58EC12422BDC00924DA5 /* ping-inline.h */; };
+		8B1CD6B4124A51AF005BD799 /* ping.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58EE12422BDC00924DA5 /* ping.h */; };
+		8B1CD6B5124A51AF005BD799 /* pkcs11.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58F012422BDC00924DA5 /* pkcs11.h */; };
+		8B1CD6B6124A51AF005BD799 /* plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D590D12422BDC00924DA5 /* plugin.h */; };
+		8B1CD6B7124A51AF005BD799 /* pool.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D590F12422BDC00924DA5 /* pool.h */; };
+		8B1CD6B8124A51AF005BD799 /* proto.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591212422BDC00924DA5 /* proto.h */; };
+		8B1CD6B9124A51AF005BD799 /* proxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591412422BDC00924DA5 /* proxy.h */; };
+		8B1CD6BA124A51AF005BD799 /* ps.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591612422BDC00924DA5 /* ps.h */; };
+		8B1CD6BB124A51AF005BD799 /* push.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591812422BDC00924DA5 /* push.h */; };
+		8B1CD6BC124A51AF005BD799 /* pushlist.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591912422BDC00924DA5 /* pushlist.h */; };
+		8B1CD6BD124A51AF005BD799 /* reliable.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591C12422BDC00924DA5 /* reliable.h */; };
+		8B1CD6BE124A51AF005BD799 /* route.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591E12422BDC00924DA5 /* route.h */; };
+		8B1CD6BF124A51AF005BD799 /* schedule.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D594612422BDC00924DA5 /* schedule.h */; };
+		8B1CD6C0124A51AF005BD799 /* session_id.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595212422BDC00924DA5 /* session_id.h */; };
+		8B1CD6C1124A51AF005BD799 /* shaper.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595412422BDC00924DA5 /* shaper.h */; };
+		8B1CD6C2124A51AF005BD799 /* sig.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595612422BDC00924DA5 /* sig.h */; };
+		8B1CD6C3124A51AF005BD799 /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595812422BDC00924DA5 /* socket.h */; };
+		8B1CD6C4124A51AF005BD799 /* socks.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595A12422BDC00924DA5 /* socks.h */; };
+		8B1CD6C5124A51AF005BD799 /* ssl.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595C12422BDC00924DA5 /* ssl.h */; };
+		8B1CD6C6124A51AF005BD799 /* status.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595F12422BDC00924DA5 /* status.h */; };
+		8B1CD6C7124A51AF005BD799 /* syshead.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D596212422BDC00924DA5 /* syshead.h */; };
+		8B1CD6C8124A51AF005BD799 /* thread.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D597F12422BDC00924DA5 /* thread.h */; };
+		8B1CD6C9124A51AF005BD799 /* tun.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D598112422BDC00924DA5 /* tun.h */; };
+		8B1CD6CA124A51AF005BD799 /* win32.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D598412422BDC00924DA5 /* win32.h */; };
+		8B1CD6CC124A51AF005BD799 /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D586E12422B1500924DA5 /* base64.c */; };
+		8B1CD6CD124A51AF005BD799 /* buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D587112422B1500924DA5 /* buffer.c */; };
+		8B1CD6CE124A51AF005BD799 /* crypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D587712422B1500924DA5 /* crypto.c */; };
+		8B1CD6CF124A51AF005BD799 /* cryptoapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D589C12422BDC00924DA5 /* cryptoapi.c */; };
+		8B1CD6D0124A51AF005BD799 /* dhcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D589F12422BDC00924DA5 /* dhcp.c */; };
+		8B1CD6D1124A51AF005BD799 /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A212422BDC00924DA5 /* error.c */; };
+		8B1CD6D2124A51AF005BD799 /* event.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A412422BDC00924DA5 /* event.c */; };
+		8B1CD6D3124A51AF005BD799 /* fdmisc.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A612422BDC00924DA5 /* fdmisc.c */; };
+		8B1CD6D4124A51AF005BD799 /* forward.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A912422BDC00924DA5 /* forward.c */; };
+		8B1CD6D5124A51AF005BD799 /* fragment.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58AB12422BDC00924DA5 /* fragment.c */; };
+		8B1CD6D6124A51AF005BD799 /* gremlin.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58AD12422BDC00924DA5 /* gremlin.c */; };
+		8B1CD6D7124A51AF005BD799 /* helper.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58AF12422BDC00924DA5 /* helper.c */; };
+		8B1CD6D8124A51AF005BD799 /* ieproxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B112422BDC00924DA5 /* ieproxy.c */; };
+		8B1CD6D9124A51AF005BD799 /* init.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B312422BDC00924DA5 /* init.c */; };
+		8B1CD6DA124A51AF005BD799 /* interval.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B612422BDC00924DA5 /* interval.c */; };
+		8B1CD6DB124A51AF005BD799 /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B812422BDC00924DA5 /* list.c */; };
+		8B1CD6DC124A51AF005BD799 /* lladdr.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58BA12422BDC00924DA5 /* lladdr.c */; };
+		8B1CD6DD124A51AF005BD799 /* lzo.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58BC12422BDC00924DA5 /* lzo.c */; };
+		8B1CD6DE124A51AF005BD799 /* manage.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58BF12422BDC00924DA5 /* manage.c */; };
+		8B1CD6DF124A51AF005BD799 /* mbuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C112422BDC00924DA5 /* mbuf.c */; };
+		8B1CD6E0124A51AF005BD799 /* memcmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C312422BDC00924DA5 /* memcmp.c */; };
+		8B1CD6E1124A51AF005BD799 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C512422BDC00924DA5 /* misc.c */; };
+		8B1CD6E2124A51AF005BD799 /* mroute.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C812422BDC00924DA5 /* mroute.c */; };
+		8B1CD6E3124A51AF005BD799 /* mss.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58CA12422BDC00924DA5 /* mss.c */; };
+		8B1CD6E4124A51AF005BD799 /* mtcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58CC12422BDC00924DA5 /* mtcp.c */; };
+		8B1CD6E5124A51AF005BD799 /* mtu.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58CE12422BDC00924DA5 /* mtu.c */; };
+		8B1CD6E6124A51AF005BD799 /* mudp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D012422BDC00924DA5 /* mudp.c */; };
+		8B1CD6E7124A51AF005BD799 /* multi.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D212422BDC00924DA5 /* multi.c */; };
+		8B1CD6E8124A51AF005BD799 /* ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D512422BDC00924DA5 /* ntlm.c */; };
+		8B1CD6E9124A51AF005BD799 /* occ.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D812422BDC00924DA5 /* occ.c */; };
+		8B1CD6EA124A51AF005BD799 /* openvpn.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58DD12422BDC00924DA5 /* openvpn.c */; };
+		8B1CD6EB124A51AF005BD799 /* options.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E112422BDC00924DA5 /* options.c */; };
+		8B1CD6EC124A51AF005BD799 /* otime.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E312422BDC00924DA5 /* otime.c */; };
+		8B1CD6ED124A51AF005BD799 /* packet_id.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E512422BDC00924DA5 /* packet_id.c */; };
+		8B1CD6EE124A51AF005BD799 /* perf.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E712422BDC00924DA5 /* perf.c */; };
+		8B1CD6EF124A51AF005BD799 /* pf.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58EA12422BDC00924DA5 /* pf.c */; };
+		8B1CD6F0124A51AF005BD799 /* ping.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58ED12422BDC00924DA5 /* ping.c */; };
+		8B1CD6F1124A51AF005BD799 /* pkcs11.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58EF12422BDC00924DA5 /* pkcs11.c */; };
+		8B1CD6F2124A51AF005BD799 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D590C12422BDC00924DA5 /* plugin.c */; };
+		8B1CD6F3124A51AF005BD799 /* pool.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D590E12422BDC00924DA5 /* pool.c */; };
+		8B1CD6F4124A51AF005BD799 /* proto.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591112422BDC00924DA5 /* proto.c */; };
+		8B1CD6F5124A51AF005BD799 /* proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591312422BDC00924DA5 /* proxy.c */; };
+		8B1CD6F6124A51AF005BD799 /* ps.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591512422BDC00924DA5 /* ps.c */; };
+		8B1CD6F7124A51AF005BD799 /* push.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591712422BDC00924DA5 /* push.c */; };
+		8B1CD6F8124A51AF005BD799 /* reliable.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591B12422BDC00924DA5 /* reliable.c */; };
+		8B1CD6F9124A51AF005BD799 /* route.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591D12422BDC00924DA5 /* route.c */; };
+		8B1CD6FA124A51AF005BD799 /* schedule.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D594512422BDC00924DA5 /* schedule.c */; };
+		8B1CD6FB124A51AF005BD799 /* session_id.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595112422BDC00924DA5 /* session_id.c */; };
+		8B1CD6FC124A51AF005BD799 /* shaper.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595312422BDC00924DA5 /* shaper.c */; };
+		8B1CD6FD124A51AF005BD799 /* sig.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595512422BDC00924DA5 /* sig.c */; };
+		8B1CD6FE124A51AF005BD799 /* socket.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595712422BDC00924DA5 /* socket.c */; };
+		8B1CD6FF124A51AF005BD799 /* socks.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595912422BDC00924DA5 /* socks.c */; };
+		8B1CD700124A51AF005BD799 /* ssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595B12422BDC00924DA5 /* ssl.c */; };
+		8B1CD701124A51AF005BD799 /* status.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595E12422BDC00924DA5 /* status.c */; };
+		8B1CD702124A51AF005BD799 /* thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D597E12422BDC00924DA5 /* thread.c */; };
+		8B1CD703124A51AF005BD799 /* tun.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D598012422BDC00924DA5 /* tun.c */; };
+		8B1CD704124A51AF005BD799 /* win32.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D598312422BDC00924DA5 /* win32.c */; };
+		8B1CD706124A51AF005BD799 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
+		8B2D587912422B1500924DA5 /* base64.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D586E12422B1500924DA5 /* base64.c */; };
+		8B2D587A12422B1500924DA5 /* base64.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D586F12422B1500924DA5 /* base64.h */; };
+		8B2D587B12422B1500924DA5 /* basic.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587012422B1500924DA5 /* basic.h */; };
+		8B2D587C12422B1500924DA5 /* buffer.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D587112422B1500924DA5 /* buffer.c */; };
+		8B2D587D12422B1500924DA5 /* buffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587212422B1500924DA5 /* buffer.h */; };
+		8B2D587E12422B1500924DA5 /* circ_list.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587312422B1500924DA5 /* circ_list.h */; };
+		8B2D587F12422B1500924DA5 /* common.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587412422B1500924DA5 /* common.h */; };
+		8B2D588012422B1500924DA5 /* config-win32.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587512422B1500924DA5 /* config-win32.h */; };
+		8B2D588112422B1500924DA5 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587612422B1500924DA5 /* config.h */; };
+		8B2D588212422B1500924DA5 /* crypto.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D587712422B1500924DA5 /* crypto.c */; };
+		8B2D588312422B1500924DA5 /* crypto.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D587812422B1500924DA5 /* crypto.h */; };
+		8B2D598512422BDC00924DA5 /* cryptoapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D589C12422BDC00924DA5 /* cryptoapi.c */; };
+		8B2D598612422BDC00924DA5 /* cryptoapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D589D12422BDC00924DA5 /* cryptoapi.h */; };
+		8B2D598712422BDC00924DA5 /* dhcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D589F12422BDC00924DA5 /* dhcp.c */; };
+		8B2D598812422BDC00924DA5 /* dhcp.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A012422BDC00924DA5 /* dhcp.h */; };
+		8B2D598912422BDC00924DA5 /* errlevel.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A112422BDC00924DA5 /* errlevel.h */; };
+		8B2D598A12422BDC00924DA5 /* error.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A212422BDC00924DA5 /* error.c */; };
+		8B2D598B12422BDC00924DA5 /* error.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A312422BDC00924DA5 /* error.h */; };
+		8B2D598C12422BDC00924DA5 /* event.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A412422BDC00924DA5 /* event.c */; };
+		8B2D598D12422BDC00924DA5 /* event.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A512422BDC00924DA5 /* event.h */; };
+		8B2D598E12422BDC00924DA5 /* fdmisc.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A612422BDC00924DA5 /* fdmisc.c */; };
+		8B2D598F12422BDC00924DA5 /* fdmisc.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A712422BDC00924DA5 /* fdmisc.h */; };
+		8B2D599012422BDC00924DA5 /* forward-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58A812422BDC00924DA5 /* forward-inline.h */; };
+		8B2D599112422BDC00924DA5 /* forward.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58A912422BDC00924DA5 /* forward.c */; };
+		8B2D599212422BDC00924DA5 /* forward.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58AA12422BDC00924DA5 /* forward.h */; };
+		8B2D599312422BDC00924DA5 /* fragment.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58AB12422BDC00924DA5 /* fragment.c */; };
+		8B2D599412422BDC00924DA5 /* fragment.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58AC12422BDC00924DA5 /* fragment.h */; };
+		8B2D599512422BDC00924DA5 /* gremlin.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58AD12422BDC00924DA5 /* gremlin.c */; };
+		8B2D599612422BDC00924DA5 /* gremlin.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58AE12422BDC00924DA5 /* gremlin.h */; };
+		8B2D599712422BDC00924DA5 /* helper.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58AF12422BDC00924DA5 /* helper.c */; };
+		8B2D599812422BDC00924DA5 /* helper.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B012422BDC00924DA5 /* helper.h */; };
+		8B2D599912422BDC00924DA5 /* ieproxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B112422BDC00924DA5 /* ieproxy.c */; };
+		8B2D599A12422BDC00924DA5 /* ieproxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B212422BDC00924DA5 /* ieproxy.h */; };
+		8B2D599B12422BDC00924DA5 /* init.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B312422BDC00924DA5 /* init.c */; };
+		8B2D599C12422BDC00924DA5 /* init.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B412422BDC00924DA5 /* init.h */; };
+		8B2D599D12422BDC00924DA5 /* integer.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B512422BDC00924DA5 /* integer.h */; };
+		8B2D599E12422BDC00924DA5 /* interval.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B612422BDC00924DA5 /* interval.c */; };
+		8B2D599F12422BDC00924DA5 /* interval.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B712422BDC00924DA5 /* interval.h */; };
+		8B2D59A012422BDC00924DA5 /* list.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58B812422BDC00924DA5 /* list.c */; };
+		8B2D59A112422BDC00924DA5 /* list.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58B912422BDC00924DA5 /* list.h */; };
+		8B2D59A212422BDC00924DA5 /* lladdr.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58BA12422BDC00924DA5 /* lladdr.c */; };
+		8B2D59A312422BDC00924DA5 /* lladdr.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58BB12422BDC00924DA5 /* lladdr.h */; };
+		8B2D59A412422BDC00924DA5 /* lzo.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58BC12422BDC00924DA5 /* lzo.c */; };
+		8B2D59A512422BDC00924DA5 /* lzo.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58BD12422BDC00924DA5 /* lzo.h */; };
+		8B2D59A712422BDC00924DA5 /* manage.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58BF12422BDC00924DA5 /* manage.c */; };
+		8B2D59A812422BDC00924DA5 /* manage.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C012422BDC00924DA5 /* manage.h */; };
+		8B2D59A912422BDC00924DA5 /* mbuf.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C112422BDC00924DA5 /* mbuf.c */; };
+		8B2D59AA12422BDC00924DA5 /* mbuf.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C212422BDC00924DA5 /* mbuf.h */; };
+		8B2D59AB12422BDC00924DA5 /* memcmp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C312422BDC00924DA5 /* memcmp.c */; };
+		8B2D59AC12422BDC00924DA5 /* memdbg.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C412422BDC00924DA5 /* memdbg.h */; };
+		8B2D59AD12422BDC00924DA5 /* misc.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C512422BDC00924DA5 /* misc.c */; };
+		8B2D59AE12422BDC00924DA5 /* misc.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C612422BDC00924DA5 /* misc.h */; };
+		8B2D59AF12422BDC00924DA5 /* mroute.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58C812422BDC00924DA5 /* mroute.c */; };
+		8B2D59B012422BDC00924DA5 /* mroute.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58C912422BDC00924DA5 /* mroute.h */; };
+		8B2D59B112422BDC00924DA5 /* mss.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58CA12422BDC00924DA5 /* mss.c */; };
+		8B2D59B212422BDC00924DA5 /* mss.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58CB12422BDC00924DA5 /* mss.h */; };
+		8B2D59B312422BDC00924DA5 /* mtcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58CC12422BDC00924DA5 /* mtcp.c */; };
+		8B2D59B412422BDC00924DA5 /* mtcp.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58CD12422BDC00924DA5 /* mtcp.h */; };
+		8B2D59B512422BDC00924DA5 /* mtu.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58CE12422BDC00924DA5 /* mtu.c */; };
+		8B2D59B612422BDC00924DA5 /* mtu.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58CF12422BDC00924DA5 /* mtu.h */; };
+		8B2D59B712422BDC00924DA5 /* mudp.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D012422BDC00924DA5 /* mudp.c */; };
+		8B2D59B812422BDC00924DA5 /* mudp.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D112422BDC00924DA5 /* mudp.h */; };
+		8B2D59B912422BDC00924DA5 /* multi.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D212422BDC00924DA5 /* multi.c */; };
+		8B2D59BA12422BDC00924DA5 /* multi.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D312422BDC00924DA5 /* multi.h */; };
+		8B2D59BB12422BDC00924DA5 /* ntlm.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D512422BDC00924DA5 /* ntlm.c */; };
+		8B2D59BC12422BDC00924DA5 /* ntlm.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D612422BDC00924DA5 /* ntlm.h */; };
+		8B2D59BD12422BDC00924DA5 /* occ-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D712422BDC00924DA5 /* occ-inline.h */; };
+		8B2D59BE12422BDC00924DA5 /* occ.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58D812422BDC00924DA5 /* occ.c */; };
+		8B2D59BF12422BDC00924DA5 /* occ.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58D912422BDC00924DA5 /* occ.h */; };
+		8B2D59C012422BDC00924DA5 /* openvpn-plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58DB12422BDC00924DA5 /* openvpn-plugin.h */; };
+		8B2D59C112422BDC00924DA5 /* openvpn.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58DD12422BDC00924DA5 /* openvpn.c */; };
+		8B2D59C212422BDC00924DA5 /* openvpn.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58DE12422BDC00924DA5 /* openvpn.h */; };
+		8B2D59C312422BDC00924DA5 /* options.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E112422BDC00924DA5 /* options.c */; };
+		8B2D59C412422BDC00924DA5 /* options.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E212422BDC00924DA5 /* options.h */; };
+		8B2D59C512422BDC00924DA5 /* otime.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E312422BDC00924DA5 /* otime.c */; };
+		8B2D59C612422BDC00924DA5 /* otime.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E412422BDC00924DA5 /* otime.h */; };
+		8B2D59C712422BDC00924DA5 /* packet_id.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E512422BDC00924DA5 /* packet_id.c */; };
+		8B2D59C812422BDC00924DA5 /* packet_id.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E612422BDC00924DA5 /* packet_id.h */; };
+		8B2D59C912422BDC00924DA5 /* perf.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58E712422BDC00924DA5 /* perf.c */; };
+		8B2D59CA12422BDC00924DA5 /* perf.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E812422BDC00924DA5 /* perf.h */; };
+		8B2D59CB12422BDC00924DA5 /* pf-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58E912422BDC00924DA5 /* pf-inline.h */; };
+		8B2D59CC12422BDC00924DA5 /* pf.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58EA12422BDC00924DA5 /* pf.c */; };
+		8B2D59CD12422BDC00924DA5 /* pf.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58EB12422BDC00924DA5 /* pf.h */; };
+		8B2D59CE12422BDC00924DA5 /* ping-inline.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58EC12422BDC00924DA5 /* ping-inline.h */; };
+		8B2D59CF12422BDC00924DA5 /* ping.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58ED12422BDC00924DA5 /* ping.c */; };
+		8B2D59D012422BDC00924DA5 /* ping.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58EE12422BDC00924DA5 /* ping.h */; };
+		8B2D59D112422BDC00924DA5 /* pkcs11.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D58EF12422BDC00924DA5 /* pkcs11.c */; };
+		8B2D59D212422BDC00924DA5 /* pkcs11.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D58F012422BDC00924DA5 /* pkcs11.h */; };
+		8B2D59DC12422BDC00924DA5 /* plugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D590C12422BDC00924DA5 /* plugin.c */; };
+		8B2D59DD12422BDC00924DA5 /* plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D590D12422BDC00924DA5 /* plugin.h */; };
+		8B2D59DE12422BDC00924DA5 /* pool.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D590E12422BDC00924DA5 /* pool.c */; };
+		8B2D59DF12422BDC00924DA5 /* pool.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D590F12422BDC00924DA5 /* pool.h */; };
+		8B2D59E012422BDC00924DA5 /* proto.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591112422BDC00924DA5 /* proto.c */; };
+		8B2D59E112422BDC00924DA5 /* proto.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591212422BDC00924DA5 /* proto.h */; };
+		8B2D59E212422BDC00924DA5 /* proxy.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591312422BDC00924DA5 /* proxy.c */; };
+		8B2D59E312422BDC00924DA5 /* proxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591412422BDC00924DA5 /* proxy.h */; };
+		8B2D59E412422BDC00924DA5 /* ps.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591512422BDC00924DA5 /* ps.c */; };
+		8B2D59E512422BDC00924DA5 /* ps.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591612422BDC00924DA5 /* ps.h */; };
+		8B2D59E612422BDC00924DA5 /* push.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591712422BDC00924DA5 /* push.c */; };
+		8B2D59E712422BDC00924DA5 /* push.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591812422BDC00924DA5 /* push.h */; };
+		8B2D59E812422BDC00924DA5 /* pushlist.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591912422BDC00924DA5 /* pushlist.h */; };
+		8B2D59E912422BDC00924DA5 /* reliable.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591B12422BDC00924DA5 /* reliable.c */; };
+		8B2D59EA12422BDC00924DA5 /* reliable.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591C12422BDC00924DA5 /* reliable.h */; };
+		8B2D59EB12422BDC00924DA5 /* route.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D591D12422BDC00924DA5 /* route.c */; };
+		8B2D59EC12422BDC00924DA5 /* route.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D591E12422BDC00924DA5 /* route.h */; };
+		8B2D59ED12422BDC00924DA5 /* schedule.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D594512422BDC00924DA5 /* schedule.c */; };
+		8B2D59EE12422BDC00924DA5 /* schedule.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D594612422BDC00924DA5 /* schedule.h */; };
+		8B2D59F312422BDC00924DA5 /* session_id.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595112422BDC00924DA5 /* session_id.c */; };
+		8B2D59F412422BDC00924DA5 /* session_id.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595212422BDC00924DA5 /* session_id.h */; };
+		8B2D59F512422BDC00924DA5 /* shaper.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595312422BDC00924DA5 /* shaper.c */; };
+		8B2D59F612422BDC00924DA5 /* shaper.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595412422BDC00924DA5 /* shaper.h */; };
+		8B2D59F712422BDC00924DA5 /* sig.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595512422BDC00924DA5 /* sig.c */; };
+		8B2D59F812422BDC00924DA5 /* sig.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595612422BDC00924DA5 /* sig.h */; };
+		8B2D59F912422BDC00924DA5 /* socket.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595712422BDC00924DA5 /* socket.c */; };
+		8B2D59FA12422BDC00924DA5 /* socket.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595812422BDC00924DA5 /* socket.h */; };
+		8B2D59FB12422BDC00924DA5 /* socks.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595912422BDC00924DA5 /* socks.c */; };
+		8B2D59FC12422BDC00924DA5 /* socks.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595A12422BDC00924DA5 /* socks.h */; };
+		8B2D59FD12422BDC00924DA5 /* ssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595B12422BDC00924DA5 /* ssl.c */; };
+		8B2D59FE12422BDC00924DA5 /* ssl.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595C12422BDC00924DA5 /* ssl.h */; };
+		8B2D59FF12422BDC00924DA5 /* status.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D595E12422BDC00924DA5 /* status.c */; };
+		8B2D5A0012422BDC00924DA5 /* status.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D595F12422BDC00924DA5 /* status.h */; };
+		8B2D5A0112422BDC00924DA5 /* syshead.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D596212422BDC00924DA5 /* syshead.h */; };
+		8B2D5A1412422BDC00924DA5 /* thread.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D597E12422BDC00924DA5 /* thread.c */; };
+		8B2D5A1512422BDC00924DA5 /* thread.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D597F12422BDC00924DA5 /* thread.h */; };
+		8B2D5A1612422BDC00924DA5 /* tun.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D598012422BDC00924DA5 /* tun.c */; };
+		8B2D5A1712422BDC00924DA5 /* tun.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D598112422BDC00924DA5 /* tun.h */; };
+		8B2D5A1812422BDC00924DA5 /* win32.c in Sources */ = {isa = PBXBuildFile; fileRef = 8B2D598312422BDC00924DA5 /* win32.c */; };
+		8B2D5A1912422BDC00924DA5 /* win32.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B2D598412422BDC00924DA5 /* win32.h */; };
+		8BB602C61250AD3F00B289F2 /* openvpninterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 8BB602C41250AD3F00B289F2 /* openvpninterface.h */; };
+		8BB602C81250AD3F00B289F2 /* openvpninterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 8BB602C41250AD3F00B289F2 /* openvpninterface.h */; };
+		8BB602F31250ADCD00B289F2 /* openvpninterface.c in Sources */ = {isa = PBXBuildFile; fileRef = 8BB602F21250ADCD00B289F2 /* openvpninterface.c */; };
+		8BB602F41250ADCD00B289F2 /* openvpninterface.c in Sources */ = {isa = PBXBuildFile; fileRef = 8BB602F21250ADCD00B289F2 /* openvpninterface.c */; };
+		8BC30D501251E38A00318061 /* libcrypto_arm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BC30D4E1251E38A00318061 /* libcrypto_arm.a */; };
+		8BC30D511251E38A00318061 /* libssl_arm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BC30D4F1251E38A00318061 /* libssl_arm.a */; };
+		8BC30D521251E38A00318061 /* libcrypto_arm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BC30D4E1251E38A00318061 /* libcrypto_arm.a */; };
+		8BC30D531251E38A00318061 /* libssl_arm.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BC30D4F1251E38A00318061 /* libssl_arm.a */; };
+		8BDBC398124B343000AFDE78 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BDBC396124B343000AFDE78 /* libcrypto.a */; };
+		8BDBC399124B343000AFDE78 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BDBC397124B343000AFDE78 /* libssl.a */; };
+		8BDBC39A124B343000AFDE78 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BDBC396124B343000AFDE78 /* libcrypto.a */; };
+		8BDBC39B124B343000AFDE78 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BDBC397124B343000AFDE78 /* libssl.a */; };
+		AA747D9F0F9514B9006C5449 /* staticopenvpnssl_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = AA747D9E0F9514B9006C5449 /* staticopenvpnssl_Prefix.pch */; };
+		AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AACBBE490F95108600F1A2B1 /* Foundation.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		8B1CD70D124A51AF005BD799 /* libstaticopenvpnssliphone.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libstaticopenvpnssliphone.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B2D586E12422B1500924DA5 /* base64.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = base64.c; path = openvpn/base64.c; sourceTree = "<group>"; };
+		8B2D586F12422B1500924DA5 /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = base64.h; path = openvpn/base64.h; sourceTree = "<group>"; };
+		8B2D587012422B1500924DA5 /* basic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basic.h; path = openvpn/basic.h; sourceTree = "<group>"; };
+		8B2D587112422B1500924DA5 /* buffer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = buffer.c; path = openvpn/buffer.c; sourceTree = "<group>"; };
+		8B2D587212422B1500924DA5 /* buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buffer.h; path = openvpn/buffer.h; sourceTree = "<group>"; };
+		8B2D587312422B1500924DA5 /* circ_list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = circ_list.h; path = openvpn/circ_list.h; sourceTree = "<group>"; };
+		8B2D587412422B1500924DA5 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = openvpn/common.h; sourceTree = "<group>"; };
+		8B2D587512422B1500924DA5 /* config-win32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "config-win32.h"; path = "openvpn/config-win32.h"; sourceTree = "<group>"; };
+		8B2D587612422B1500924DA5 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = openvpn/config.h; sourceTree = "<group>"; };
+		8B2D587712422B1500924DA5 /* crypto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crypto.c; path = openvpn/crypto.c; sourceTree = "<group>"; };
+		8B2D587812422B1500924DA5 /* crypto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = crypto.h; path = openvpn/crypto.h; sourceTree = "<group>"; };
+		8B2D589C12422BDC00924DA5 /* cryptoapi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cryptoapi.c; path = openvpn/cryptoapi.c; sourceTree = "<group>"; };
+		8B2D589D12422BDC00924DA5 /* cryptoapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cryptoapi.h; path = openvpn/cryptoapi.h; sourceTree = "<group>"; };
+		8B2D589F12422BDC00924DA5 /* dhcp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dhcp.c; path = openvpn/dhcp.c; sourceTree = "<group>"; };
+		8B2D58A012422BDC00924DA5 /* dhcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dhcp.h; path = openvpn/dhcp.h; sourceTree = "<group>"; };
+		8B2D58A112422BDC00924DA5 /* errlevel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = errlevel.h; path = openvpn/errlevel.h; sourceTree = "<group>"; };
+		8B2D58A212422BDC00924DA5 /* error.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = error.c; path = openvpn/error.c; sourceTree = "<group>"; };
+		8B2D58A312422BDC00924DA5 /* error.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = error.h; path = openvpn/error.h; sourceTree = "<group>"; };
+		8B2D58A412422BDC00924DA5 /* event.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = event.c; path = openvpn/event.c; sourceTree = "<group>"; };
+		8B2D58A512422BDC00924DA5 /* event.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = event.h; path = openvpn/event.h; sourceTree = "<group>"; };
+		8B2D58A612422BDC00924DA5 /* fdmisc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fdmisc.c; path = openvpn/fdmisc.c; sourceTree = "<group>"; };
+		8B2D58A712422BDC00924DA5 /* fdmisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fdmisc.h; path = openvpn/fdmisc.h; sourceTree = "<group>"; };
+		8B2D58A812422BDC00924DA5 /* forward-inline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "forward-inline.h"; path = "openvpn/forward-inline.h"; sourceTree = "<group>"; };
+		8B2D58A912422BDC00924DA5 /* forward.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = forward.c; path = openvpn/forward.c; sourceTree = "<group>"; };
+		8B2D58AA12422BDC00924DA5 /* forward.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = forward.h; path = openvpn/forward.h; sourceTree = "<group>"; };
+		8B2D58AB12422BDC00924DA5 /* fragment.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fragment.c; path = openvpn/fragment.c; sourceTree = "<group>"; };
+		8B2D58AC12422BDC00924DA5 /* fragment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fragment.h; path = openvpn/fragment.h; sourceTree = "<group>"; };
+		8B2D58AD12422BDC00924DA5 /* gremlin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = gremlin.c; path = openvpn/gremlin.c; sourceTree = "<group>"; };
+		8B2D58AE12422BDC00924DA5 /* gremlin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gremlin.h; path = openvpn/gremlin.h; sourceTree = "<group>"; };
+		8B2D58AF12422BDC00924DA5 /* helper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = helper.c; path = openvpn/helper.c; sourceTree = "<group>"; };
+		8B2D58B012422BDC00924DA5 /* helper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = helper.h; path = openvpn/helper.h; sourceTree = "<group>"; };
+		8B2D58B112422BDC00924DA5 /* ieproxy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ieproxy.c; path = openvpn/ieproxy.c; sourceTree = "<group>"; };
+		8B2D58B212422BDC00924DA5 /* ieproxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ieproxy.h; path = openvpn/ieproxy.h; sourceTree = "<group>"; };
+		8B2D58B312422BDC00924DA5 /* init.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = init.c; path = openvpn/init.c; sourceTree = "<group>"; };
+		8B2D58B412422BDC00924DA5 /* init.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = init.h; path = openvpn/init.h; sourceTree = "<group>"; };
+		8B2D58B512422BDC00924DA5 /* integer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = integer.h; path = openvpn/integer.h; sourceTree = "<group>"; };
+		8B2D58B612422BDC00924DA5 /* interval.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = interval.c; path = openvpn/interval.c; sourceTree = "<group>"; };
+		8B2D58B712422BDC00924DA5 /* interval.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = interval.h; path = openvpn/interval.h; sourceTree = "<group>"; };
+		8B2D58B812422BDC00924DA5 /* list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = list.c; path = openvpn/list.c; sourceTree = "<group>"; };
+		8B2D58B912422BDC00924DA5 /* list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = list.h; path = openvpn/list.h; sourceTree = "<group>"; };
+		8B2D58BA12422BDC00924DA5 /* lladdr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lladdr.c; path = openvpn/lladdr.c; sourceTree = "<group>"; };
+		8B2D58BB12422BDC00924DA5 /* lladdr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lladdr.h; path = openvpn/lladdr.h; sourceTree = "<group>"; };
+		8B2D58BC12422BDC00924DA5 /* lzo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lzo.c; path = openvpn/lzo.c; sourceTree = "<group>"; };
+		8B2D58BD12422BDC00924DA5 /* lzo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lzo.h; path = openvpn/lzo.h; sourceTree = "<group>"; };
+		8B2D58BF12422BDC00924DA5 /* manage.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = manage.c; path = openvpn/manage.c; sourceTree = "<group>"; };
+		8B2D58C012422BDC00924DA5 /* manage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = manage.h; path = openvpn/manage.h; sourceTree = "<group>"; };
+		8B2D58C112422BDC00924DA5 /* mbuf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mbuf.c; path = openvpn/mbuf.c; sourceTree = "<group>"; };
+		8B2D58C212422BDC00924DA5 /* mbuf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mbuf.h; path = openvpn/mbuf.h; sourceTree = "<group>"; };
+		8B2D58C312422BDC00924DA5 /* memcmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = memcmp.c; path = openvpn/memcmp.c; sourceTree = "<group>"; };
+		8B2D58C412422BDC00924DA5 /* memdbg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = memdbg.h; path = openvpn/memdbg.h; sourceTree = "<group>"; };
+		8B2D58C512422BDC00924DA5 /* misc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = misc.c; path = openvpn/misc.c; sourceTree = "<group>"; };
+		8B2D58C612422BDC00924DA5 /* misc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = misc.h; path = openvpn/misc.h; sourceTree = "<group>"; };
+		8B2D58C812422BDC00924DA5 /* mroute.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mroute.c; path = openvpn/mroute.c; sourceTree = "<group>"; };
+		8B2D58C912422BDC00924DA5 /* mroute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mroute.h; path = openvpn/mroute.h; sourceTree = "<group>"; };
+		8B2D58CA12422BDC00924DA5 /* mss.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mss.c; path = openvpn/mss.c; sourceTree = "<group>"; };
+		8B2D58CB12422BDC00924DA5 /* mss.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mss.h; path = openvpn/mss.h; sourceTree = "<group>"; };
+		8B2D58CC12422BDC00924DA5 /* mtcp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mtcp.c; path = openvpn/mtcp.c; sourceTree = "<group>"; };
+		8B2D58CD12422BDC00924DA5 /* mtcp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mtcp.h; path = openvpn/mtcp.h; sourceTree = "<group>"; };
+		8B2D58CE12422BDC00924DA5 /* mtu.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mtu.c; path = openvpn/mtu.c; sourceTree = "<group>"; };
+		8B2D58CF12422BDC00924DA5 /* mtu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mtu.h; path = openvpn/mtu.h; sourceTree = "<group>"; };
+		8B2D58D012422BDC00924DA5 /* mudp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mudp.c; path = openvpn/mudp.c; sourceTree = "<group>"; };
+		8B2D58D112422BDC00924DA5 /* mudp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mudp.h; path = openvpn/mudp.h; sourceTree = "<group>"; };
+		8B2D58D212422BDC00924DA5 /* multi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = multi.c; path = openvpn/multi.c; sourceTree = "<group>"; };
+		8B2D58D312422BDC00924DA5 /* multi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = multi.h; path = openvpn/multi.h; sourceTree = "<group>"; };
+		8B2D58D512422BDC00924DA5 /* ntlm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ntlm.c; path = openvpn/ntlm.c; sourceTree = "<group>"; };
+		8B2D58D612422BDC00924DA5 /* ntlm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ntlm.h; path = openvpn/ntlm.h; sourceTree = "<group>"; };
+		8B2D58D712422BDC00924DA5 /* occ-inline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "occ-inline.h"; path = "openvpn/occ-inline.h"; sourceTree = "<group>"; };
+		8B2D58D812422BDC00924DA5 /* occ.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = occ.c; path = openvpn/occ.c; sourceTree = "<group>"; };
+		8B2D58D912422BDC00924DA5 /* occ.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = occ.h; path = openvpn/occ.h; sourceTree = "<group>"; };
+		8B2D58DB12422BDC00924DA5 /* openvpn-plugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "openvpn-plugin.h"; path = "openvpn/openvpn-plugin.h"; sourceTree = "<group>"; };
+		8B2D58DC12422BDC00924DA5 /* openvpn.8 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = openvpn.8; path = openvpn/openvpn.8; sourceTree = "<group>"; };
+		8B2D58DD12422BDC00924DA5 /* openvpn.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = openvpn.c; path = openvpn/openvpn.c; sourceTree = "<group>"; };
+		8B2D58DE12422BDC00924DA5 /* openvpn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = openvpn.h; path = openvpn/openvpn.h; sourceTree = "<group>"; };
+		8B2D58E112422BDC00924DA5 /* options.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = options.c; path = openvpn/options.c; sourceTree = "<group>"; };
+		8B2D58E212422BDC00924DA5 /* options.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = options.h; path = openvpn/options.h; sourceTree = "<group>"; };
+		8B2D58E312422BDC00924DA5 /* otime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = otime.c; path = openvpn/otime.c; sourceTree = "<group>"; };
+		8B2D58E412422BDC00924DA5 /* otime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = otime.h; path = openvpn/otime.h; sourceTree = "<group>"; };
+		8B2D58E512422BDC00924DA5 /* packet_id.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = packet_id.c; path = openvpn/packet_id.c; sourceTree = "<group>"; };
+		8B2D58E612422BDC00924DA5 /* packet_id.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = packet_id.h; path = openvpn/packet_id.h; sourceTree = "<group>"; };
+		8B2D58E712422BDC00924DA5 /* perf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = perf.c; path = openvpn/perf.c; sourceTree = "<group>"; };
+		8B2D58E812422BDC00924DA5 /* perf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = perf.h; path = openvpn/perf.h; sourceTree = "<group>"; };
+		8B2D58E912422BDC00924DA5 /* pf-inline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "pf-inline.h"; path = "openvpn/pf-inline.h"; sourceTree = "<group>"; };
+		8B2D58EA12422BDC00924DA5 /* pf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pf.c; path = openvpn/pf.c; sourceTree = "<group>"; };
+		8B2D58EB12422BDC00924DA5 /* pf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pf.h; path = openvpn/pf.h; sourceTree = "<group>"; };
+		8B2D58EC12422BDC00924DA5 /* ping-inline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "ping-inline.h"; path = "openvpn/ping-inline.h"; sourceTree = "<group>"; };
+		8B2D58ED12422BDC00924DA5 /* ping.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ping.c; path = openvpn/ping.c; sourceTree = "<group>"; };
+		8B2D58EE12422BDC00924DA5 /* ping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ping.h; path = openvpn/ping.h; sourceTree = "<group>"; };
+		8B2D58EF12422BDC00924DA5 /* pkcs11.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pkcs11.c; path = openvpn/pkcs11.c; sourceTree = "<group>"; };
+		8B2D58F012422BDC00924DA5 /* pkcs11.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pkcs11.h; path = openvpn/pkcs11.h; sourceTree = "<group>"; };
+		8B2D590C12422BDC00924DA5 /* plugin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = plugin.c; path = openvpn/plugin.c; sourceTree = "<group>"; };
+		8B2D590D12422BDC00924DA5 /* plugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = plugin.h; path = openvpn/plugin.h; sourceTree = "<group>"; };
+		8B2D590E12422BDC00924DA5 /* pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = pool.c; path = openvpn/pool.c; sourceTree = "<group>"; };
+		8B2D590F12422BDC00924DA5 /* pool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pool.h; path = openvpn/pool.h; sourceTree = "<group>"; };
+		8B2D591012422BDC00924DA5 /* PORTS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = PORTS; path = openvpn/PORTS; sourceTree = "<group>"; };
+		8B2D591112422BDC00924DA5 /* proto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = proto.c; path = openvpn/proto.c; sourceTree = "<group>"; };
+		8B2D591212422BDC00924DA5 /* proto.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = proto.h; path = openvpn/proto.h; sourceTree = "<group>"; };
+		8B2D591312422BDC00924DA5 /* proxy.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = proxy.c; path = openvpn/proxy.c; sourceTree = "<group>"; };
+		8B2D591412422BDC00924DA5 /* proxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = proxy.h; path = openvpn/proxy.h; sourceTree = "<group>"; };
+		8B2D591512422BDC00924DA5 /* ps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ps.c; path = openvpn/ps.c; sourceTree = "<group>"; };
+		8B2D591612422BDC00924DA5 /* ps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ps.h; path = openvpn/ps.h; sourceTree = "<group>"; };
+		8B2D591712422BDC00924DA5 /* push.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = push.c; path = openvpn/push.c; sourceTree = "<group>"; };
+		8B2D591812422BDC00924DA5 /* push.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = push.h; path = openvpn/push.h; sourceTree = "<group>"; };
+		8B2D591912422BDC00924DA5 /* pushlist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pushlist.h; path = openvpn/pushlist.h; sourceTree = "<group>"; };
+		8B2D591A12422BDC00924DA5 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README; path = openvpn/README; sourceTree = "<group>"; };
+		8B2D591B12422BDC00924DA5 /* reliable.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = reliable.c; path = openvpn/reliable.c; sourceTree = "<group>"; };
+		8B2D591C12422BDC00924DA5 /* reliable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = reliable.h; path = openvpn/reliable.h; sourceTree = "<group>"; };
+		8B2D591D12422BDC00924DA5 /* route.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = route.c; path = openvpn/route.c; sourceTree = "<group>"; };
+		8B2D591E12422BDC00924DA5 /* route.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = route.h; path = openvpn/route.h; sourceTree = "<group>"; };
+		8B2D594312422BDC00924DA5 /* sandbox.crt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = sandbox.crt; path = openvpn/sandbox.crt; sourceTree = "<group>"; };
+		8B2D594412422BDC00924DA5 /* sandbox.ovpn */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = sandbox.ovpn; path = openvpn/sandbox.ovpn; sourceTree = "<group>"; };
+		8B2D594512422BDC00924DA5 /* schedule.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = schedule.c; path = openvpn/schedule.c; sourceTree = "<group>"; };
+		8B2D594612422BDC00924DA5 /* schedule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = schedule.h; path = openvpn/schedule.h; sourceTree = "<group>"; };
+		8B2D595112422BDC00924DA5 /* session_id.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = session_id.c; path = openvpn/session_id.c; sourceTree = "<group>"; };
+		8B2D595212422BDC00924DA5 /* session_id.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = session_id.h; path = openvpn/session_id.h; sourceTree = "<group>"; };
+		8B2D595312422BDC00924DA5 /* shaper.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = shaper.c; path = openvpn/shaper.c; sourceTree = "<group>"; };
+		8B2D595412422BDC00924DA5 /* shaper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shaper.h; path = openvpn/shaper.h; sourceTree = "<group>"; };
+		8B2D595512422BDC00924DA5 /* sig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sig.c; path = openvpn/sig.c; sourceTree = "<group>"; };
+		8B2D595612422BDC00924DA5 /* sig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sig.h; path = openvpn/sig.h; sourceTree = "<group>"; };
+		8B2D595712422BDC00924DA5 /* socket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = socket.c; path = openvpn/socket.c; sourceTree = "<group>"; };
+		8B2D595812422BDC00924DA5 /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socket.h; path = openvpn/socket.h; sourceTree = "<group>"; };
+		8B2D595912422BDC00924DA5 /* socks.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = socks.c; path = openvpn/socks.c; sourceTree = "<group>"; };
+		8B2D595A12422BDC00924DA5 /* socks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = socks.h; path = openvpn/socks.h; sourceTree = "<group>"; };
+		8B2D595B12422BDC00924DA5 /* ssl.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ssl.c; path = openvpn/ssl.c; sourceTree = "<group>"; };
+		8B2D595C12422BDC00924DA5 /* ssl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ssl.h; path = openvpn/ssl.h; sourceTree = "<group>"; };
+		8B2D595E12422BDC00924DA5 /* status.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = status.c; path = openvpn/status.c; sourceTree = "<group>"; };
+		8B2D595F12422BDC00924DA5 /* status.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = status.h; path = openvpn/status.h; sourceTree = "<group>"; };
+		8B2D596212422BDC00924DA5 /* syshead.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = syshead.h; path = openvpn/syshead.h; sourceTree = "<group>"; };
+		8B2D597E12422BDC00924DA5 /* thread.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = thread.c; path = openvpn/thread.c; sourceTree = "<group>"; };
+		8B2D597F12422BDC00924DA5 /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = thread.h; path = openvpn/thread.h; sourceTree = "<group>"; };
+		8B2D598012422BDC00924DA5 /* tun.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tun.c; path = openvpn/tun.c; sourceTree = "<group>"; };
+		8B2D598112422BDC00924DA5 /* tun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tun.h; path = openvpn/tun.h; sourceTree = "<group>"; };
+		8B2D598212422BDC00924DA5 /* version.m4 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = version.m4; path = openvpn/version.m4; sourceTree = "<group>"; };
+		8B2D598312422BDC00924DA5 /* win32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = win32.c; path = openvpn/win32.c; sourceTree = "<group>"; };
+		8B2D598412422BDC00924DA5 /* win32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = win32.h; path = openvpn/win32.h; sourceTree = "<group>"; };
+		8BB602C41250AD3F00B289F2 /* openvpninterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = openvpninterface.h; path = openvpn/openvpninterface.h; sourceTree = "<group>"; };
+		8BB602F21250ADCD00B289F2 /* openvpninterface.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = openvpninterface.c; path = openvpn/openvpninterface.c; sourceTree = "<group>"; };
+		8BC30D4E1251E38A00318061 /* libcrypto_arm.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto_arm.a; path = "openssl-1.0.0a/openssl_armv6/lib/libcrypto_arm.a"; sourceTree = "<group>"; };
+		8BC30D4F1251E38A00318061 /* libssl_arm.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl_arm.a; path = "openssl-1.0.0a/openssl_armv6/lib/libssl_arm.a"; sourceTree = "<group>"; };
+		8BDBC396124B343000AFDE78 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = "openssl-1.0.0a/openssl_i386/lib/libcrypto.a"; sourceTree = "<group>"; };
+		8BDBC397124B343000AFDE78 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = "openssl-1.0.0a/openssl_i386/lib/libssl.a"; sourceTree = "<group>"; };
+		AA747D9E0F9514B9006C5449 /* staticopenvpnssl_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = staticopenvpnssl_Prefix.pch; sourceTree = SOURCE_ROOT; };
+		AACBBE490F95108600F1A2B1 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		D2AAC07E0554694100DB518D /* libstaticopenvpnssl.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libstaticopenvpnssl.a; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8B1CD705124A51AF005BD799 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8B1CD706124A51AF005BD799 /* Foundation.framework in Frameworks */,
+				8BDBC39A124B343000AFDE78 /* libcrypto.a in Frameworks */,
+				8BDBC39B124B343000AFDE78 /* libssl.a in Frameworks */,
+				8BC30D501251E38A00318061 /* libcrypto_arm.a in Frameworks */,
+				8BC30D511251E38A00318061 /* libssl_arm.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D2AAC07C0554694100DB518D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AACBBE4A0F95108600F1A2B1 /* Foundation.framework in Frameworks */,
+				8BDBC398124B343000AFDE78 /* libcrypto.a in Frameworks */,
+				8BDBC399124B343000AFDE78 /* libssl.a in Frameworks */,
+				8BC30D521251E38A00318061 /* libcrypto_arm.a in Frameworks */,
+				8BC30D531251E38A00318061 /* libssl_arm.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		034768DFFF38A50411DB9C8B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D2AAC07E0554694100DB518D /* libstaticopenvpnssl.a */,
+				8B1CD70D124A51AF005BD799 /* libstaticopenvpnssliphone.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0867D691FE84028FC02AAC07 /* staticopenvpnssl */ = {
+			isa = PBXGroup;
+			children = (
+				08FB77AEFE84172EC02AAC07 /* Classes */,
+				32C88DFF0371C24200C91783 /* Other Sources */,
+				0867D69AFE84028FC02AAC07 /* Frameworks */,
+				034768DFFF38A50411DB9C8B /* Products */,
+			);
+			name = staticopenvpnssl;
+			sourceTree = "<group>";
+		};
+		0867D69AFE84028FC02AAC07 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AACBBE490F95108600F1A2B1 /* Foundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		08FB77AEFE84172EC02AAC07 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Classes;
+			sourceTree = "<group>";
+		};
+		32C88DFF0371C24200C91783 /* Other Sources */ = {
+			isa = PBXGroup;
+			children = (
+				8BC30D4E1251E38A00318061 /* libcrypto_arm.a */,
+				8BC30D4F1251E38A00318061 /* libssl_arm.a */,
+				8BB602C41250AD3F00B289F2 /* openvpninterface.h */,
+				8BB602F21250ADCD00B289F2 /* openvpninterface.c */,
+				8BDBC396124B343000AFDE78 /* libcrypto.a */,
+				8BDBC397124B343000AFDE78 /* libssl.a */,
+				8B2D589C12422BDC00924DA5 /* cryptoapi.c */,
+				8B2D589D12422BDC00924DA5 /* cryptoapi.h */,
+				8B2D589F12422BDC00924DA5 /* dhcp.c */,
+				8B2D58A012422BDC00924DA5 /* dhcp.h */,
+				8B2D58A112422BDC00924DA5 /* errlevel.h */,
+				8B2D58A212422BDC00924DA5 /* error.c */,
+				8B2D58A312422BDC00924DA5 /* error.h */,
+				8B2D58A412422BDC00924DA5 /* event.c */,
+				8B2D58A512422BDC00924DA5 /* event.h */,
+				8B2D58A612422BDC00924DA5 /* fdmisc.c */,
+				8B2D58A712422BDC00924DA5 /* fdmisc.h */,
+				8B2D58A812422BDC00924DA5 /* forward-inline.h */,
+				8B2D58A912422BDC00924DA5 /* forward.c */,
+				8B2D58AA12422BDC00924DA5 /* forward.h */,
+				8B2D58AB12422BDC00924DA5 /* fragment.c */,
+				8B2D58AC12422BDC00924DA5 /* fragment.h */,
+				8B2D58AD12422BDC00924DA5 /* gremlin.c */,
+				8B2D58AE12422BDC00924DA5 /* gremlin.h */,
+				8B2D58AF12422BDC00924DA5 /* helper.c */,
+				8B2D58B012422BDC00924DA5 /* helper.h */,
+				8B2D58B112422BDC00924DA5 /* ieproxy.c */,
+				8B2D58B212422BDC00924DA5 /* ieproxy.h */,
+				8B2D58B312422BDC00924DA5 /* init.c */,
+				8B2D58B412422BDC00924DA5 /* init.h */,
+				8B2D58B512422BDC00924DA5 /* integer.h */,
+				8B2D58B612422BDC00924DA5 /* interval.c */,
+				8B2D58B712422BDC00924DA5 /* interval.h */,
+				8B2D58B812422BDC00924DA5 /* list.c */,
+				8B2D58B912422BDC00924DA5 /* list.h */,
+				8B2D58BA12422BDC00924DA5 /* lladdr.c */,
+				8B2D58BB12422BDC00924DA5 /* lladdr.h */,
+				8B2D58BC12422BDC00924DA5 /* lzo.c */,
+				8B2D58BD12422BDC00924DA5 /* lzo.h */,
+				8B2D58BF12422BDC00924DA5 /* manage.c */,
+				8B2D58C012422BDC00924DA5 /* manage.h */,
+				8B2D58C112422BDC00924DA5 /* mbuf.c */,
+				8B2D58C212422BDC00924DA5 /* mbuf.h */,
+				8B2D58C312422BDC00924DA5 /* memcmp.c */,
+				8B2D58C412422BDC00924DA5 /* memdbg.h */,
+				8B2D58C512422BDC00924DA5 /* misc.c */,
+				8B2D58C612422BDC00924DA5 /* misc.h */,
+				8B2D58C812422BDC00924DA5 /* mroute.c */,
+				8B2D58C912422BDC00924DA5 /* mroute.h */,
+				8B2D58CA12422BDC00924DA5 /* mss.c */,
+				8B2D58CB12422BDC00924DA5 /* mss.h */,
+				8B2D58CC12422BDC00924DA5 /* mtcp.c */,
+				8B2D58CD12422BDC00924DA5 /* mtcp.h */,
+				8B2D58CE12422BDC00924DA5 /* mtu.c */,
+				8B2D58CF12422BDC00924DA5 /* mtu.h */,
+				8B2D58D012422BDC00924DA5 /* mudp.c */,
+				8B2D58D112422BDC00924DA5 /* mudp.h */,
+				8B2D58D212422BDC00924DA5 /* multi.c */,
+				8B2D58D312422BDC00924DA5 /* multi.h */,
+				8B2D58D512422BDC00924DA5 /* ntlm.c */,
+				8B2D58D612422BDC00924DA5 /* ntlm.h */,
+				8B2D58D712422BDC00924DA5 /* occ-inline.h */,
+				8B2D58D812422BDC00924DA5 /* occ.c */,
+				8B2D58D912422BDC00924DA5 /* occ.h */,
+				8B2D58DB12422BDC00924DA5 /* openvpn-plugin.h */,
+				8B2D58DC12422BDC00924DA5 /* openvpn.8 */,
+				8B2D58DD12422BDC00924DA5 /* openvpn.c */,
+				8B2D58DE12422BDC00924DA5 /* openvpn.h */,
+				8B2D58E112422BDC00924DA5 /* options.c */,
+				8B2D58E212422BDC00924DA5 /* options.h */,
+				8B2D58E312422BDC00924DA5 /* otime.c */,
+				8B2D58E412422BDC00924DA5 /* otime.h */,
+				8B2D58E512422BDC00924DA5 /* packet_id.c */,
+				8B2D58E612422BDC00924DA5 /* packet_id.h */,
+				8B2D58E712422BDC00924DA5 /* perf.c */,
+				8B2D58E812422BDC00924DA5 /* perf.h */,
+				8B2D58E912422BDC00924DA5 /* pf-inline.h */,
+				8B2D58EA12422BDC00924DA5 /* pf.c */,
+				8B2D58EB12422BDC00924DA5 /* pf.h */,
+				8B2D58EC12422BDC00924DA5 /* ping-inline.h */,
+				8B2D58ED12422BDC00924DA5 /* ping.c */,
+				8B2D58EE12422BDC00924DA5 /* ping.h */,
+				8B2D58EF12422BDC00924DA5 /* pkcs11.c */,
+				8B2D58F012422BDC00924DA5 /* pkcs11.h */,
+				8B2D590C12422BDC00924DA5 /* plugin.c */,
+				8B2D590D12422BDC00924DA5 /* plugin.h */,
+				8B2D590E12422BDC00924DA5 /* pool.c */,
+				8B2D590F12422BDC00924DA5 /* pool.h */,
+				8B2D591012422BDC00924DA5 /* PORTS */,
+				8B2D591112422BDC00924DA5 /* proto.c */,
+				8B2D591212422BDC00924DA5 /* proto.h */,
+				8B2D591312422BDC00924DA5 /* proxy.c */,
+				8B2D591412422BDC00924DA5 /* proxy.h */,
+				8B2D591512422BDC00924DA5 /* ps.c */,
+				8B2D591612422BDC00924DA5 /* ps.h */,
+				8B2D591712422BDC00924DA5 /* push.c */,
+				8B2D591812422BDC00924DA5 /* push.h */,
+				8B2D591912422BDC00924DA5 /* pushlist.h */,
+				8B2D591A12422BDC00924DA5 /* README */,
+				8B2D591B12422BDC00924DA5 /* reliable.c */,
+				8B2D591C12422BDC00924DA5 /* reliable.h */,
+				8B2D591D12422BDC00924DA5 /* route.c */,
+				8B2D591E12422BDC00924DA5 /* route.h */,
+				8B2D594312422BDC00924DA5 /* sandbox.crt */,
+				8B2D594412422BDC00924DA5 /* sandbox.ovpn */,
+				8B2D594512422BDC00924DA5 /* schedule.c */,
+				8B2D594612422BDC00924DA5 /* schedule.h */,
+				8B2D595112422BDC00924DA5 /* session_id.c */,
+				8B2D595212422BDC00924DA5 /* session_id.h */,
+				8B2D595312422BDC00924DA5 /* shaper.c */,
+				8B2D595412422BDC00924DA5 /* shaper.h */,
+				8B2D595512422BDC00924DA5 /* sig.c */,
+				8B2D595612422BDC00924DA5 /* sig.h */,
+				8B2D595712422BDC00924DA5 /* socket.c */,
+				8B2D595812422BDC00924DA5 /* socket.h */,
+				8B2D595912422BDC00924DA5 /* socks.c */,
+				8B2D595A12422BDC00924DA5 /* socks.h */,
+				8B2D595B12422BDC00924DA5 /* ssl.c */,
+				8B2D595C12422BDC00924DA5 /* ssl.h */,
+				8B2D595E12422BDC00924DA5 /* status.c */,
+				8B2D595F12422BDC00924DA5 /* status.h */,
+				8B2D596212422BDC00924DA5 /* syshead.h */,
+				8B2D597E12422BDC00924DA5 /* thread.c */,
+				8B2D597F12422BDC00924DA5 /* thread.h */,
+				8B2D598012422BDC00924DA5 /* tun.c */,
+				8B2D598112422BDC00924DA5 /* tun.h */,
+				8B2D598212422BDC00924DA5 /* version.m4 */,
+				8B2D598312422BDC00924DA5 /* win32.c */,
+				8B2D598412422BDC00924DA5 /* win32.h */,
+				8B2D586E12422B1500924DA5 /* base64.c */,
+				8B2D586F12422B1500924DA5 /* base64.h */,
+				8B2D587012422B1500924DA5 /* basic.h */,
+				8B2D587112422B1500924DA5 /* buffer.c */,
+				8B2D587212422B1500924DA5 /* buffer.h */,
+				8B2D587312422B1500924DA5 /* circ_list.h */,
+				8B2D587412422B1500924DA5 /* common.h */,
+				8B2D587512422B1500924DA5 /* config-win32.h */,
+				8B2D587612422B1500924DA5 /* config.h */,
+				8B2D587712422B1500924DA5 /* crypto.c */,
+				8B2D587812422B1500924DA5 /* crypto.h */,
+				AA747D9E0F9514B9006C5449 /* staticopenvpnssl_Prefix.pch */,
+			);
+			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		8B1CD682124A51AF005BD799 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8B1CD683124A51AF005BD799 /* staticopenvpnssl_Prefix.pch in Headers */,
+				8B1CD684124A51AF005BD799 /* base64.h in Headers */,
+				8B1CD685124A51AF005BD799 /* basic.h in Headers */,
+				8B1CD686124A51AF005BD799 /* buffer.h in Headers */,
+				8B1CD687124A51AF005BD799 /* circ_list.h in Headers */,
+				8B1CD688124A51AF005BD799 /* common.h in Headers */,
+				8B1CD689124A51AF005BD799 /* config-win32.h in Headers */,
+				8B1CD68A124A51AF005BD799 /* config.h in Headers */,
+				8B1CD68B124A51AF005BD799 /* crypto.h in Headers */,
+				8B1CD68C124A51AF005BD799 /* cryptoapi.h in Headers */,
+				8B1CD68D124A51AF005BD799 /* dhcp.h in Headers */,
+				8B1CD68E124A51AF005BD799 /* errlevel.h in Headers */,
+				8B1CD68F124A51AF005BD799 /* error.h in Headers */,
+				8B1CD690124A51AF005BD799 /* event.h in Headers */,
+				8B1CD691124A51AF005BD799 /* fdmisc.h in Headers */,
+				8B1CD692124A51AF005BD799 /* forward-inline.h in Headers */,
+				8B1CD693124A51AF005BD799 /* forward.h in Headers */,
+				8B1CD694124A51AF005BD799 /* fragment.h in Headers */,
+				8B1CD695124A51AF005BD799 /* gremlin.h in Headers */,
+				8B1CD696124A51AF005BD799 /* helper.h in Headers */,
+				8B1CD697124A51AF005BD799 /* ieproxy.h in Headers */,
+				8B1CD698124A51AF005BD799 /* init.h in Headers */,
+				8B1CD699124A51AF005BD799 /* integer.h in Headers */,
+				8B1CD69A124A51AF005BD799 /* interval.h in Headers */,
+				8B1CD69B124A51AF005BD799 /* list.h in Headers */,
+				8B1CD69C124A51AF005BD799 /* lladdr.h in Headers */,
+				8B1CD69D124A51AF005BD799 /* lzo.h in Headers */,
+				8B1CD69E124A51AF005BD799 /* manage.h in Headers */,
+				8B1CD69F124A51AF005BD799 /* mbuf.h in Headers */,
+				8B1CD6A0124A51AF005BD799 /* memdbg.h in Headers */,
+				8B1CD6A1124A51AF005BD799 /* misc.h in Headers */,
+				8B1CD6A2124A51AF005BD799 /* mroute.h in Headers */,
+				8B1CD6A3124A51AF005BD799 /* mss.h in Headers */,
+				8B1CD6A4124A51AF005BD799 /* mtcp.h in Headers */,
+				8B1CD6A5124A51AF005BD799 /* mtu.h in Headers */,
+				8B1CD6A6124A51AF005BD799 /* mudp.h in Headers */,
+				8B1CD6A7124A51AF005BD799 /* multi.h in Headers */,
+				8B1CD6A8124A51AF005BD799 /* ntlm.h in Headers */,
+				8B1CD6A9124A51AF005BD799 /* occ-inline.h in Headers */,
+				8B1CD6AA124A51AF005BD799 /* occ.h in Headers */,
+				8B1CD6AB124A51AF005BD799 /* openvpn-plugin.h in Headers */,
+				8B1CD6AC124A51AF005BD799 /* openvpn.h in Headers */,
+				8B1CD6AD124A51AF005BD799 /* options.h in Headers */,
+				8B1CD6AE124A51AF005BD799 /* otime.h in Headers */,
+				8B1CD6AF124A51AF005BD799 /* packet_id.h in Headers */,
+				8B1CD6B0124A51AF005BD799 /* perf.h in Headers */,
+				8B1CD6B1124A51AF005BD799 /* pf-inline.h in Headers */,
+				8B1CD6B2124A51AF005BD799 /* pf.h in Headers */,
+				8B1CD6B3124A51AF005BD799 /* ping-inline.h in Headers */,
+				8B1CD6B4124A51AF005BD799 /* ping.h in Headers */,
+				8B1CD6B5124A51AF005BD799 /* pkcs11.h in Headers */,
+				8B1CD6B6124A51AF005BD799 /* plugin.h in Headers */,
+				8B1CD6B7124A51AF005BD799 /* pool.h in Headers */,
+				8B1CD6B8124A51AF005BD799 /* proto.h in Headers */,
+				8B1CD6B9124A51AF005BD799 /* proxy.h in Headers */,
+				8B1CD6BA124A51AF005BD799 /* ps.h in Headers */,
+				8B1CD6BB124A51AF005BD799 /* push.h in Headers */,
+				8B1CD6BC124A51AF005BD799 /* pushlist.h in Headers */,
+				8B1CD6BD124A51AF005BD799 /* reliable.h in Headers */,
+				8B1CD6BE124A51AF005BD799 /* route.h in Headers */,
+				8B1CD6BF124A51AF005BD799 /* schedule.h in Headers */,
+				8B1CD6C0124A51AF005BD799 /* session_id.h in Headers */,
+				8B1CD6C1124A51AF005BD799 /* shaper.h in Headers */,
+				8B1CD6C2124A51AF005BD799 /* sig.h in Headers */,
+				8B1CD6C3124A51AF005BD799 /* socket.h in Headers */,
+				8B1CD6C4124A51AF005BD799 /* socks.h in Headers */,
+				8B1CD6C5124A51AF005BD799 /* ssl.h in Headers */,
+				8B1CD6C6124A51AF005BD799 /* status.h in Headers */,
+				8B1CD6C7124A51AF005BD799 /* syshead.h in Headers */,
+				8B1CD6C8124A51AF005BD799 /* thread.h in Headers */,
+				8B1CD6C9124A51AF005BD799 /* tun.h in Headers */,
+				8B1CD6CA124A51AF005BD799 /* win32.h in Headers */,
+				8BB602C61250AD3F00B289F2 /* openvpninterface.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D2AAC07A0554694100DB518D /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA747D9F0F9514B9006C5449 /* staticopenvpnssl_Prefix.pch in Headers */,
+				8B2D587A12422B1500924DA5 /* base64.h in Headers */,
+				8B2D587B12422B1500924DA5 /* basic.h in Headers */,
+				8B2D587D12422B1500924DA5 /* buffer.h in Headers */,
+				8B2D587E12422B1500924DA5 /* circ_list.h in Headers */,
+				8B2D587F12422B1500924DA5 /* common.h in Headers */,
+				8B2D588012422B1500924DA5 /* config-win32.h in Headers */,
+				8B2D588112422B1500924DA5 /* config.h in Headers */,
+				8B2D588312422B1500924DA5 /* crypto.h in Headers */,
+				8B2D598612422BDC00924DA5 /* cryptoapi.h in Headers */,
+				8B2D598812422BDC00924DA5 /* dhcp.h in Headers */,
+				8B2D598912422BDC00924DA5 /* errlevel.h in Headers */,
+				8B2D598B12422BDC00924DA5 /* error.h in Headers */,
+				8B2D598D12422BDC00924DA5 /* event.h in Headers */,
+				8B2D598F12422BDC00924DA5 /* fdmisc.h in Headers */,
+				8B2D599012422BDC00924DA5 /* forward-inline.h in Headers */,
+				8B2D599212422BDC00924DA5 /* forward.h in Headers */,
+				8B2D599412422BDC00924DA5 /* fragment.h in Headers */,
+				8B2D599612422BDC00924DA5 /* gremlin.h in Headers */,
+				8B2D599812422BDC00924DA5 /* helper.h in Headers */,
+				8B2D599A12422BDC00924DA5 /* ieproxy.h in Headers */,
+				8B2D599C12422BDC00924DA5 /* init.h in Headers */,
+				8B2D599D12422BDC00924DA5 /* integer.h in Headers */,
+				8B2D599F12422BDC00924DA5 /* interval.h in Headers */,
+				8B2D59A112422BDC00924DA5 /* list.h in Headers */,
+				8B2D59A312422BDC00924DA5 /* lladdr.h in Headers */,
+				8B2D59A512422BDC00924DA5 /* lzo.h in Headers */,
+				8B2D59A812422BDC00924DA5 /* manage.h in Headers */,
+				8B2D59AA12422BDC00924DA5 /* mbuf.h in Headers */,
+				8B2D59AC12422BDC00924DA5 /* memdbg.h in Headers */,
+				8B2D59AE12422BDC00924DA5 /* misc.h in Headers */,
+				8B2D59B012422BDC00924DA5 /* mroute.h in Headers */,
+				8B2D59B212422BDC00924DA5 /* mss.h in Headers */,
+				8B2D59B412422BDC00924DA5 /* mtcp.h in Headers */,
+				8B2D59B612422BDC00924DA5 /* mtu.h in Headers */,
+				8B2D59B812422BDC00924DA5 /* mudp.h in Headers */,
+				8B2D59BA12422BDC00924DA5 /* multi.h in Headers */,
+				8B2D59BC12422BDC00924DA5 /* ntlm.h in Headers */,
+				8B2D59BD12422BDC00924DA5 /* occ-inline.h in Headers */,
+				8B2D59BF12422BDC00924DA5 /* occ.h in Headers */,
+				8B2D59C012422BDC00924DA5 /* openvpn-plugin.h in Headers */,
+				8B2D59C212422BDC00924DA5 /* openvpn.h in Headers */,
+				8B2D59C412422BDC00924DA5 /* options.h in Headers */,
+				8B2D59C612422BDC00924DA5 /* otime.h in Headers */,
+				8B2D59C812422BDC00924DA5 /* packet_id.h in Headers */,
+				8B2D59CA12422BDC00924DA5 /* perf.h in Headers */,
+				8B2D59CB12422BDC00924DA5 /* pf-inline.h in Headers */,
+				8B2D59CD12422BDC00924DA5 /* pf.h in Headers */,
+				8B2D59CE12422BDC00924DA5 /* ping-inline.h in Headers */,
+				8B2D59D012422BDC00924DA5 /* ping.h in Headers */,
+				8B2D59D212422BDC00924DA5 /* pkcs11.h in Headers */,
+				8B2D59DD12422BDC00924DA5 /* plugin.h in Headers */,
+				8B2D59DF12422BDC00924DA5 /* pool.h in Headers */,
+				8B2D59E112422BDC00924DA5 /* proto.h in Headers */,
+				8B2D59E312422BDC00924DA5 /* proxy.h in Headers */,
+				8B2D59E512422BDC00924DA5 /* ps.h in Headers */,
+				8B2D59E712422BDC00924DA5 /* push.h in Headers */,
+				8B2D59E812422BDC00924DA5 /* pushlist.h in Headers */,
+				8B2D59EA12422BDC00924DA5 /* reliable.h in Headers */,
+				8B2D59EC12422BDC00924DA5 /* route.h in Headers */,
+				8B2D59EE12422BDC00924DA5 /* schedule.h in Headers */,
+				8B2D59F412422BDC00924DA5 /* session_id.h in Headers */,
+				8B2D59F612422BDC00924DA5 /* shaper.h in Headers */,
+				8B2D59F812422BDC00924DA5 /* sig.h in Headers */,
+				8B2D59FA12422BDC00924DA5 /* socket.h in Headers */,
+				8B2D59FC12422BDC00924DA5 /* socks.h in Headers */,
+				8B2D59FE12422BDC00924DA5 /* ssl.h in Headers */,
+				8B2D5A0012422BDC00924DA5 /* status.h in Headers */,
+				8B2D5A0112422BDC00924DA5 /* syshead.h in Headers */,
+				8B2D5A1512422BDC00924DA5 /* thread.h in Headers */,
+				8B2D5A1712422BDC00924DA5 /* tun.h in Headers */,
+				8B2D5A1912422BDC00924DA5 /* win32.h in Headers */,
+				8BB602C81250AD3F00B289F2 /* openvpninterface.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8B1CD681124A51AF005BD799 /* staticopenvpnssliphone */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8B1CD70A124A51AF005BD799 /* Build configuration list for PBXNativeTarget "staticopenvpnssliphone" */;
+			buildPhases = (
+				8B1CD682124A51AF005BD799 /* Headers */,
+				8B1CD6CB124A51AF005BD799 /* Sources */,
+				8B1CD705124A51AF005BD799 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = staticopenvpnssliphone;
+			productName = staticopenvpnssl;
+			productReference = 8B1CD70D124A51AF005BD799 /* libstaticopenvpnssliphone.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		D2AAC07D0554694100DB518D /* staticopenvpnssl */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB921E08733DC00010E9CD /* Build configuration list for PBXNativeTarget "staticopenvpnssl" */;
+			buildPhases = (
+				D2AAC07A0554694100DB518D /* Headers */,
+				D2AAC07B0554694100DB518D /* Sources */,
+				D2AAC07C0554694100DB518D /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = staticopenvpnssl;
+			productName = staticopenvpnssl;
+			productReference = D2AAC07E0554694100DB518D /* libstaticopenvpnssl.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0867D690FE84028FC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB922208733DC00010E9CD /* Build configuration list for PBXProject "staticopenvpnssl" */;
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = 0867D691FE84028FC02AAC07 /* staticopenvpnssl */;
+			productRefGroup = 034768DFFF38A50411DB9C8B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D2AAC07D0554694100DB518D /* staticopenvpnssl */,
+				8B1CD681124A51AF005BD799 /* staticopenvpnssliphone */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8B1CD6CB124A51AF005BD799 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8B1CD6CC124A51AF005BD799 /* base64.c in Sources */,
+				8B1CD6CD124A51AF005BD799 /* buffer.c in Sources */,
+				8B1CD6CE124A51AF005BD799 /* crypto.c in Sources */,
+				8B1CD6CF124A51AF005BD799 /* cryptoapi.c in Sources */,
+				8B1CD6D0124A51AF005BD799 /* dhcp.c in Sources */,
+				8B1CD6D1124A51AF005BD799 /* error.c in Sources */,
+				8B1CD6D2124A51AF005BD799 /* event.c in Sources */,
+				8B1CD6D3124A51AF005BD799 /* fdmisc.c in Sources */,
+				8B1CD6D4124A51AF005BD799 /* forward.c in Sources */,
+				8B1CD6D5124A51AF005BD799 /* fragment.c in Sources */,
+				8B1CD6D6124A51AF005BD799 /* gremlin.c in Sources */,
+				8B1CD6D7124A51AF005BD799 /* helper.c in Sources */,
+				8B1CD6D8124A51AF005BD799 /* ieproxy.c in Sources */,
+				8B1CD6D9124A51AF005BD799 /* init.c in Sources */,
+				8B1CD6DA124A51AF005BD799 /* interval.c in Sources */,
+				8B1CD6DB124A51AF005BD799 /* list.c in Sources */,
+				8B1CD6DC124A51AF005BD799 /* lladdr.c in Sources */,
+				8B1CD6DD124A51AF005BD799 /* lzo.c in Sources */,
+				8B1CD6DE124A51AF005BD799 /* manage.c in Sources */,
+				8B1CD6DF124A51AF005BD799 /* mbuf.c in Sources */,
+				8B1CD6E0124A51AF005BD799 /* memcmp.c in Sources */,
+				8B1CD6E1124A51AF005BD799 /* misc.c in Sources */,
+				8B1CD6E2124A51AF005BD799 /* mroute.c in Sources */,
+				8B1CD6E3124A51AF005BD799 /* mss.c in Sources */,
+				8B1CD6E4124A51AF005BD799 /* mtcp.c in Sources */,
+				8B1CD6E5124A51AF005BD799 /* mtu.c in Sources */,
+				8B1CD6E6124A51AF005BD799 /* mudp.c in Sources */,
+				8B1CD6E7124A51AF005BD799 /* multi.c in Sources */,
+				8B1CD6E8124A51AF005BD799 /* ntlm.c in Sources */,
+				8B1CD6E9124A51AF005BD799 /* occ.c in Sources */,
+				8B1CD6EA124A51AF005BD799 /* openvpn.c in Sources */,
+				8B1CD6EB124A51AF005BD799 /* options.c in Sources */,
+				8B1CD6EC124A51AF005BD799 /* otime.c in Sources */,
+				8B1CD6ED124A51AF005BD799 /* packet_id.c in Sources */,
+				8B1CD6EE124A51AF005BD799 /* perf.c in Sources */,
+				8B1CD6EF124A51AF005BD799 /* pf.c in Sources */,
+				8B1CD6F0124A51AF005BD799 /* ping.c in Sources */,
+				8B1CD6F1124A51AF005BD799 /* pkcs11.c in Sources */,
+				8B1CD6F2124A51AF005BD799 /* plugin.c in Sources */,
+				8B1CD6F3124A51AF005BD799 /* pool.c in Sources */,
+				8B1CD6F4124A51AF005BD799 /* proto.c in Sources */,
+				8B1CD6F5124A51AF005BD799 /* proxy.c in Sources */,
+				8B1CD6F6124A51AF005BD799 /* ps.c in Sources */,
+				8B1CD6F7124A51AF005BD799 /* push.c in Sources */,
+				8B1CD6F8124A51AF005BD799 /* reliable.c in Sources */,
+				8B1CD6F9124A51AF005BD799 /* route.c in Sources */,
+				8B1CD6FA124A51AF005BD799 /* schedule.c in Sources */,
+				8B1CD6FB124A51AF005BD799 /* session_id.c in Sources */,
+				8B1CD6FC124A51AF005BD799 /* shaper.c in Sources */,
+				8B1CD6FD124A51AF005BD799 /* sig.c in Sources */,
+				8B1CD6FE124A51AF005BD799 /* socket.c in Sources */,
+				8B1CD6FF124A51AF005BD799 /* socks.c in Sources */,
+				8B1CD700124A51AF005BD799 /* ssl.c in Sources */,
+				8B1CD701124A51AF005BD799 /* status.c in Sources */,
+				8B1CD702124A51AF005BD799 /* thread.c in Sources */,
+				8B1CD703124A51AF005BD799 /* tun.c in Sources */,
+				8B1CD704124A51AF005BD799 /* win32.c in Sources */,
+				8BB602F31250ADCD00B289F2 /* openvpninterface.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D2AAC07B0554694100DB518D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8B2D587912422B1500924DA5 /* base64.c in Sources */,
+				8B2D587C12422B1500924DA5 /* buffer.c in Sources */,
+				8B2D588212422B1500924DA5 /* crypto.c in Sources */,
+				8B2D598512422BDC00924DA5 /* cryptoapi.c in Sources */,
+				8B2D598712422BDC00924DA5 /* dhcp.c in Sources */,
+				8B2D598A12422BDC00924DA5 /* error.c in Sources */,
+				8B2D598C12422BDC00924DA5 /* event.c in Sources */,
+				8B2D598E12422BDC00924DA5 /* fdmisc.c in Sources */,
+				8B2D599112422BDC00924DA5 /* forward.c in Sources */,
+				8B2D599312422BDC00924DA5 /* fragment.c in Sources */,
+				8B2D599512422BDC00924DA5 /* gremlin.c in Sources */,
+				8B2D599712422BDC00924DA5 /* helper.c in Sources */,
+				8B2D599912422BDC00924DA5 /* ieproxy.c in Sources */,
+				8B2D599B12422BDC00924DA5 /* init.c in Sources */,
+				8B2D599E12422BDC00924DA5 /* interval.c in Sources */,
+				8B2D59A012422BDC00924DA5 /* list.c in Sources */,
+				8B2D59A212422BDC00924DA5 /* lladdr.c in Sources */,
+				8B2D59A412422BDC00924DA5 /* lzo.c in Sources */,
+				8B2D59A712422BDC00924DA5 /* manage.c in Sources */,
+				8B2D59A912422BDC00924DA5 /* mbuf.c in Sources */,
+				8B2D59AB12422BDC00924DA5 /* memcmp.c in Sources */,
+				8B2D59AD12422BDC00924DA5 /* misc.c in Sources */,
+				8B2D59AF12422BDC00924DA5 /* mroute.c in Sources */,
+				8B2D59B112422BDC00924DA5 /* mss.c in Sources */,
+				8B2D59B312422BDC00924DA5 /* mtcp.c in Sources */,
+				8B2D59B512422BDC00924DA5 /* mtu.c in Sources */,
+				8B2D59B712422BDC00924DA5 /* mudp.c in Sources */,
+				8B2D59B912422BDC00924DA5 /* multi.c in Sources */,
+				8B2D59BB12422BDC00924DA5 /* ntlm.c in Sources */,
+				8B2D59BE12422BDC00924DA5 /* occ.c in Sources */,
+				8B2D59C112422BDC00924DA5 /* openvpn.c in Sources */,
+				8B2D59C312422BDC00924DA5 /* options.c in Sources */,
+				8B2D59C512422BDC00924DA5 /* otime.c in Sources */,
+				8B2D59C712422BDC00924DA5 /* packet_id.c in Sources */,
+				8B2D59C912422BDC00924DA5 /* perf.c in Sources */,
+				8B2D59CC12422BDC00924DA5 /* pf.c in Sources */,
+				8B2D59CF12422BDC00924DA5 /* ping.c in Sources */,
+				8B2D59D112422BDC00924DA5 /* pkcs11.c in Sources */,
+				8B2D59DC12422BDC00924DA5 /* plugin.c in Sources */,
+				8B2D59DE12422BDC00924DA5 /* pool.c in Sources */,
+				8B2D59E012422BDC00924DA5 /* proto.c in Sources */,
+				8B2D59E212422BDC00924DA5 /* proxy.c in Sources */,
+				8B2D59E412422BDC00924DA5 /* ps.c in Sources */,
+				8B2D59E612422BDC00924DA5 /* push.c in Sources */,
+				8B2D59E912422BDC00924DA5 /* reliable.c in Sources */,
+				8B2D59EB12422BDC00924DA5 /* route.c in Sources */,
+				8B2D59ED12422BDC00924DA5 /* schedule.c in Sources */,
+				8B2D59F312422BDC00924DA5 /* session_id.c in Sources */,
+				8B2D59F512422BDC00924DA5 /* shaper.c in Sources */,
+				8B2D59F712422BDC00924DA5 /* sig.c in Sources */,
+				8B2D59F912422BDC00924DA5 /* socket.c in Sources */,
+				8B2D59FB12422BDC00924DA5 /* socks.c in Sources */,
+				8B2D59FD12422BDC00924DA5 /* ssl.c in Sources */,
+				8B2D59FF12422BDC00924DA5 /* status.c in Sources */,
+				8B2D5A1412422BDC00924DA5 /* thread.c in Sources */,
+				8B2D5A1612422BDC00924DA5 /* tun.c in Sources */,
+				8B2D5A1812422BDC00924DA5 /* win32.c in Sources */,
+				8BB602F41250ADCD00B289F2 /* openvpninterface.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB921F08733DC00010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				DSTROOT = /tmp/staticopenvpnssl.dst;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = staticopenvpnssl_Prefix.pch;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/lzo-2.03\"",
+					"\"$(SRCROOT)/../testvpn/openssl-1.0.0a\"",
+					"\"$(SRCROOT)/openssl-1.0.0a\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_i386/lib\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_armv6/lib\"",
+				);
+				PRODUCT_NAME = staticopenvpnssl;
+			};
+			name = Debug;
+		};
+		1DEB922008733DC00010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				DSTROOT = /tmp/staticopenvpnssl.dst;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = staticopenvpnssl_Prefix.pch;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/lzo-2.03\"",
+					"\"$(SRCROOT)/../testvpn/openssl-1.0.0a\"",
+					"\"$(SRCROOT)/openssl-1.0.0a\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_i386/lib\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_armv6/lib\"",
+				);
+				PRODUCT_NAME = staticopenvpnssl;
+			};
+			name = Release;
+		};
+		1DEB922308733DC00010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"./openssl-1.0.0a/include",
+					./openvpn,
+					"./lzo-2.03",
+				);
+				OTHER_LDFLAGS = "-ObjC";
+				PREBINDING = NO;
+				SDKROOT = iphoneos4.0;
+			};
+			name = Debug;
+		};
+		1DEB922408733DC00010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"./openssl-1.0.0a/include",
+					./openvpn,
+					"lzo-2.03/include",
+					"./lzo-2.03",
+				);
+				OTHER_LDFLAGS = "-ObjC";
+				PREBINDING = NO;
+				SDKROOT = iphoneos4.0;
+			};
+			name = Release;
+		};
+		8B1CD70B124A51AF005BD799 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				DSTROOT = /tmp/staticopenvpnssl.dst;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = staticopenvpnssl_Prefix.pch;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\\\"$(SRCROOT)/lzo-2.03\\\"",
+					"\\\"$(SRCROOT)/../testvpn/openssl-1.0.0a\\\"",
+					"\\\"$(SRCROOT)/openssl-1.0.0a\\\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_i386/lib\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_armv6/lib\"",
+				);
+				PRODUCT_NAME = staticopenvpnssl;
+			};
+			name = Debug;
+		};
+		8B1CD70C124A51AF005BD799 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				DSTROOT = /tmp/staticopenvpnssl.dst;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = staticopenvpnssl_Prefix.pch;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\\\"$(SRCROOT)/lzo-2.03\\\"",
+					"\\\"$(SRCROOT)/../testvpn/openssl-1.0.0a\\\"",
+					"\\\"$(SRCROOT)/openssl-1.0.0a\\\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_i386/lib\"",
+					"\"$(SRCROOT)/openssl-1.0.0a/openssl_armv6/lib\"",
+				);
+				PRODUCT_NAME = staticopenvpnssliphone;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB921E08733DC00010E9CD /* Build configuration list for PBXNativeTarget "staticopenvpnssl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB921F08733DC00010E9CD /* Debug */,
+				1DEB922008733DC00010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB922208733DC00010E9CD /* Build configuration list for PBXProject "staticopenvpnssl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB922308733DC00010E9CD /* Debug */,
+				1DEB922408733DC00010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8B1CD70A124A51AF005BD799 /* Build configuration list for PBXNativeTarget "staticopenvpnssliphone" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8B1CD70B124A51AF005BD799 /* Debug */,
+				8B1CD70C124A51AF005BD799 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0867D690FE84028FC02AAC07 /* Project object */;
+}

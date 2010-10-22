@@ -141,7 +141,7 @@ that are not required otherwise.
 #define CMD_NOTIFY		10
 #define CMD_SUBSCRIBE	11
 #define CMD_TALK		12
-
+#define CMD_ACTUAL_LOGIN 20
 /* these are the possible valid values of the response field */
 #define RESPONSE_OK 200
 #define RESPONSE_OK_RELAYED 202
@@ -160,7 +160,15 @@ fixed public IP addresses, MAIL_PRIORITY is a low priority login. */
 #define GATEWAY_PRIORITY 3
 
 	//added by mukesh for callback 27/6/09	
+typedef enum OpenVpnStatusType
+{
+	OpenVpnNotConnected=0,
+	OpenVpnConnectionProgress=1,
+	OpenVpnConnected=2,
+	OpenVpnConnectionFailed=3,
+	OpenVpnConnectionNotPossible=4
 	
+}OpenVpnStatusType;	
 
 #ifdef _CALLBACKLTP_
 	struct ltpStack;
@@ -689,6 +697,8 @@ struct ltpStack
 		char logfile[260];
 	#endif
 	char *openopvnFileP;
+	OpenVpnStatusType  openVpnStatus;
+	int openVpnFailedCount;
 };
 
 

@@ -25,11 +25,18 @@
 #define ATTEMPT_VPN_CONNECT_SUCCESS 6017
 #define ATTEMPT_VPN_CONNECT_UNSUCCESS 6018
 #define ATTEMPT_VPN_CONNECT_EXIT 6019
-
+#define MAX_VPN_FAILED 3
 #define MAXTIMEOUT 300
 #include "ltpmobile.h"
+#define _OPEN_VPN_
 #ifdef _OPEN_VPN_
 #include "openvpninterface.h"
+
+#endif
+#ifdef _MACOS_
+#define THREAD_PROC void*
+#else
+#define THREAD_PROC DWORD WINAPI 
 #endif
 //#define _ENCRIPTION_
 #ifdef _ENCRIPTION_
@@ -37,8 +44,9 @@
 #define SIP_PORT1   DEFAULT_SIP_PORT
 #define SIP_DOMAIN	"174.143.168.31"
 #else
-
+//#define _ENCRIPTION_SUPPORT_IN_MAIN 
 #define DEFAULT_SIP_PORT  "5060"
+#define SIP_ENCRIPTION_PORT "9065"
 #define SIP_PORT1   "8060"
 #define SIP_PORT2   "9060"
 #define SIP_PORT3   "5062"
@@ -106,7 +114,8 @@ int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned 
 void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath);
 int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
 	void setDevPath(unsigned char *pathP);
-	
+void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status);
+OpenVpnStatusType getVpnStatus(struct ltpStack *pstackP);
 #ifdef __cplusplus
 }
 #endif 

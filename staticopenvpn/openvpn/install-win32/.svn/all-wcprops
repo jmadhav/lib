@@ -1,0 +1,167 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32
+END
+maketext
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/maketext
+END
+maketap
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/maketap
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/Makefile.in
+END
+makeopenvpn
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/makeopenvpn
+END
+getopenssl
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/getopenssl
+END
+winconfig
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/winconfig
+END
+getgui
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/getgui
+END
+build-pkcs11-helper.sh
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/build-pkcs11-helper.sh
+END
+getprebuilt
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/getprebuilt
+END
+ifdef.pl
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/ifdef.pl
+END
+ddk-common
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/ddk-common
+END
+GetWindowsVersion.nsi
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/GetWindowsVersion.nsi
+END
+dosname.pl
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/dosname.pl
+END
+setpath.nsi
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/setpath.nsi
+END
+trans.pl
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/trans.pl
+END
+sample.ovpn
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/sample.ovpn
+END
+getpkcs11helper
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/getpkcs11helper
+END
+doclean
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/doclean
+END
+settings.in
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/settings.in
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/Makefile.am
+END
+maketapinstall
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/maketapinstall
+END
+macro.pl
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/macro.pl
+END
+u2d.c
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/u2d.c
+END
+getxgui
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/getxgui
+END
+m4todef.pl
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/m4todef.pl
+END
+buildinstaller
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/buildinstaller
+END
+openvpn.nsi
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/212/trunk/third_party/openvpn/install-win32/openvpn.nsi
+END

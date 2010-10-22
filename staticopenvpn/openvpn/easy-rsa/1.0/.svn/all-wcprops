@@ -1,0 +1,113 @@
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0
+END
+build-ca
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-ca
+END
+revoke-crt
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/revoke-crt
+END
+build-req
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-req
+END
+sign-req
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/sign-req
+END
+build-key
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-key
+END
+build-key-pkcs12
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-key-pkcs12
+END
+build-dh
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-dh
+END
+clean-all
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/clean-all
+END
+openssl.cnf
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/openssl.cnf
+END
+build-req-pass
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-req-pass
+END
+list-crl
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/list-crl
+END
+build-key-pass
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-key-pass
+END
+build-key-server
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-key-server
+END
+revoke-full
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/revoke-full
+END
+make-crl
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/make-crl
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/README
+END
+vars
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/vars
+END
+build-inter
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/1.0/build-inter
+END

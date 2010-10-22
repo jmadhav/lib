@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/Makefile.in
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/Makefile.am
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/179/trunk/third_party/lzo-2.03/include/Makefile
+END

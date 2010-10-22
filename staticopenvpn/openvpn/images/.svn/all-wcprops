@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/212/trunk/third_party/openvpn/images
+END
+icon.ico
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/212/trunk/third_party/openvpn/images/icon.ico
+END
+Makefile.in
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/212/trunk/third_party/openvpn/images/Makefile.in
+END
+install-whirl.bmp
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/images/install-whirl.bmp
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/212/trunk/third_party/openvpn/images/Makefile.am
+END

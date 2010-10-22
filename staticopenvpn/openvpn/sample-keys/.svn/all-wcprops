@@ -1,0 +1,71 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys
+END
+dh1024.pem
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/dh1024.pem
+END
+pkcs12.p12
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/pkcs12.p12
+END
+client.crt
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/client.crt
+END
+client.key
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/client.key
+END
+ca.crt
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/ca.crt
+END
+ca.key
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/ca.key
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/README
+END
+pass.crt
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/pass.crt
+END
+server.crt
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/server.crt
+END
+server.key
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/server.key
+END
+pass.key
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-keys/pass.key
+END

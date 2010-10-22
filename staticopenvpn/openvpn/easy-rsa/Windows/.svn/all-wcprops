@@ -1,0 +1,95 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows
+END
+index.txt.start
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/index.txt.start
+END
+build-ca.bat
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-ca.bat
+END
+build-ca-pass.bat
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-ca-pass.bat
+END
+build-key.bat
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-key.bat
+END
+build-key-pkcs12.bat
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-key-pkcs12.bat
+END
+build-dh.bat
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-dh.bat
+END
+clean-all.bat
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/clean-all.bat
+END
+build-key-server.bat
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-key-server.bat
+END
+build-key-pass.bat
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-key-pass.bat
+END
+vars.bat.sample
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/vars.bat.sample
+END
+revoke-full.bat
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/revoke-full.bat
+END
+build-key-server-pass.bat
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/build-key-server-pass.bat
+END
+serial.start
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/serial.start
+END
+init-config.bat
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/init-config.bat
+END
+README.txt
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/212/trunk/third_party/openvpn/easy-rsa/Windows/README.txt
+END

@@ -23,8 +23,13 @@
 #include "sipandltpwrapper.h"
 #include <stdlib.h>
 #include <string.h>
+#define OPVNFILENAME "spokn.ovpn"
 #ifdef _OPEN_VPN_
-#include <pthread.h>
+#ifdef _MACOS_
+	#include <pthread.h>
+#else
+extern void mySleep(int sec);  
+#endif
 #endif
 
 //#include "openvpn.h"
@@ -3554,6 +3559,7 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	static SipOptionDataType sipOptionDataPort2;
 	static SipOptionDataType sipOptionDataPort3;
 	static SipOptionDataType sipOptionDataPort4;
+	static SipOptionDataType sipOptionDataPortEnc;
 	
 	if(ps->localAccId<0)
 	{	
@@ -3574,6 +3580,8 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	//send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
 	//send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
     //send_request(ps->localAccId,"OPTIONS",sipOptionDataPort4.connectionUrl,&sipOptionDataPort4);
+	
+	
 	sipOptionDataPort1.errorCode = 0;
 	strcpy(sipOptionDataPort1.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT1);
 	sipOptionDataPort1.dataP = ps;
@@ -3593,6 +3601,14 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 		sipOptionDataPort4.dataP = ps;
 		
 		ps->portCount = 4;
+		#ifdef _ENCRIPTION_SUPPORT_IN_MAIN
+			ps->portCount++
+			sipOptionDataPortEnc.errorCode = 0;
+			strcpy(sipOptionDataPortEnc.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_ENCRIPTION_PORT);
+			sipOptionDataPortEnc.dataP = ps;
+
+		#endif
+
 		send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);  
 	    send_request(ps->localAccId,"OPTIONS",sipOptionDataPort2.connectionUrl,&sipOptionDataPort2);
 		send_request(ps->localAccId,"OPTIONS",sipOptionDataPort3.connectionUrl,&sipOptionDataPort3);    
@@ -3616,6 +3632,8 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 		}
 		#ifdef _MACOS_	
 			sleep(1);
+		#else
+			MySleep(1);
 		#endif
 	}
 	return 0;
@@ -4285,8 +4303,8 @@ int sip_ltpRing(struct ltpStack *ps, char *remoteid, int command)
 			}
 			else
 			{	
-				//sprintf(struri, "sip:+%s@%s",remoteid, ps->registerUrl);
-				sprintf(struri, "sip:%s@%s",remoteid, ps->registerUrl);
+				sprintf(struri, "sip:+%s@%s",remoteid, ps->registerUrl);
+				//sprintf(struri, "sip:%s@%s",remoteid, ps->registerUrl);
 			}	
 		}	
 	}
@@ -4584,13 +4602,33 @@ void ltpChat(struct ltpStack *ps, char *userid, char *message)
 
 void ltpLogin(struct ltpStack *ps, int command)
 {
-	
+	char errStr[50];
+	int er;
 	if(ps->sipOnB)
 	{
+		if(command==CMD_LOGIN)
+		{
+			er = sip_IsPortOpen(ps,errStr,0);
+			if(er==0)
+			{
+				return;
+			}
+		}
+		else
+		{
+			if(command==CMD_ACTUAL_LOGIN)
+			{
+				command = CMD_LOGIN;
+			}
+		}
 		sip_ltpLogin(ps,command);
 	}
 	else
 	{
+		if(command==CMD_ACTUAL_LOGIN)
+			{
+				command = CMD_LOGIN;
+			}
 		LTP_ltpLogin(ps,command);
 	}
 }
@@ -4758,10 +4796,16 @@ void Unconference(struct ltpStack *pstackP)
 
 vpnDataStructureType *startVpnObj;
 vpnDataStructureType *endVpnObj;
-
+#ifdef _WIN32
+#include "winsock2.h"
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include<arpa/inet.h>
+#endif
+
+
+
 #include <stdio.h>
 int sockfd;//,n;
 int  sendSoc,recvSoc;
@@ -4772,7 +4816,7 @@ int mymain(int port,unsigned char *data,int len)
 	int er;
 	if(sockfd==0)
 	sockfd=socket(AF_INET,SOCK_DGRAM,0);
-	bzero(&servaddr,sizeof(servaddr));
+	memset(&servaddr,0,sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr=inet_addr("127.0.0.1");
 	servaddr.sin_port=port;//htons(port);
@@ -4821,7 +4865,13 @@ unsigned int myreadDataCallbackL (void *uData,unsigned int*srchostP,unsigned sho
 		//printf("\nmadan");
 		if(startVpnObj==0)
 		{
-			while(globlex){ printf("\nsdbarman");sleep(1);}
+			while(globlex){ printf("\nsdbarman");
+			#ifdef _MACOS_
+				sleep(1);
+			#else
+				MySleep(1);
+			#endif
+			}
 			globlex = 1;
 			endVpnObj = 0;
 			globlex = 0;
@@ -4933,7 +4983,14 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 	//while(startVpnObj)sleep(1);
 	if(startVpnObj==0)
 	{
-		while(globlex){ printf("\ndilip");sleep(1);}
+		while(globlex){ printf("\ndilip");
+		#ifdef _MACOS_ 
+		sleep(1);
+		#else
+		MySleep(1);
+		#endif
+		}
+
 		globlex = 1;
 		startVpnObj = endVpnObj = tmpVpn;
 		globlex = 0;
@@ -4943,7 +5000,13 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 		//printf("\n test 123");
 		if(endVpnObj==0)
 		{
-			while(globlex){ printf("\nmukesh");sleep(1);}
+			while(globlex){ printf("\nmukesh");
+			#ifdef _MASOS_
+				sleep(1);
+			#else
+				MySleep(1);
+			#endif
+			}
 			globlex = 1;
 			startVpnObj = endVpnObj = tmpVpn;
 			globlex = 0;
@@ -4962,7 +5025,7 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 	//vpnDataStructureP
 }
 
-int mytestVPN(void *uDataP)
+THREAD_PROC mytestVPN(void *uDataP)
 {
 	char *pathP = 0;//(char*)uDataP;
 	struct ltpStack *pstackP;
@@ -4978,34 +5041,59 @@ int mytestVPN(void *uDataP)
 
 #define OPVN_SERVER "sandbox.spokn.com"
 #define OPVN_PORT 1935
+#ifdef _MACOS_
 #define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
+
+#else
+#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\sandbox-ca.crt\"\r\ncert \"%s\\sandbox.crt\"\r\nkey \"%s\\sandbox.key\""
+
+#endif
 
 void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 {
-	
-	
-	pthread_t pt;
 	FILE *fp;
 	char *opvnData,*sendpathP;
+	
+	#ifdef _MACOS_
+	pthread_t pt;
+	#endif
+	
 	setReadWriteCallback(readSipDataCallback,writeSipDataCallback);
 	opvnData = malloc(2000);
 	memset(opvnData,0,2000);
 	sprintf(opvnData,OPVNFILE,OPVN_SERVER,OPVN_PORT,rscPath,rscPath,rscPath);
 	sendpathP =(char*) malloc(strlen(pathP)+10);
 	strcpy(sendpathP,pathP);
-	strcat(sendpathP,"/sandbox.opvn");
-	fp = fopen(sendpathP,"w");
-	if(fp)
+
+	#ifdef _MACOS_
+	strcat(sendpathP,"/"OPVNFILENAME);
+	#else
+	strcat(sendpathP,"\\"OPVNFILENAME);
+	#endif
+	fp = fopen(sendpathP,"r");
+	if(fp==0)
 	{
-		fwrite(opvnData,strlen(opvnData)+1,1,fp);
-		//printf("\n%s\n",opvnData);
+		fp = fopen(sendpathP,"w");
+		if(fp)
+		{
+			fwrite(opvnData,strlen(opvnData)+1,1,fp);
+			//printf("\n%s\n",opvnData);
+			fclose(fp);
+		}
+	
+	}
+	else
+	{
 		fclose(fp);
 	}
 	
 	free(opvnData);
 	pstackP->openopvnFileP = sendpathP;
-	pthread_create(&pt, 0,mytestVPN,pstackP);
-		
+	#ifdef _MACOS_
+		pthread_create(&pt, 0,mytestVPN,pstackP);
+	#else
+		CreateThread(NULL, 0, mytestVPN, pstackP, 0, NULL);
+	#endif
 	
 
 
@@ -5014,6 +5102,29 @@ void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 void setDevPath(unsigned char *pathP)
 {
 	setTurnPathInterface(pathP);
+}
+void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status)
+{
+	if(status==OpenVpnConnected)
+	{
+		pstackP->openVpnFailedCount = 0;
+	}
+	else
+	{
+		pstackP->openVpnFailedCount++;
+		if(pstackP->openVpnFailedCount>=MAX_VPN_FAILED)
+		{
+			pstackP->openVpnStatus = OpenVpnConnectionNotPossible;
+			return;
+		}
+	}
+	pstackP->openVpnStatus = status;
+
+
+}
+OpenVpnStatusType getVpnStatus(struct ltpStack *pstackP)
+{
+	return pstackP->openVpnStatus;
 }
 #else
 void setDevPath(unsigned char *pathP)

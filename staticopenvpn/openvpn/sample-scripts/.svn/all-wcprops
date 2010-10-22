@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-scripts
+END
+bridge-stop
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-scripts/bridge-stop
+END
+ucn.pl
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-scripts/ucn.pl
+END
+verify-cn
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-scripts/verify-cn
+END
+auth-pam.pl
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-scripts/auth-pam.pl
+END
+openvpn.init
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-scripts/openvpn.init
+END
+bridge-start
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/212/trunk/third_party/openvpn/sample-scripts/bridge-start
+END
