@@ -28,7 +28,7 @@
 #define MAX_VPN_FAILED 3
 #define MAXTIMEOUT 300
 #include "ltpmobile.h"
-#define _OPEN_VPN_
+//#define _OPEN_VPN_
 #ifdef _OPEN_VPN_
 #include "openvpninterface.h"
 

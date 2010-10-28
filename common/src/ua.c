@@ -1677,7 +1677,7 @@ static void vmsDownload()
 			if (!strcmp(data, "\r\n"))
 				break;
 		}
-		printf("\npath=%s\n\n",pathname);
+		//printf("\npath=%s\n\n",pathname);
 		//prepare to download gsm
 		pfIn = fopen(pathname, "wb");
 		if (!pfIn){
