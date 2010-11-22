@@ -96,7 +96,7 @@ int myexit(int code)
 	}
 	else
 	{
-		statusP(udata,2);
+		statusP(udata,2,0);
 		#ifdef WIN32
 			ExitThread(code);
 		#else
@@ -732,7 +732,7 @@ openvpn_exit (const int status)
   if (status == OPENVPN_EXIT_STATUS_GOOD)
     perf_output_results ();
 
-  myexit (status);
+ // myexit (status);
 }
 
 /*

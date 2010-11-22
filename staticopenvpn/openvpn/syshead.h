@@ -561,7 +561,7 @@ socket_defined (const socket_descriptor_t sd)
  * Should we include OCC (options consistency check) code?
  */
 #ifndef ENABLE_SMALL
-#define ENABLE_OCC
+//#define ENABLE_OCC
 #endif
 
 /*

@@ -18,20 +18,19 @@
  */
 
 
-
 #include <ltpmobile.h>
 #include "sipandltpwrapper.h"
 #include <stdlib.h>
 #include <string.h>
-#define OPVNFILENAME "spokn.ovpn"
+#define OVPNFILENAME "spokn.ovpn"
 #ifdef _OPEN_VPN_
 #ifdef _MACOS_
 	#include <pthread.h>
 #else
-extern void mySleep(int sec);  
-#endif
-#endif
 
+#endif
+#endif
+extern void mySleep(int sec);  
 //#include "openvpn.h"
 #define VPNMAXPATH 355 
 
@@ -2992,7 +2991,8 @@ static void sip_on_call_state(pjsua_call_id call_id, pjsip_event *e)
 				break;
 			//case PJSIP_INV_STATE_EARLY:	    /**< After response with To tag.	    */				
 			case PJSIP_INV_STATE_CONNECTING:	    /**< After 2xx is sent/received.	    */
-				pstack->call[i].ltpState = CALL_RING_ACCEPTED;
+				
+				pstack->call[i].ltpState = CALL_CONNECTED;
 				break;
 			case PJSIP_INV_STATE_CONFIRMED:	    /**< After ACK is sent/received.	    */
 				pstack->call[i].ltpState = CALL_CONNECTED;
@@ -3148,7 +3148,7 @@ static void sip_on_call_media_state(pjsua_call_id call_id)
 				} // end of handling non-conference call
 
 			}
-			//alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
+			alert(pstack->call[i].lineId, ALERT_CONNECTED, NULL);
 		}
 	}
 }
@@ -3240,12 +3240,12 @@ int sip_spokn_pj_Create(struct ltpStack *ps)
 }
 int sip_destroy_transation(struct ltpStack *ps)
 {
-	/*if(ps->tranportID>=0 && ps->sipOnB)
+	if(ps->tranportID>=0 && ps->sipOnB && ps->stunB==0)
 	{
 		pjsua_transport_close(ps->tranportID,0);
 		ps->tranportID = -1;
 		
-	}*/
+	}
 	return 1;
 }
 int sip_set_randomVariable(struct ltpStack *ps,int randVariable)
@@ -3256,7 +3256,9 @@ int sip_set_randomVariable(struct ltpStack *ps,int randVariable)
 int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int *p_id)
 {
 	
-    /* Add UDP transport. */
+//#define _OLD_METHOD_TRANSPORT_
+	char *vpnIP;
+	/* Add UDP transport. */
 	pj_status_t status = 1;
 	int idUser=0;
 	pjsua_transport_config transcfg;
@@ -3273,8 +3275,71 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 	}
 	
 	pjsua_transport_config_default(&transcfg);
-	//transcfg.public_addr = pj_str("192.168.175.102");
-	//transcfg.bound_addr = pj_str(" 127.0.0.1");
+	vpnIP = getVpnIP(ps);
+	if(vpnIP)
+	{
+		transcfg.public_addr = pj_str(vpnIP);
+	}
+		//transcfg.bound_addr = pj_str(" 127.0.0.1");
+#ifdef _OLD_METHOD_TRANSPORT_
+	{
+	enum { START_PORT=4000 };
+			unsigned range;
+		transcfg.port = 8060;	
+				status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+				if (status != PJ_SUCCESS)
+				{
+					transcfg.port = 5060;
+					status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+					if (status != PJ_SUCCESS)
+					{	 
+						range = (10000-dummy_start_port);
+						transcfg.port = dummy_start_port + 
+						((pj_rand() % range) & 0xFFFE);
+						if(transcfg.port==5060)//change to some other port
+						{
+							transcfg.port = transcfg.port + 102;
+			
+						}
+						status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &transcfg, p_id);
+						if (status != PJ_SUCCESS)
+						{
+							sprintf(errorstring, "Error in pjsua_transport_create(). [status:%d]",status);
+							return 0;
+						}
+					}	 
+				}
+	
+		pjsua_transport_config_default(&rtp_cfg);
+	vpnIP = getVpnIP(ps);
+	if(vpnIP)
+	{
+		rtp_cfg.public_addr = pj_str(vpnIP);
+	}
+	rtp_cfg.port = 4000;			
+	status = pjsua_media_transports_create(&rtp_cfg);
+	if(status!=PJ_SUCCESS)
+	
+	{
+		range = (65535-START_PORT-PJSUA_MAX_CALLS*2);
+				rtp_cfg.port = START_PORT + 
+				((pj_rand() % range) & 0xFFFE);
+				
+				diffport = transcfg.port-rtp_cfg.port;
+				if(diffport<0)
+				{
+					diffport = diffport*-1;
+				}
+				if(rtp_cfg.port==5060 || diffport<10)//change to some other port
+					
+				{
+					rtp_cfg.port = rtp_cfg.port + 102;
+					
+				}
+		status = pjsua_media_transports_create(&rtp_cfg);
+	}
+	}			
+#else
 	if(userId)
 	{
 		idUser = atoi(userId);
@@ -3347,6 +3412,11 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 //	transcfg.public_addr = pj_str("192.168.175.102");
 	//return 1;
 	pjsua_transport_config_default(&rtp_cfg);
+	vpnIP = getVpnIP(ps);
+	if(vpnIP)
+	{
+		rtp_cfg.public_addr = pj_str(vpnIP);
+	}
 	{
 		enum { START_MEDIA_PORT=4000 };
 		unsigned range;
@@ -3408,7 +3478,7 @@ int sip_set_udp_transport(struct ltpStack *ps,char *userId,char *errorstring,int
 		}
 	}	
 		
-		
+#endif	
 	return 1;
 	
 
@@ -3465,7 +3535,7 @@ void  tsx_callback(void *token, pjsip_event *event)
 			return ;
 		}
 		sipOptionP->errorCode = 0;
-		if(tsx->status_code ==408)//mean error
+		if(tsx->status_code ==408||tsx->status_code ==502)//mean error
 		{
 			sipOptionP->errorCode = 1;
 			lpsP->portCount--;
@@ -3560,17 +3630,23 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	static SipOptionDataType sipOptionDataPort3;
 	static SipOptionDataType sipOptionDataPort4;
 	static SipOptionDataType sipOptionDataPortEnc;
-	
+	//alert(0, ATTEMPT_LOGIN_ON_OPEN_PORT, 0);
+	//return 0;
+	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
+	{
+		return 1;
+	}
 	if(ps->localAccId<0)
 	{	
 		
 		pjsua_acc_add_local(ps->tranportID,PJ_TRUE,&ps->localAccId);
 		
 	}
+	
 	ps->gotOpenPortB = 0;
 	#ifdef  _ENCRIPTION_
 	sipOptionDataPort1.errorCode = 0;
-	strcpy(sipOptionDataPort1.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT1);
+	sprintf(sipOptionDataPort1.connectionUrl,"SIP:%s:%s",ps->sipVpnServer.sipServer,SIP_PORT1);
 	sipOptionDataPort1.dataP = ps;
 	ps->portCount = 1;
 	send_request(ps->localAccId,"OPTIONS",sipOptionDataPort1.connectionUrl,&sipOptionDataPort1);  
@@ -3583,28 +3659,30 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	
 	
 	sipOptionDataPort1.errorCode = 0;
-	strcpy(sipOptionDataPort1.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT1);
+	sprintf(sipOptionDataPort1.connectionUrl,"SIP:%s:%s",ps->sipVpnServer.sipServer,SIP_PORT1);
+	
 	sipOptionDataPort1.dataP = ps;
 	
 	
 		sipOptionDataPort2.errorCode = 0;
-		strcpy(sipOptionDataPort2.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT2);
+
+		sprintf(sipOptionDataPort2.connectionUrl,"SIP:%s:%s",ps->sipVpnServer.sipServer,SIP_PORT2);
 		sipOptionDataPort2.dataP = ps;
 		
 		sipOptionDataPort3.errorCode = 0;
-		strcpy(sipOptionDataPort3.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT3);
+		sprintf(sipOptionDataPort3.connectionUrl,"SIP:%s:%s",ps->sipVpnServer.sipServer,SIP_PORT3);
 		sipOptionDataPort3.dataP = ps;
 		
 		
 		sipOptionDataPort4.errorCode = 0;
-		strcpy(sipOptionDataPort4.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_PORT4);
+		sprintf(sipOptionDataPort4.connectionUrl,"SIP:%s:%s",ps->sipVpnServer.sipServer,SIP_PORT4);
 		sipOptionDataPort4.dataP = ps;
 		
 		ps->portCount = 4;
 		#ifdef _ENCRIPTION_SUPPORT_IN_MAIN
 			ps->portCount++
 			sipOptionDataPortEnc.errorCode = 0;
-			strcpy(sipOptionDataPortEnc.connectionUrl,"SIP:"SIP_DOMAIN":" SIP_ENCRIPTION_PORT);
+			sprintf(sipOptionDataPort5.connectionUrl,"SIP:%s:%s",ps->sipVpnServer.sipServer,SIP_PORT5);
 			sipOptionDataPortEnc.dataP = ps;
 
 		#endif
@@ -3775,12 +3853,14 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 		return 1;
 	}
 	
-	
-	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
+	if(ps->stunB)
 	{
-		strcpy(errorstring, "Error in sip_set_udp_transport");
-		return 2;
-	}	
+		if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
+		{
+			strcpy(errorstring, "Error in sip_set_udp_transport");
+			return 2;
+		}
+	}
 #ifdef _SPEEX_CODEC_
 	{
 		//speex code
@@ -4034,6 +4114,10 @@ void sip_pj_DeInit(struct ltpStack *ps)
 		
 	}
 	pjsua_destroy();
+	#ifdef _OPEN_VPN_
+	//break openvpn 
+		 vpnExitNormal(pstack);
+	#endif
 	
 	
 }
@@ -4072,6 +4156,10 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->stunB = 1;
 	ps->tranportID = -1;
 	ps->localAccId = -1;
+	strcpy(ps->sipVpnServer.sipServer ,SIP_DOMAIN);
+	strcpy(ps->sipVpnServer.vpnServer ,OVPN_SERVER);
+	ps->sipVpnServer.vpnPort = OVPN_PORT;
+	strcpy(ps->sipVpnServer.spoknServer ,"www.spokn.com");
 	sprintf(ps->registerUrl,"%s:%s",SIP_DOMAIN,DEFAULT_SIP_PORT);
 	//strcpy(ps->registerUrl,SIP_DOMAIN); 
 	ps->maxSlots = maxslots;
@@ -4181,7 +4269,7 @@ void sip_ltpLogin(struct ltpStack *ps, int command)
 		//sprintf(url1, "testrelmstring%s%d", ps->ltpUserid, ps->lport);
 		//acccfg.force_contact =pj_str(url1);
 		acccfg.cred_count = 1;
-		acccfg.cred_info[0].realm = pj_str(SIP_DOMAIN);
+		acccfg.cred_info[0].realm = pj_str("*");
 		acccfg.cred_info[0].scheme = pj_str("digest");
 		acccfg.cred_info[0].username = pj_str(ps->ltpUserid);
 		acccfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
@@ -4229,7 +4317,29 @@ void sip_ltpLoginCancel(struct ltpStack *ps)
 
 /* we reuse the ltpSession member of the call slot to hold the callid of pjsip in the ltpstack 
 */
+void sip_setCallIdle(struct ltpStack *ps,int llineID)
+{
+	int i;
+	for (i = 0; i < ps->maxSlots; i++)
+	{
+		if(ps->call[i].lineId == llineID || llineID ==-1)
+		{
+			if (ps->call[i].ltpState == CALL_HANGING || ps->call[i].lineId == llineID)
+			{
+				struct pjsua_call_info ci;
+				pjsua_call_id call_id;
+				call_id = (pjsua_call_id) ps->call[i].ltpSession;
+				pjsua_call_get_info(call_id, &ci);
 
+				ps->call[i].ltpState = CALL_IDLE;
+				pjsua_conf_disconnect(ci.conf_slot, 0);
+				pjsua_conf_disconnect(0, ci.conf_slot);
+			}
+		}
+	
+	}
+
+}
 void sip_ltpHangup(struct ltpStack *ps, int lineid)
 {
 	int	i;
@@ -4259,10 +4369,14 @@ void sip_ltpHangup(struct ltpStack *ps, int lineid)
 			//else this is a regular hangup
 			else
 			{
+				char remoteID[200];
+				sprintf(remoteID,"\nhangup  %s   to %s",pstack->ltpUserid,pstack->call[i].remoteUserid);
+				writeUIlog(ps,remoteID,"entered regular hangup loop in sip_ltpHangup");
 				ps->call[i].ltpState = CALL_HANGING;
 				er = pjsua_call_hangup(call_id, 0, NULL, NULL);
 				if(er!=PJ_SUCCESS)
 				{
+					writeUIlog(ps,ps->ltpUserid,"pjsip pjsua_call_hangup error");
 					ps->call[i].ltpState = CALL_IDLE;
 					alert(pstack->call[i].lineId, ALERT_DISCONNECTED, "");
 				}
@@ -4492,12 +4606,12 @@ int ltpTalk(struct ltpStack *ps, char *remoteid)
 }
 
 void ltpHangup(struct ltpStack *ps, int lineid)
-{
-	
+{	
 	if(lineid>=0)
 	{	
 		if(ps->sipOnB)
 		{
+			writeUIlog(ps,ps->ltpUserid,"entered ltp hangup function for sip");
 			sip_ltpHangup(ps,lineid);
 		}
 		else
@@ -4620,8 +4734,10 @@ void ltpLogin(struct ltpStack *ps, int command)
 			{
 				command = CMD_LOGIN;
 			}
+			
 		}
 		sip_ltpLogin(ps,command);
+		
 	}
 	else
 	{
@@ -4857,6 +4973,10 @@ unsigned int myreadDataCallbackL (void *uData,unsigned int*srchostP,unsigned sho
 	//char sip[32],dip[32];
 	//struct in_addr x,y;
 	tmpVpn = startVpnObj;
+	if(lenP)
+	{
+		*lenP = 0;
+	}
 	if(tmpVpn)
 	{
 		//while(globlex) ;
@@ -4902,17 +5022,49 @@ unsigned int myreadDataCallbackL (void *uData,unsigned int*srchostP,unsigned sho
 	
 	return *lenP;
 }
-
-int statusCallbackL(void *udata,int status)
+char * getVpnIP(struct ltpStack *pstackP)
 {
+	char *resultP;
+	struct	in_addr srcHost;
+	if(pstackP->stunB)
+	{
+		return 0;
+	}
+	return pstackP->sipVpnServer.vpnServer;
+	if(pstackP->vpnIP)
+	{
+		resultP = malloc(100);
+		srcHost.S_un.S_addr=htonl(pstackP->vpnIP);
+		strcpy(resultP,inet_ntoa(srcHost));
+		return resultP;
+		
+	}
+	return 0;
+}
+
+int statusCallbackL(void *udata,int status,int vpnIP)
+{
+	//struct	in_addr srcHost;
+	struct ltpStack *pstackP;
+	pstackP = (struct ltpStack *)udata;
+	if(pstackP)
+	{
+		pstackP->vpnIP = vpnIP;
+
+	}
 	//printf("\n openvpn Start %d",status);
+	//sip_destroy_transation(udata);
 	if(status)
 	{
 		setReadWriteCallback(0,0);
 	}
 	if(status==0)//mean success
 	{	
+		
 		alert(0,ATTEMPT_VPN_CONNECT_SUCCESS+status,0);
+		//srcHost.S_un.S_addr=htonl(vpnIP);
+		//printf("\n src %s",inet_ntoa(srcHost) );
+		
 	}
 	else
 	{
@@ -4950,7 +5102,13 @@ int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned 
 	sipP = readDataInterface(data,*lenP,srchostP,srcportP,dsthostP,dstportP,lenP);
 	if(sipP)
 	{
+		//FILE *fp;
+		//fp = fopen("c:\\spokn\\recvrsg.txt","a");
+		//fprintf(fp,"\n%s",sipP);
+		//fclose(fp);
 		memmove(data,sipP,*lenP);
+		
+		//printf("\nread=%s",data);
 		free(sipP);
 		recvSoc++;
 	}	
@@ -4980,7 +5138,15 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 	tmpVpn->portDst = *dstportP;
 	tmpVpn->length = *lenP;
 	tmpVpn->next = 0;
-	//while(startVpnObj)sleep(1);
+	/*if(*lenP<1400)
+	if(strstr(data,"REGISTER"))
+	{
+		FILE *fp;
+		fp = fopen("c:\\spokn\\sendrsg.txt","a");
+		fprintf(fp,"\n%s",data);
+		fclose(fp);
+		//	printf("\n send %s",data);
+	}*/	//while(startVpnObj)sleep(1);
 	if(startVpnObj==0)
 	{
 		while(globlex){ printf("\ndilip");
@@ -5039,16 +5205,6 @@ THREAD_PROC mytestVPN(void *uDataP)
 	
 }
 
-#define OPVN_SERVER "sandbox.spokn.com"
-#define OPVN_PORT 1935
-#ifdef _MACOS_
-#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
-
-#else
-#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\sandbox-ca.crt\"\r\ncert \"%s\\sandbox.crt\"\r\nkey \"%s\\sandbox.key\""
-
-#endif
-
 void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 {
 	FILE *fp;
@@ -5061,31 +5217,31 @@ void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	setReadWriteCallback(readSipDataCallback,writeSipDataCallback);
 	opvnData = malloc(2000);
 	memset(opvnData,0,2000);
-	sprintf(opvnData,OPVNFILE,OPVN_SERVER,OPVN_PORT,rscPath,rscPath,rscPath);
-	sendpathP =(char*) malloc(strlen(pathP)+10);
+	sprintf(opvnData,OPVNFILE,pstackP->sipVpnServer.vpnServer,pstackP->sipVpnServer.vpnPort,rscPath,CACRTDEF,rscPath,CERTDEF,rscPath,KEY);
+	sendpathP =(char*) malloc(strlen(pathP)+110);
 	strcpy(sendpathP,pathP);
 
 	#ifdef _MACOS_
 	strcat(sendpathP,"/"OPVNFILENAME);
 	#else
-	strcat(sendpathP,"\\"OPVNFILENAME);
+	strcat(sendpathP,"\\"OVPNFILENAME);
 	#endif
-	fp = fopen(sendpathP,"r");
-	if(fp==0)
+	fp = fopen(sendpathP,"w");
+	//if(fp==0)
 	{
-		fp = fopen(sendpathP,"w");
+		//fp = fopen(sendpathP,"w");
 		if(fp)
 		{
-			fwrite(opvnData,strlen(opvnData)+1,1,fp);
+			fwrite(opvnData,strlen(opvnData),1,fp);
 			//printf("\n%s\n",opvnData);
 			fclose(fp);
 		}
 	
 	}
-	else
+	/*else
 	{
 		fclose(fp);
-	}
+	}*/
 	
 	free(opvnData);
 	pstackP->openopvnFileP = sendpathP;
@@ -5098,7 +5254,10 @@ void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 
 
 }
-
+void resetFailCount(struct ltpStack *pstackP)
+{
+	pstackP->openVpnFailedCount = 0;
+}
 void setDevPath(unsigned char *pathP)
 {
 	setTurnPathInterface(pathP);
@@ -5111,7 +5270,10 @@ void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status)
 	}
 	else
 	{
-		pstackP->openVpnFailedCount++;
+		if(status==OpenVpnConnectionNotPossible|| status==OpenVpnConnectionFailed)
+		{
+			pstackP->openVpnFailedCount++;
+		}
 		if(pstackP->openVpnFailedCount>=MAX_VPN_FAILED)
 		{
 			pstackP->openVpnStatus = OpenVpnConnectionNotPossible;
@@ -5126,11 +5288,518 @@ OpenVpnStatusType getVpnStatus(struct ltpStack *pstackP)
 {
 	return pstackP->openVpnStatus;
 }
+void vpnExitNormal(struct ltpStack *pstackP)
+{
+	 normalExitInterface();
+	 pstackP->openVpnStatus = OpenVpnNotConnected;
+}
 #else
+char * getVpnIP(struct ltpStack *pstackP)
+{
+	return 0;
+}
+void resetFailCount(struct ltpStack *pstackP)
+{
+	
+}
+void vpnExitNormal(struct ltpStack *pstackP)
+{
+}
 void setDevPath(unsigned char *pathP)
 {
 }
 void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 {
 }
+void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status)
+{
+
+}
+OpenVpnStatusType getVpnStatus(struct ltpStack *pstackP)
+{
+	return OpenVpnConnectionNotPossible;
+}
 #endif
+#ifndef _MACOS_
+#include <windows.h>
+#include <stdlib.h>
+#include <crtdbg.h>
+#include <time.h>
+#include <stdio.h>
+#include <string.h>
+#include <windows.h>
+#include <winsock.h>
+#include <io.h>
+#include <process.h>
+#include <wininet.h>
+#endif
+#include "ezxml.h"
+int getHostIPPage(char*url, char *data, int maxsize)
+{
+	
+#ifndef _MACOS_
+	char	*p;
+	int		i;
+	unsigned long dwread = 0;
+	HINTERNET hpage;
+	FILE *fp;
+	HINTERNET hnet = InternetOpenA("spokn", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	if(!hnet)
+	{
+		puts("InternetOpen failed nW");
+		return 0;
+	}
+
+	hpage = InternetOpenUrlA(hnet, url, NULL, -1, INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_NO_UI | INTERNET_FLAG_IGNORE_CERT_CN_INVALID, 0);
+	if (!hpage)
+	{
+		printf("%s failed\n", url);
+		InternetCloseHandle(hnet);
+		return 0;
+	}
+
+	
+	p = data;
+	i = 0;
+	fp = fopen("c:\\test.html","w");
+	while(i < maxsize && InternetReadFile(hpage, p, maxsize - i, &dwread)){
+		if (!dwread)
+			break;
+		i += dwread;
+		fwrite(p,1,dwread,fp);
+		p += dwread;
+	}
+	fclose(fp);
+	*p = 0;
+
+	InternetCloseHandle(hpage);
+	InternetCloseHandle(hnet);
+
+	return i;
+#endif
+	return 0;
+}
+static unsigned int  resolveLocalDNS(char *host)
+{
+	int i, count=0;
+	char *p = host;
+	struct sockaddr_in	addr;
+	struct hostent		*pent;
+	int	dnsip = INADDR_NONE;
+
+	if (!strcmp(host, "0"))
+		return 0;
+
+	while (*p)
+	{
+		for (i = 0; i < 3; i++, p++)
+			if (!isdigit(*p))
+				break;
+		if (*p != '.')
+			break;
+		p++;
+		count++;
+	}
+
+	if (count == 3 && i > 0 && i <= 3)
+		return inet_addr(host);
+
+	dnsip = 0;
+	pent = gethostbyname((char *)host);
+	if (!pent)
+		dnsip = 0;
+	else
+	{
+		addr.sin_addr = *((struct in_addr *) *pent->h_addr_list);
+		dnsip =  addr.sin_addr.s_addr;
+	}
+	
+	
+	if (!dnsip)
+		return INADDR_NONE;
+
+	return dnsip;
+}
+static int accessLocalServer(char *host,int port)
+{
+	char request[500];
+	SOCKET sock;
+	struct sockaddr_in	addr;
+
+	addr.sin_addr.s_addr = resolveLocalDNS(host);
+	if (addr.sin_addr.s_addr == INADDR_NONE)
+		return 0;
+	if(port==0)
+	{
+		return addr.sin_addr.s_addr;
+	}
+	_snprintf(request, sizeof(request), "GET // HTTP/1.1\r\nHost: %s\r\n\r\n", host);
+	addr.sin_port = htons(port);	
+	addr.sin_family = AF_INET;
+
+	sock = (int)socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	
+	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))){
+		closesocket(sock);
+		return 0;
+	}
+
+	closesocket(sock);
+	return addr.sin_addr.s_addr;
+}
+
+
+THREAD_PROC checkNetConnection(void *data)
+{
+	struct ltpStack *pstackP;
+	pstackP = (struct ltpStack *)data;
+	if (resolveLocalDNS("yahoo.com") == INADDR_NONE)
+	{
+		alert(0,NET_NOT_AVAILABLE,0);	
+		
+		return 0;
+	}
+	getGooglePage(pstackP);
+	
+	 return 0;
+}
+int getNewServerForSpokn(struct ltpStack *pstackP)
+{
+	//WSADATA	wsadata;
+	//int err;
+	if(pstackP->attemptPageGet)
+	{
+		return 0;
+	}
+	
+	//err = WSAStartup(0x0101, &wsadata);
+	pstackP->attemptPageGet = 1;
+	#ifdef _MACOS_
+	{
+		pthread_t pt;
+		pthread_create(&pt, 0,mytestVPN,pstackP);
+	}
+	#else
+		CreateThread(NULL, 0, checkNetConnection, pstackP, 0, NULL);
+	#endif
+}
+
+int getGooglePage(struct ltpStack *pstackP)
+{
+	char	*data, strIP[20], *p, *q;//host[100];
+	int		i, j;
+	char *type;
+	char *hostP;
+	char *port;
+	ezxml_t xml,parsexml;
+	char *newm;
+	int addr;
+	int done =0;
+	SipVpnServer *sipVpnServerP=0;
+	int vpnConnectB=0,sipConnectedB=0,spoknConnectedB=0;
+	data = (char *) malloc(100000);
+	if (!data)
+	{
+		alert(0,GOOGLE_PAGE_NOT_FOUND,0);	
+		return 0;
+	}
+	i = getHostIPPage(GOOGLEPAGE, data, 100000);
+	if(i==0)
+	{
+		if(pstackP->sipVpnServer.newUrlPage[0])
+		{
+			i = getHostIPPage(pstackP->sipVpnServer.newUrlPage, data, 100000);
+		}
+	}
+	if(i!=0)//mean got the page
+	{
+		newm = strstr(data,"<?xml version=\"1.0\"?>");
+		if(newm)
+		{
+			xml = ezxml_parse_str(newm, strlen(newm));
+			if(xml)
+			{
+				sipVpnServerP =(SipVpnServer*) malloc(sizeof(SipVpnServer));
+				memset(sipVpnServerP,0,sizeof(SipVpnServer));
+				strcpy(sipVpnServerP->sipServer,SIP_DOMAIN);
+				strcpy(sipVpnServerP->vpnServer,OVPN_SERVER);
+				sipVpnServerP->vpnPort = OVPN_PORT;
+				strcpy(sipVpnServerP->spoknServer,SPOKN_SERVER);
+				parsexml = ezxml_child(xml, "host");
+				while(parsexml)
+				{
+					type =(char*) ezxml_attr(parsexml, "type");
+					hostP =(char*) ezxml_attr(parsexml, "name");
+					port =(char*) ezxml_attr(parsexml, "port");
+					if(hostP)
+					{
+						if(port)
+						{
+							addr = accessLocalServer(hostP,atoi(port));
+						}
+						else
+						{
+							addr = accessLocalServer(hostP,0);
+						}
+					
+						if(addr)
+						{
+							if(type)
+							{
+								if(strcmp(type,"vpn")==0)
+								{
+									vpnConnectB = 1;
+									strcpy(sipVpnServerP->vpnServer,hostP);
+									if(port)
+									{
+										sipVpnServerP->vpnPort = atoi(port);
+									}
+									else
+									{
+										sipVpnServerP->vpnPort = OVPN_PORT;
+									}
+								}
+								if(strcmp(type,"sip")==0)
+								{
+									sipConnectedB = 1;
+									strcpy(sipVpnServerP->sipServer,hostP);
+									if(port)
+									{
+										sipVpnServerP->sipPort = atoi(port);
+									}
+									else
+									{
+										sipVpnServerP->sipPort = SIP_DEFAULT_PORT;
+									}
+								}
+								if(strcmp(type,"spokn")==0)
+								{
+									spoknConnectedB = 1;
+ 									strcpy(sipVpnServerP->spoknServer,hostP);
+									if(port)
+									{
+										sipVpnServerP->spoknPort = atoi(port);
+									}
+									else
+									{
+										sipVpnServerP->spoknPort = 80;
+									}
+								}
+							}
+							if(vpnConnectB&&spoknConnectedB&&sipConnectedB)
+							{
+								break;
+							}
+						}	
+					}
+					//printf("\n %s %s %s",type,hostP,port);
+					parsexml = parsexml->next;
+					
+				}
+				ezxml_free(xml);
+				done = 1;
+				
+			}
+		}
+	}
+	if(done)
+	alert(0,GOOGLE_PAGE_FOUND,sipVpnServerP);
+	else
+	alert(0,GOOGLE_PAGE_NOT_FOUND,sipVpnServerP);
+	free(data);
+}
+int getServerList(char *data,SipVpnServer *sipVpnServerP)
+{
+	int addr = 1;
+	char *type;
+	char *hostP;
+	char *port;
+	ezxml_t xml,parsexml;
+	char *newm;
+	newm = strstr(data,"<?xml version=\"1.0\"?>");
+	if(newm)
+	{
+		xml = ezxml_parse_str(newm, strlen(newm));
+		if(xml)
+		{
+			strcpy(sipVpnServerP->sipServer,SIP_DOMAIN);
+			strcpy(sipVpnServerP->vpnServer,OVPN_SERVER);
+			sipVpnServerP->vpnPort = OVPN_PORT;
+			strcpy(sipVpnServerP->spoknServer,SPOKN_SERVER);
+			parsexml = ezxml_child(xml, "host");
+			while(parsexml)
+			{
+				type =(char*) ezxml_attr(parsexml, "type");
+				hostP =(char*) ezxml_attr(parsexml, "name");
+				port =(char*) ezxml_attr(parsexml, "port");
+				if(hostP)
+				{
+										
+					if(addr)
+					{
+						if(type)
+						{
+							if(strcmp(type,"vpn")==0)
+							{
+								
+								strcpy(sipVpnServerP->vpnServer,hostP);
+								if(port)
+								{
+									sipVpnServerP->vpnPort = atoi(port);
+								}
+								else
+								{
+									sipVpnServerP->vpnPort = OVPN_PORT;
+								}
+							}
+							if(strcmp(type,"sip")==0)
+							{
+								
+								strcpy(sipVpnServerP->sipServer,hostP);
+								if(port)
+								{
+									sipVpnServerP->sipPort = atoi(port);
+								}
+								else
+								{
+									sipVpnServerP->sipPort = SIP_DEFAULT_PORT;
+								}
+							}
+							if(strcmp(type,"spokn")==0)
+							{
+								
+								strcpy(sipVpnServerP->spoknServer,hostP);
+								if(port)
+								{
+									sipVpnServerP->spoknPort = atoi(port);
+								}
+								else
+								{
+									sipVpnServerP->spoknPort = 80;
+								}
+							}
+						}
+						
+					}	
+				}
+				//printf("\n %s %s %s",type,hostP,port);
+				parsexml = parsexml->next;
+				
+			}
+			ezxml_free(xml);
+			return 0;
+		}
+	}
+	return 1;
+}
+int  setSpoknHost(struct ltpStack *pstackP,char *vpnserverP,char *sipServer,char *spoknServerP,int vpnport,char *pageP,char *path)
+{
+	SipVpnServer *sipVpnP;
+	int returnVal = 1;
+	char *pathP;
+	FILE *fp = 0;
+	pathP = (char*)malloc(500);
+	sipVpnP = (SipVpnServer*)malloc(sizeof(SipVpnServer));
+	memset(sipVpnP,0,sizeof(SipVpnServer));
+	if(spoknServerP)
+	{
+
+		strcpy(sipVpnP->spoknServer,spoknServerP);
+	}
+	if(vpnserverP)
+	strcpy(sipVpnP->vpnServer,vpnserverP);
+	if(pageP)
+	strcpy(sipVpnP->newUrlPage,pageP);
+	sipVpnP->vpnPort = vpnport;
+	if(sipServer)
+	{
+		strcpy(sipVpnP->sipServer,sipServer);
+	}
+	#ifndef _MACOS_
+		sprintf(pathP,"%s\\serverlist.txt",path);
+	#else
+		sprintf(pathP,"%s//serverlist.txt",path);
+	#endif	
+	fp = fopen(pathP,"w");
+	if(fp)
+	{
+		
+		
+		int len;
+		
+		fprintf(fp,MYXML,sipVpnP->sipServer,sipVpnP->sipPort ,sipVpnP->spoknServer,sipVpnP->spoknPort,sipVpnP->vpnServer,sipVpnP->vpnPort);
+		//len = fwrite(sipVpnP,1,sizeof(SipVpnServer),fp);
+		fclose(fp);
+		returnVal = 0;
+	}
+	free(sipVpnP);
+	free(pathP);
+	return returnVal;
+}
+int  getSpoknHost(struct ltpStack *pstackP,char *vpnserverP,char *sipServer,char *spoknServerP,int *vpnportP,char *pageP,char *path)
+{
+	SipVpnServer *sipVpnP;
+	int returnVal = 1;
+	char *pathP;
+	FILE *fp = 0;
+	pathP = (char*)malloc(500);
+	sipVpnP = (SipVpnServer*)malloc(sizeof(SipVpnServer));
+	memset(sipVpnP,0,sizeof(SipVpnServer));
+	
+	#ifndef _MACOS_
+		sprintf(pathP,"%s\\serverlist.txt",path);
+	#else
+		sprintf(pathP,"%s//serverlist.txt",path);
+	#endif	
+	fp = fopen(pathP,"r");
+	if(fp)
+	{
+		int sz;
+		char *data;
+		data = malloc(4010);
+		sz = fread(data,1,4000,fp);
+		
+
+		if(getServerList(data,sipVpnP)==0)
+		{
+			if(spoknServerP)
+			strcpy(spoknServerP,sipVpnP->sipServer);
+			if(vpnserverP)
+			strcpy(vpnserverP,sipVpnP->vpnServer);
+			if(pageP)
+			strcpy(pageP,sipVpnP->newUrlPage);
+			if(vpnportP)
+			*vpnportP = sipVpnP->vpnPort;
+			if(sipServer)
+			{
+				strcpy(sipServer,sipVpnP->sipServer);
+			}
+			returnVal = 0;
+		}
+		fclose(fp);
+		
+	}
+	free(sipVpnP);
+	free(pathP);
+	return returnVal;
+}
+char myFolderPath[300];						//for following hangup path and writting it to a file
+void setFolderPath(struct ltpStack *pstackP,char* lpath)
+{
+	strcpy(pstackP->folderPath,lpath);
+}
+void writeUIlog(struct ltpStack *pstackP,char * data,char *extraInfoP)
+{
+#ifdef _UI_LOG_
+	FILE *pf;
+	char	pathname[300];
+	sprintf(pathname, "%s\\UIlog.txt", pstackP->folderPath);
+	pf = fopen(pathname,"a");
+	if(pf)
+	{
+		fprintf(pf,"%s - %s",data,extraInfoP);
+		fprintf(pf,"\n");
+		fclose(pf);
+	}
+#endif
+}

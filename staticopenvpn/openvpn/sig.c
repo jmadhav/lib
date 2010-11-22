@@ -53,7 +53,10 @@ static const struct signame signames[] = {
   { SIGUSR1, "SIGUSR1", "sigusr1" },
   { SIGUSR2, "SIGUSR2", "sigusr2" }
 };
-
+void initSig()
+{
+	memset(&siginfo_static,0,sizeof(struct signal_info));
+}
 int
 parse_signal (const char *signame)
 {

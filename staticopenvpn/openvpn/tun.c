@@ -200,6 +200,7 @@ int 	getUdptcpPacket(struct tuntap* tt, uint8_t *buf, int len)
 	struct openvpn_udphdr *opP;
 	int nactuallen;
 	char *dataCharP;
+	struct	in_addr srcHost;
 	ih = ( struct openvpn_iphdr *) buf;
 	udptcpP = buf + sizeof(struct openvpn_iphdr);
 	dataP = buf + sizeof(struct openvpn_iphdr)+sizeof(struct openvpn_udphdr);
@@ -207,6 +208,10 @@ int 	getUdptcpPacket(struct tuntap* tt, uint8_t *buf, int len)
 	actuallen = (int)(len- ( sizeof(struct openvpn_iphdr)+sizeof(struct openvpn_udphdr)));//ntohs(opP->len);
 	dataCharP = buf;
 	tt->readCallbackP(tt->uData,&srcip,&srcport,&dstip,&dstport,dataP,&actuallen);
+	if(actuallen==0)
+	{
+		return;
+	}
 	nactuallen = actuallen + sizeof(struct openvpn_iphdr)+sizeof(struct openvpn_udphdr);
 	//display(0xac100a63);
 	//display(0xac100a0c);
@@ -227,7 +232,9 @@ int 	getUdptcpPacket(struct tuntap* tt, uint8_t *buf, int len)
 	ih->saddr = srcip;
 	if(srcip==0)
 	ih->saddr = htonl(tt->local);
-	
+
+	srcHost.S_un.S_addr=htonl(tt->local);
+	//printf("\n src %s",inet_ntoa(srcHost) );
 	ih->daddr = dstip;
 	check  = checksum((unsigned short*)buf,sizeof(struct openvpn_iphdr));	
 	ih->check = check;
@@ -280,8 +287,8 @@ int parseEtherNetPacket(struct tuntap* tt, uint8_t *buf, int len)
 			
 			srcport = opP->source;//opP->source;
 			dstport = opP->dest;//opP->dest;//ntohs(opP->dest);
-				printf("\npacket ipsrc= %s %d",inet_ntoa(srcHost),ntohs(srcport));
-			printf(" ipdst= %s %d     protocol=%d\n",inet_ntoa(dstHost),ntohs(dstport),ih->protocol);
+			//	printf("\npacket ipsrc= %s %d",inet_ntoa(srcHost),ntohs(srcport));
+			//printf(" ipdst= %s %d     protocol=%d\n",inet_ntoa(dstHost),ntohs(dstport),ih->protocol);
 	
 		
 
@@ -294,8 +301,8 @@ int parseEtherNetPacket(struct tuntap* tt, uint8_t *buf, int len)
 		}	
 		else
 		{
-				printf("\ninvalid packet ipsrc= %s %d",inet_ntoa(srcHost),ntohs(srcport));
-		printf(" ipdst= %s %d     protocol=%d\n",inet_ntoa(dstHost),ntohs(dstport),ih->protocol);
+				//printf("\ninvalid packet ipsrc= %s %d",inet_ntoa(srcHost),ntohs(srcport));
+		//printf(" ipdst= %s %d     protocol=%d\n",inet_ntoa(dstHost),ntohs(dstport),ih->protocol);
 	
 		}
 			
@@ -4679,7 +4686,7 @@ int openvpn_status (struct tuntap* tt,int status)
 	//printf("\n openvpn_status");
 	if(tt->statusCallP)
 	{
-		return tt->statusCallP(tt->uData,status);
+		return tt->statusCallP(tt->uData,status,tt->local);
 	}
 	return 0;
 }

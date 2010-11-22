@@ -150,7 +150,7 @@ uninit_win32 (void)
     }
   window_title_restore (&window_title);
   win32_signal_close (&win32_signal);
-  WSACleanup ();
+  //WSACleanup ();
   free (win_sys_path);
 }
 

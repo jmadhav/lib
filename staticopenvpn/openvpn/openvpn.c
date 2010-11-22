@@ -35,15 +35,32 @@
 #include "openssl/bio.h"
 #include "openssl/ssl.h"
 #include "openssl/err.h"
+int normalExit = 1;
 #define P2P_CHECK_SIG() EVENT_LOOP_CHECK_SIGNAL (c, process_signal_p2p, c);
 struct context c;
-static bool
-process_signal_p2p (struct context *c)
+static bool process_signal_p2p (struct context *c)
 {
   remap_signal (c);
   return process_signal (c);
 }
-
+int breakLoop = 0;
+int ThreadStartB = 0;
+void normalExitFunction()
+{
+	
+	int count = 0;
+	if(ThreadStartB==0)
+		return;
+	sleep(1);
+	breakLoop = 1;
+	while(normalExit==0 || ThreadStartB==1)
+	{
+		printf("\n wait for thread exit");
+		count++;
+		if(count>20)break;
+		sleep(1);
+	}
+}
 static void
 tunnel_point_to_point (struct context *c)
 {
@@ -51,19 +68,25 @@ tunnel_point_to_point (struct context *c)
 
   /* set point-to-point mode */
   c->mode = CM_P2P;
-
+	normalExit = 1;
   /* initialize tunnel instance */
   init_instance_handle_signals (c, c->es, CC_HARD_USR1_TO_HUP);
   if (IS_SIG (c))
     return;
 
   init_management_callback_p2p (c);
-
+	breakLoop = 0;
+	normalExit = 0;
   /* main event loop */
   while (true)
     {
       perf_push (PERF_EVENT_LOOP);
-
+	  if(breakLoop)
+	  {
+		//breakLoop = 1;
+		  normalExit = 1;
+		  break;
+	  }
       /* process timers, TLS, etc. */
       pre_select (c);
       P2P_CHECK_SIG();
@@ -85,7 +108,7 @@ tunnel_point_to_point (struct context *c)
 
       perf_pop ();
     }
-
+  normalExit = 1;	
   uninit_management_callback ();
 
   /* tear down tunnel instance (unless --persist-tun) */
@@ -123,6 +146,7 @@ unsigned int readDataCallbackL (void *uData,unsigned int*shost,unsigned short *s
 }
 int vpnInitAndCall(char *conf,void *uData,readwriteDataCallback readP,readwriteDataCallback writeP,statusCallback statusP)
 {
+	//FILE *fp;
 	OpenvpnInterfaceType openVpn;
 	strcpy(openVpn.confFile,conf);
 	openVpn.readCallP = readP;
@@ -130,7 +154,17 @@ int vpnInitAndCall(char *conf,void *uData,readwriteDataCallback readP,readwriteD
 	openVpn.uData = uData;
 	openVpn.statusCallP = statusP;
 	setStatusCallbackforExit(uData,statusP);
+	normalExit = 1;
 	initAndStartOpenVpn(&openVpn,0,0);
+	normalExit = 1;
+	/*fp = fopen("test.txt","a");
+	if(fp)
+	{
+		fprintf(fp,"\n openvpn exit successfull\n");
+		fclose(fp);
+	}*/
+	printf("\n openvpn exit successfull");
+	//sleep(10);
 	return 0;
 	
 
@@ -189,9 +223,11 @@ int initAndStartOpenVpn(OpenvpnInterfaceType *openVpnP,int argc, char *argv[])
   fprintf (stderr, "Sorry, I was built with --enable-pedantic and I am incapable of doing any real work!\n");
   return 1;
 #endif
-
+  initSig();
+  memset(&c,0,sizeof(struct context));
+	ThreadStartB = 1;
   CLEAR (c);
-	
+	breakLoop = 0;
   /* signify first time for components which can
      only be initialized once per program instantiation. */
   c.first_time = true;
@@ -207,7 +243,7 @@ int initAndStartOpenVpn(OpenvpnInterfaceType *openVpnP,int argc, char *argv[])
 	{
 	  /* enter pre-initialization mode with regard to signal handling */
 	  pre_init_signal_catch ();
-		printf("\n shankar jaikishan");
+		//printf("\n shankar jaikishan");
 	  /* zero context struct but leave first_time member alone */
 	  context_clear_all_except_first_time (&c);
 
@@ -221,7 +257,7 @@ int initAndStartOpenVpn(OpenvpnInterfaceType *openVpnP,int argc, char *argv[])
 	  /* initialize environmental variable store */
 	  c.es = env_set_create (NULL);
 #ifdef MYWIN32
-	  env_set_add_win32 (c.es);
+	  //env_set_add_win32 (c.es);
 #endif
 
 #ifdef ENABLE_MANAGEMENT
@@ -255,6 +291,7 @@ int initAndStartOpenVpn(OpenvpnInterfaceType *openVpnP,int argc, char *argv[])
 	  c.readCallbackP = openVpnP->readCallP;
 	  c.writeCallbackP = openVpnP->writeCallP;
 		c.statusCallP = 	openVpnP->statusCallP;
+		c.uData = 	openVpnP->uData;
 	  /* openssl print info? */
 	  if (print_openssl_info (&c.options))
 	    break;
@@ -301,10 +338,18 @@ int initAndStartOpenVpn(OpenvpnInterfaceType *openVpnP,int argc, char *argv[])
 	      switch (c.options.mode)
 		{
 		case MODE_POINT_TO_POINT:
-			printf("\n madan mohan");	
+			//printf("\n madan mohan");	
 		  tunnel_point_to_point (&c);
 				breakB = 1;
-				openVpnP->statusCallP(openVpnP->uData,2);//failed	
+				if(breakLoop)
+				{
+					openVpnP->statusCallP(openVpnP->uData,3,0);//normal exit	
+				}
+				else
+				{
+					openVpnP->statusCallP(openVpnP->uData,2,0);//failed	
+				}
+				normalExit = 1;
 		  break;
 #if P2MP_SERVER
 		case MODE_SERVER:
@@ -350,6 +395,8 @@ int initAndStartOpenVpn(OpenvpnInterfaceType *openVpnP,int argc, char *argv[])
   /* uninitialize program-wide statics */
   uninit_static ();
 
- // openvpn_exit (OPENVPN_EXIT_STATUS_GOOD);  /* exit point */
+  openvpn_exit (OPENVPN_EXIT_STATUS_GOOD);  /* exit point */
+  ThreadStartB = 0;
   return 0;			            /* NOTREACHED */
+
 }

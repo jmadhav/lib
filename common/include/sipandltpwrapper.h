@@ -25,10 +25,15 @@
 #define ATTEMPT_VPN_CONNECT_SUCCESS 6017
 #define ATTEMPT_VPN_CONNECT_UNSUCCESS 6018
 #define ATTEMPT_VPN_CONNECT_EXIT 6019
+#define ATTEMPT_VPN_CONNECT_QUIT 6020
+#define GOOGLE_PAGE_FOUND 6021
+#define GOOGLE_PAGE_NOT_FOUND 6022
+#define NET_NOT_AVAILABLE     6023
 #define MAX_VPN_FAILED 3
 #define MAXTIMEOUT 300
 #include "ltpmobile.h"
 #define _OPEN_VPN_
+//#define _UI_LOG_
 #ifdef _OPEN_VPN_
 #include "openvpninterface.h"
 
@@ -38,6 +43,7 @@
 #else
 #define THREAD_PROC DWORD WINAPI 
 #endif
+#define SPOKN_SERVER "www.spokn.com"
 //#define _ENCRIPTION_
 #ifdef _ENCRIPTION_
 #define DEFAULT_SIP_PORT  "9065"
@@ -45,6 +51,7 @@
 #define SIP_DOMAIN	"174.143.168.31"
 #else
 //#define _ENCRIPTION_SUPPORT_IN_MAIN 
+
 #define DEFAULT_SIP_PORT  "5060"
 #define SIP_ENCRIPTION_PORT "9065"
 #define SIP_PORT1   "8060"
@@ -53,7 +60,9 @@
 #define SIP_PORT4   "5060"
 #define SIP_DOMAIN	"spokn.com"
 #endif
-
+#define SIP_DEFAULT_PORT 5060
+#define GOOGLEPAGE "https://spreadsheets.google.com/pub?key=0AgkzZhuXK8RXdHF5TVJTa04xVFRKTm1uYmtmTzRGTFE&hl=en&single=true&gid=0&output=txt"
+//#define GOOGLEPAGE "http://www.google.com/notebook/public/08332985133275968837/BDQ8nSgoQobyBnpEj?alt=xml"
 #ifdef __cplusplus
 extern "C" {
 #endif 
@@ -75,6 +84,7 @@ typedef struct SipOptionDataType
 		void *dataP;
 		int errorCode;
 	}SipOptionDataType;
+
 int sip_spokn_pj_init(struct ltpStack *ps,char* luserAgentP,char *errorstring);
 void LTP_ltpHangup(struct ltpStack *ps, int lineid);
 void LTP_ltpRefuse(struct ltpStack *ps, int lineid, char *msg);
@@ -109,13 +119,47 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB);
 int send_request(int acc_id,char *cstr_method, char *ldst_uriP,void *uDataP);	
 typedef unsigned int (*readwriteSipDataCallback1 )(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dstHostP,unsigned short *dstPortP ,unsigned char *data,int *lenP);
 extern void setReadWriteCallback(readwriteSipDataCallback1 readSipDataCallbackP,readwriteSipDataCallback1 writeDataCallP );
-
+void sip_setCallIdle(struct ltpStack *ps,int llineID);
 int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
 void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath);
 int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
 	void setDevPath(unsigned char *pathP);
 void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status);
 OpenVpnStatusType getVpnStatus(struct ltpStack *pstackP);
+
+//for following hangup path and writting it to a file
+void setFolderPath(struct ltpStack *pstackP,char* lpath);
+void writeUIlog(struct ltpStack *pstackP,char * data,char *extraInfoP);
+void vpnExitNormal(struct ltpStack *pstackP);
+void resetFailCount(struct ltpStack *pstackP);
+int statusCallbackL(void *udata,int status,int vpnIP);
+char* getVpnIP(struct ltpStack *pstackP);
+int  getSpoknHost(struct ltpStack *pstackP,char *vpnserverP,char *sipServer,char *spoknServerP,int *vpnportP,char *pageP,char *path);
+int  setSpoknHost(struct ltpStack *pstackP,char *vpnserverP,char *sipServer,char *spoknServerP,int vpnport,char *pageP,char *path);
+int getGooglePage(struct ltpStack *pstackP);
+int getNewServerForSpokn(struct ltpStack *pstackP);
+int getServerList(char *data,SipVpnServer *sipVpnServerP);
+#define CACRTDEF "ca_luke.crt"
+#define CERTDEF "luke.crt"
+#define KEY     "luke.key"
+#define OVPN_SERVER "luke.stage.spokn.com"
+#define OVPN_PORT 443
+#define MYXML "<?xml version=\"1.0\"?>" "\r\n"\
+"<server>" "\r\n"\
+"<host type =\"sip\" name=\"%s\" port=\"%d\"\"/>" "\r\n"\
+"<host type =\"spokn\" name=\"%s\" port=\"%d\"/>" "\r\n"\
+"<host type =\"vpn\" name=\"%s\" port=\"%d\"/>" "\r\n"\
+"</server>""\r\n"
+#ifdef _MACOS_
+
+
+#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
+
+#else
+#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n"
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif 

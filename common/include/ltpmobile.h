@@ -581,6 +581,9 @@ struct Contact{
 #define LOGIN_STATUS_TRYING_LOGOUT 5
 #define LOGIN_STATUS_BUSY_OTHERDEVICE 6
 #define LOGIN_STATUS_TIMEDOUT		7
+#define LOGIN_STATUS_VPNCONNECTING		8
+
+
 
 #endif
 	
@@ -607,6 +610,17 @@ struct Contact{
 /* this is the big ltp structure that in turn holds call and contact arrays.
 The important field for you to set are ltpUserid, ltpPassword and ltpServer.
 You can keep checking on loginStatus to see your current state */
+typedef struct SipVpnServer 
+{
+	char vpnServer[100];
+	int  vpnPort;
+	char sipServer[100];
+	int  sipPort;
+	char spoknServer[100];
+	int  spoknPort;
+	char newUrlPage[300];
+	
+}SipVpnServer;
 struct ltpStack
 {
 	int incount, outcount;
@@ -641,7 +655,7 @@ struct ltpStack
 	int doDebug;
 	int	forceProxy;
 	int	doPreprocess;
-	char	ltpUserid[40], ltpPassword[40], ltpServerName[40], motd[1000];
+	char	ltpUserid[40], ltpPassword[40], ltpServerName[100], motd[1000];
 	char    ltpNonce[20];
 	char	ltpTitle[1000];
 	char	ltpLabel[128];
@@ -699,6 +713,10 @@ struct ltpStack
 	char *openopvnFileP;
 	OpenVpnStatusType  openVpnStatus;
 	int openVpnFailedCount;
+	char folderPath[260];
+	int vpnIP;
+	int attemptPageGet;
+	SipVpnServer sipVpnServer;
 };
 
 

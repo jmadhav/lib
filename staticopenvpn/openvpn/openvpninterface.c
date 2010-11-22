@@ -14,6 +14,7 @@ extern int vpnInitAndCall(char *conf,void *uData,readwriteDataCallback readP,rea
 extern unsigned char * readData(unsigned char *buf, int len,unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,int *lenP);
 extern void setTurnPath(unsigned char *pathP);
 extern void genrateReadSignal();
+extern void normalExit();
 int vpnInitAndCallInterface(char *conf,void *uData,readwriteDataCallback readP,readwriteDataCallback writeP, statusCallback statusCallP)
 {
 	return vpnInitAndCall(conf,uData,readP,writeP,statusCallP);
@@ -31,4 +32,7 @@ void setTurnPathInterface(unsigned char *pathP)
 	return setTurnPath(pathP);
 
 }
-
+void normalExitInterface()
+{
+	normalExitFunction();
+}

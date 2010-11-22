@@ -564,4 +564,5 @@ int testVPN();
 int vpnInitAndCall(char *conf,void *uData,readwriteDataCallback readP,readwriteDataCallback writeP,statusCallback statusP);
 unsigned char * readData(unsigned char *buf, int len,unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,int *lenP);
 void genrateReadSignal();
+void normalExitFunction();
 #endif

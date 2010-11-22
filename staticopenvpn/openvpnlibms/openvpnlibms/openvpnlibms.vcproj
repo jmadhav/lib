@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="openvpnlibms"
 	ProjectGUID="{21337136-AEF1-4786-BA67-61291DA70BC0}"
 	RootNamespace="openvpnlibms"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
 		<Platform
@@ -63,10 +62,10 @@
 			<Tool
 				Name="VCLibrarianTool"
 				LinkLibraryDependencies="false"
-				AdditionalDependencies="libeay32.lib ssleay32.lib"
+				AdditionalDependencies="libeay32.lib ssleay32.lib crypt32.lib"
 				OutputFile="$(OutDir)\$(ProjectName).lib"
 				AdditionalLibraryDirectories="../../opensslms/lib"
-				IgnoreDefaultLibraryNames="LIBCMTD"
+				IgnoreDefaultLibraryNames=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -130,9 +129,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="libeay32.lib ssleay32.lib"
+				AdditionalDependencies="libeay32.lib ssleay32.lib crypt32.lib"
 				AdditionalLibraryDirectories="../../opensslms/lib"
-				IgnoreDefaultLibraryNames="LIBCMTD"
+				IgnoreDefaultLibraryNames=""
 			/>
 			<Tool
 				Name="VCALinkTool"

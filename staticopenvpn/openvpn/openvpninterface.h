@@ -10,7 +10,7 @@
 #define _OPEN_VPN_INTERFACE_H_
 #define VPNMAXPATH 355 
 typedef unsigned int (*readwriteDataCallback )(void *udata, unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,unsigned char *data,int *lenP);
-typedef unsigned int (*statusCallback )(void *udata,int status);
+typedef unsigned int (*statusCallback )(void *udata,int status,int vpnIpAddress);
 typedef struct OpenvpnInterfaceType
 {
 	//char caFile[VPNMAXPATH];
@@ -32,6 +32,7 @@ extern "C" {
 
  void setTurnPathInterface(unsigned char *pathP);
 void genrateReadSignalInterface();
+void normalExitInterface();
 #ifdef __cplusplus
 }
 #endif 

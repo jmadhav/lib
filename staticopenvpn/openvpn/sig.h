@@ -54,7 +54,7 @@ void throw_signal_soft (const int signum, const char *signal_text);
 void pre_init_signal_catch (void);
 void post_init_signal_catch (void);
 void restore_signal_state (void);
-
+void initSig();
 void print_signal (const struct signal_info *si, const char *title, int msglevel);
 void print_status (const struct context *c, struct status_output *so);
 
