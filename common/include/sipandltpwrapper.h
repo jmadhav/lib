@@ -33,7 +33,7 @@
 #define MAXTIMEOUT 300
 #include "ltpmobile.h"
 //#define _UI_LOG_
-
+#define _OPEN_VPN_
 #ifdef _OPEN_VPN_
 #include "openvpninterface.h"
 #endif
@@ -60,7 +60,7 @@
 #define SIP_DOMAIN	"spokn.com"
 #endif
 #define SIP_DEFAULT_PORT 5060
-#define GOOGLEPAGE "https://spreadsheets.google.com/pub?key=0AgkzZhuXK8RXdHF5TVJTa04xVFRKTm1uYmtmTzRGTFE&hl=en&single=true&gid=0&output=txt"
+#define GOOGLEPAGE " https://spreadsheets.google.com/pub?key=0Ao-_UbC4VxyDdHdyaDNQQjhKTUpsT1Axc2hQVlhMMnc&hl=en&single=true&gid=0&output=txt"
 //#define GOOGLEPAGE "http://www.google.com/notebook/public/08332985133275968837/BDQ8nSgoQobyBnpEj?alt=xml"
 #ifdef __cplusplus
 extern "C" {
@@ -138,11 +138,14 @@ int  setSpoknHost(struct ltpStack *pstackP,char *vpnserverP,char *sipServer,char
 int getGooglePage(struct ltpStack *pstackP);
 int getNewServerForSpokn(struct ltpStack *pstackP);
 int getServerList(char *data,SipVpnServer *sipVpnServerP);
-#define CACRTDEF "ca_luke.crt"
-#define CERTDEF "luke.crt"
-#define KEY     "luke.key"
-#define OVPN_SERVER "luke.stage.spokn.com"
-#define OVPN_PORT 443
+void setVpnPjsipCallBack();
+
+#define CACRTDEF "ca.crt"
+#define CERTDEF "spokn.crt"
+#define KEY     "spokn.key"
+//#define OVPN_SERVER "luke.stage.spokn.com"
+#define OVPN_SERVER "nkops.com"
+#define OVPN_PORT 1935
 #define MYXML "<?xml version=\"1.0\"?>" "\r\n"\
 "<server>" "\r\n"\
 "<host type =\"sip\" name=\"%s\" port=\"%d\"\"/>" "\r\n"\
@@ -150,7 +153,6 @@ int getServerList(char *data,SipVpnServer *sipVpnServerP);
 "<host type =\"vpn\" name=\"%s\" port=\"%d\"/>" "\r\n"\
 "</server>""\r\n"
 #ifdef _MACOS_
-
 
 #define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
 

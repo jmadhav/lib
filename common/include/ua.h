@@ -150,7 +150,7 @@ extern "C" {
 		char	mobile[32];
 		char	other[32];
 		char	email[128];
-		char    spoknid[8];
+		char    spoknid[9];
 		int		presence;
 		int		isFavourite;
 		int		dirty;
@@ -259,6 +259,7 @@ extern "C" {
 //#define ALERT_SERVERMSG	102
 #define ALERT_HOSTNOTFOUND 110
 	
+#define ALERT_THREADTERMINATED 111
 	//Seperator for href & message, sent by server.
 #define SEPARATOR '|'
 
@@ -302,6 +303,7 @@ extern "C" {
 	THREAD_PROC sendLogOutPacket(void *lDataP);
 	void TerminateUAThread();
 	void ReStartUAThread();
+	int getThreadState();
 
 #ifdef _MACOS_
 #define TEST_CALL_ID -2

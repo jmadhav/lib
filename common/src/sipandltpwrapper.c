@@ -4154,6 +4154,7 @@ struct ltpStack  *sip_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 	ps->ltpPresence = NOTIFY_ONLINE;
 	ps->updateTimingAdvance = 0;
 	ps->stunB = 1;
+	ps->vpnConnected = 0;
 	ps->tranportID = -1;
 	ps->localAccId = -1;
 	strcpy(ps->sipVpnServer.sipServer ,SIP_DOMAIN);
@@ -5026,7 +5027,7 @@ char * getVpnIP(struct ltpStack *pstackP)
 {
 	char *resultP;
 	struct	in_addr srcHost;
-	if(pstackP->stunB)
+	if(pstackP->stunB || (pstackP->vpnConnected == 0 ))
 	{
 		return 0;
 	}
@@ -5763,7 +5764,7 @@ int  getSpoknHost(struct ltpStack *pstackP,char *vpnserverP,char *sipServer,char
 		if(getServerList(data,sipVpnP)==0)
 		{
 			if(spoknServerP)
-			strcpy(spoknServerP,sipVpnP->sipServer);
+			strcpy(spoknServerP,sipVpnP->spoknServer);
 			if(vpnserverP)
 			strcpy(vpnserverP,sipVpnP->vpnServer);
 			if(pageP)

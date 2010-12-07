@@ -715,8 +715,10 @@ struct ltpStack
 	int openVpnFailedCount;
 	char folderPath[260];
 	int vpnIP;
+	int vpnConnected;
 	int attemptPageGet;
 	SipVpnServer sipVpnServer;
+	char *stunvpnserver[100];
 };
 
 

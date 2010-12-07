@@ -2515,7 +2515,7 @@ THREAD_PROC profileDownload(void *extras)
 			" <query>vms</query> \n"
 			" <since>%lu</since> \n", 
 			pstack->ltpUserid, key, client_name,client_ver,client_os,client_osver,client_model,client_uid,lastUpdate);
-	
+	printf("Prfile Download started");
 	/*if (extras){
 	 int	param = (int)extras;*/
 	if((settingType != -1) && (settingType != oldSetting))
@@ -2562,7 +2562,7 @@ THREAD_PROC profileDownload(void *extras)
 		fprintf(pfOut, "</add>\n");
 	}
 	
-	
+	printf("Contact list in profile download");
 	//check for updated contacts
 	//existing contacts have an id and isDeleted is 0
 	ndirty = 0;
@@ -2610,7 +2610,7 @@ THREAD_PROC profileDownload(void *extras)
 			}
 		fprintf(pfOut, "</mod>\n");
 	}
-	
+	printf("Vmails in profile download");
 	//check for deleted contacts
 	//these contacts have an id and isDeleted is 1
 	ndirty = 0;
@@ -2673,8 +2673,9 @@ THREAD_PROC profileDownload(void *extras)
 		sprintf(pathDown, "%s\\down.xml", myFolder);
 	#endif
 	
-	
+	printf("Rest call in prfile download");
 	byteCount = restCall(pathUpload, pathDown, pstack->ltpServerName, "/cgi-bin/userxml.cgi",1);
+	printf("rest call ended");
 	if (!byteCount)
 	{
 		alert(-1, ALERT_HOSTNOTFOUND, "Failed to upload.");
@@ -2693,7 +2694,7 @@ THREAD_PROC profileDownload(void *extras)
 			relistContacts();
 			refreshDisplay();
 			vmsUploadAll();
-		
+			
 			vmsDownload();
 			vmsSort();
 			relistVMails();
@@ -2704,13 +2705,14 @@ THREAD_PROC profileDownload(void *extras)
 	if(terminateB==0)
 		relistAll();
 	#endif
-	
+	//Sleep(5000);
 	busy = 0;
 	//printf("\n download end");
 	//add by mukesh for bug id 20359
 	if(threadStatus==ThreadTerminate)
 	{
-		threadStatus = ThreadNotStart ;
+		printf("Thread shud be terrminated");
+		//threadStatus = ThreadNotStart ;
 		profileClear();
 	}
 	threadStatus = ThreadNotStart ;
@@ -2728,7 +2730,7 @@ THREAD_PROC profileDownload(void *extras)
 	//#ifdef _MACOS_
 		UaThreadEnd();
 	//#endif
-	
+	printf("Thread Ended");
 
 
 	return 0;
@@ -2741,11 +2743,13 @@ void UaThreadEnd()
 		{
 			
 			profileClear();
+			
 		}	
 		#ifdef _MACOS_
 			uaCallBackObject.alertNotifyP(UA_ALERT,0,END_THREAD,(unsigned long)uaCallBackObject.uData,0);
 		#endif
 	}	
+	alert(0,ALERT_THREADTERMINATED,0);
 }
 void loggedOut()
 {
@@ -3053,15 +3057,23 @@ int encode(unsigned s_len, char *src, unsigned d_len, char *dst)
 	
 }
 
+
+
+
+
+int getThreadState()
+	{
+		return threadStatus;
+	}
+
+
+
 	
 #ifdef _MACOS_
 //UACallBackType uaCallBackObject;
 
 	#ifdef	_MAC_OSX_CLIENT_
-	int getThreadState()
-	{
-		return threadStatus;
-	}
+	
 	#endif
 
 void UACallBackInit(UACallBackPtr uaCallbackP,struct ltpStack *pstackP)
