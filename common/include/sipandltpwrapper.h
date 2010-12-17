@@ -26,9 +26,11 @@
 #define ATTEMPT_VPN_CONNECT_UNSUCCESS 6018
 #define ATTEMPT_VPN_CONNECT_EXIT 6019
 #define ATTEMPT_VPN_CONNECT_QUIT 6020
+
 #define GOOGLE_PAGE_FOUND 6021
 #define GOOGLE_PAGE_NOT_FOUND 6022
 #define NET_NOT_AVAILABLE     6023
+#define ATTEMPT_VPN_END_CALL 6024
 #define MAX_VPN_FAILED 3
 #define MAXTIMEOUT 300
 #include "ltpmobile.h"
@@ -60,7 +62,7 @@
 #define SIP_DOMAIN	"spokn.com"
 #endif
 #define SIP_DEFAULT_PORT 5060
-#define GOOGLEPAGE " https://spreadsheets.google.com/pub?key=0Ao-_UbC4VxyDdHdyaDNQQjhKTUpsT1Axc2hQVlhMMnc&hl=en&single=true&gid=0&output=txt"
+#define GOOGLEPAGE "https://spreadsheets.google.com/pub?key=0Ao-_UbC4VxyDdHdyaDNQQjhKTUpsT1Axc2hQVlhMMnc&hl=en&single=true&gid=0&output=txt"
 //#define GOOGLEPAGE "http://www.google.com/notebook/public/08332985133275968837/BDQ8nSgoQobyBnpEj?alt=xml"
 #ifdef __cplusplus
 extern "C" {
@@ -139,7 +141,9 @@ int getGooglePage(struct ltpStack *pstackP);
 int getNewServerForSpokn(struct ltpStack *pstackP);
 int getServerList(char *data,SipVpnServer *sipVpnServerP);
 void setVpnPjsipCallBack();
-
+int closeLocalsocket();
+//THREAD_PROC vpnThreadProc(void *uDataP);
+unsigned int  resolveLocalDNS(char *host);
 #define CACRTDEF "ca.crt"
 #define CERTDEF "spokn.crt"
 #define KEY     "spokn.key"

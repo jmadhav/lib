@@ -3630,6 +3630,8 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	static SipOptionDataType sipOptionDataPort3;
 	static SipOptionDataType sipOptionDataPort4;
 	static SipOptionDataType sipOptionDataPortEnc;
+	
+
 	//alert(0, ATTEMPT_LOGIN_ON_OPEN_PORT, 0);
 	//return 0;
 	if(sip_set_udp_transport(ps,ps->ltpUserid,errorstring,&ps->tranportID)==0)
@@ -3902,7 +3904,7 @@ int sip_spokn_pj_init(struct ltpStack *ps,char *luserAgentP, char *errorstring)
 {
 	pj_status_t status;
 	    /* Create pjsua first! */
-  
+  ps->pjsipInitialize = 1;
 	/* Init pjsua */
 	pjsua_destroy();
 	status = pjsua_create();
@@ -4944,7 +4946,14 @@ int mymain(int port,unsigned char *data,int len)
 	return 0;
 	
 }
-
+int closeLocalsocket()
+{
+	if(sockfd!=0)
+	{
+		close(sockfd);
+		sockfd = 0;
+	}
+}
 unsigned int mywriteDataCallbackL (void *uData,unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,unsigned char *data,int *lenP)
 {
 	
@@ -5057,7 +5066,16 @@ int statusCallbackL(void *udata,int status,int vpnIP)
 	//sip_destroy_transation(udata);
 	if(status)
 	{
-		setReadWriteCallback(0,0);
+		if(status==2)
+		{
+			alert(0,ATTEMPT_VPN_END_CALL,0);
+			#ifdef _MACOS_ 
+			sleep(10);
+			#else
+			MySleep(2000);
+			#endif
+			setReadWriteCallback(0,0);
+		}
 	}
 	if(status==0)//mean success
 	{	
@@ -5192,7 +5210,7 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 	//vpnDataStructureP
 }
 
-THREAD_PROC mytestVPN(void *uDataP)
+THREAD_PROC vpnThreadProc(void *uDataP)
 {
 	char *pathP = 0;//(char*)uDataP;
 	struct ltpStack *pstackP;
@@ -5201,6 +5219,7 @@ THREAD_PROC mytestVPN(void *uDataP)
 	//strcpy(openVpn.confFile,"/Users/mukesh/mygit/myvpnlibrary/staticopenvpnssl/sandbox.ovpn");
 	//printf("\n path %s\n",pathP);
 	vpnInitAndCallInterface(pstackP->openopvnFileP,uDataP,myreadDataCallbackL,mywriteDataCallbackL,statusCallbackL);
+	 closeLocalsocket();
 	return 0;
 	
 	
@@ -5247,9 +5266,9 @@ void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	free(opvnData);
 	pstackP->openopvnFileP = sendpathP;
 	#ifdef _MACOS_
-		pthread_create(&pt, 0,mytestVPN,pstackP);
+		pthread_create(&pt, 0,vpnThreadProc,pstackP);
 	#else
-		CreateThread(NULL, 0, mytestVPN, pstackP, 0, NULL);
+		CreateThread(NULL, 0,vpnThreadProc , pstackP, 0, NULL);
 	#endif
 	
 
@@ -5265,7 +5284,7 @@ void setDevPath(unsigned char *pathP)
 }
 void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status)
 {
-	if(status==OpenVpnConnected)
+	if(status==OpenVpnConnected || status==OpenVpnNotConnected)
 	{
 		pstackP->openVpnFailedCount = 0;
 	}
@@ -5344,6 +5363,7 @@ int getHostIPPage(char*url, char *data, int maxsize)
 	unsigned long dwread = 0;
 	HINTERNET hpage;
 	FILE *fp;
+	DWORD error;
 	HINTERNET hnet = InternetOpenA("spokn", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
 	if(!hnet)
 	{
@@ -5356,6 +5376,7 @@ int getHostIPPage(char*url, char *data, int maxsize)
 	{
 		printf("%s failed\n", url);
 		InternetCloseHandle(hnet);
+		error = GetLastError();
 		return 0;
 	}
 
@@ -5380,7 +5401,7 @@ int getHostIPPage(char*url, char *data, int maxsize)
 #endif
 	return 0;
 }
-static unsigned int  resolveLocalDNS(char *host)
+ unsigned int  resolveLocalDNS(char *host)
 {
 	int i, count=0;
 	char *p = host;
@@ -5478,7 +5499,7 @@ int getNewServerForSpokn(struct ltpStack *pstackP)
 	#ifdef _MACOS_
 	{
 		pthread_t pt;
-		pthread_create(&pt, 0,mytestVPN,pstackP);
+		pthread_create(&pt, 0,checkNetConnection,pstackP);
 	}
 	#else
 		CreateThread(NULL, 0, checkNetConnection, pstackP, 0, NULL);

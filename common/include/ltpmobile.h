@@ -719,6 +719,8 @@ struct ltpStack
 	int attemptPageGet;
 	SipVpnServer sipVpnServer;
 	char *stunvpnserver[100];
+	int pjsipInitialize;
+
 };
 
 

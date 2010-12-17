@@ -225,7 +225,7 @@ int 	getUdptcpPacket(struct tuntap* tt, uint8_t *buf, int len)
 	
 	ih->frag_off = 0;
 	ih->ttl = 128;
-	ih->protocol = 17;
+	ih->protocol = 17;//udp
 	ih->check  = 0;
 	
 	//srcip =0;
