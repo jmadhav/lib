@@ -4950,7 +4950,7 @@ int closeLocalsocket()
 {
 	if(sockfd!=0)
 	{
-		close(sockfd);
+		closesocket(sockfd);
 		sockfd = 0;
 	}
 }
