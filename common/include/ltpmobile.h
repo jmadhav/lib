@@ -720,6 +720,7 @@ struct ltpStack
 	SipVpnServer sipVpnServer;
 	char *stunvpnserver[100];
 	int pjsipInitialize;
+	int vpnstart;
 
 };
 

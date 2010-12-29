@@ -5215,17 +5215,19 @@ THREAD_PROC vpnThreadProc(void *uDataP)
 	char *pathP = 0;//(char*)uDataP;
 	struct ltpStack *pstackP;
 	pstackP = (struct ltpStack *)uDataP;
+	pstackP-> vpnstart = 1;
 	//OpenvpnInterfaceType openVpn;
 	//strcpy(openVpn.confFile,"/Users/mukesh/mygit/myvpnlibrary/staticopenvpnssl/sandbox.ovpn");
 	//printf("\n path %s\n",pathP);
 	vpnInitAndCallInterface(pstackP->openopvnFileP,uDataP,myreadDataCallbackL,mywriteDataCallbackL,statusCallbackL);
 	 closeLocalsocket();
+	pstackP-> vpnstart = 0;
 	return 0;
 	
 	
 }
 
-void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
+int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 {
 	FILE *fp;
 	char *opvnData,*sendpathP;
@@ -5234,6 +5236,15 @@ void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	pthread_t pt;
 	#endif
 	
+	
+	if(pstackP-> vpnstart==1)
+	{
+		if(pstackP->vpnConnected==1)
+		{
+			return 1;//mean directly send login packet
+		}
+		return 0;//mean we still not got reply
+	}
 	setReadWriteCallback(readSipDataCallback,writeSipDataCallback);
 	opvnData = malloc(2000);
 	memset(opvnData,0,2000);
@@ -5270,6 +5281,7 @@ void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	#else
 		CreateThread(NULL, 0,vpnThreadProc , pstackP, 0, NULL);
 	#endif
+		return 0;
 	
 
 

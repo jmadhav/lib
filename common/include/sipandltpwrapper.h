@@ -122,7 +122,7 @@ typedef unsigned int (*readwriteSipDataCallback1 )(unsigned int*srchostP,unsigne
 extern void setReadWriteCallback(readwriteSipDataCallback1 readSipDataCallbackP,readwriteSipDataCallback1 writeDataCallP );
 void sip_setCallIdle(struct ltpStack *ps,int llineID);
 int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
-void setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath);
+int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath);
 int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
 	void setDevPath(unsigned char *pathP);
 void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status);
