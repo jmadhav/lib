@@ -171,7 +171,8 @@ unsigned int  resolveLocalDNS(char *host);
 #define KEY     "spokn.key"
 //#define OVPN_SERVER "luke.stage.spokn.com"
 #define OVPN_SERVER "nkops.com"
-#define OVPN_PORT 1935
+//#define OVPN_PORT 1935
+#define OVPN_PORT 5004
 #define MYXML "<?xml version=\"1.0\"?>" "\r\n"\
 "<server>" "\r\n"\
 "<host type =\"sip\" name=\"%s\" port=\"%d\"\"/>" "\r\n"\
@@ -183,8 +184,8 @@ unsigned int  resolveLocalDNS(char *host);
 #define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
 
 #else
-#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n %s\r\n"
-
+//#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n %s\r\n"
+#define OPVNFILE "client\r\ndev tun\r\nproto udp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n %s\r\n"
 #endif
 
 #ifdef __cplusplus

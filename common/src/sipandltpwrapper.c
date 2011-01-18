@@ -5183,11 +5183,11 @@ int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned 
 				{
 					if(pstack->call[0].remoteUserid)
 					{
-						sprintf(pathname, "%s\\%s_recv_sip.txt", path,pstack->call[0].remoteUserid);
+						sprintf(pathname, "%s\\%s siplog.txt", path,pstack->call[0].remoteUserid);
 					}
 					else
 					{
-						sprintf(pathname, "%s\\recv_sip.txt",path);
+						sprintf(pathname, "%s\\siplog.txt",path);
 					}
 					pf = fopen(pathname, "ab");
 					if (pf)
@@ -5207,11 +5207,11 @@ int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned 
 			{
 				if(pstack->call[0].remoteUserid)
 				{
-					sprintf(pathname, "%s\\%s_recv_rtp.txt", path,pstack->call[0].remoteUserid);
+					sprintf(pathname, "%s\\%s_recieved_rtplog.txt", path,pstack->call[0].remoteUserid);
 				}
 				else
 				{
-					sprintf(pathname, "%s\\recv_rtp.txt",path);
+					sprintf(pathname, "%s\\recieved_rtplog.txt",path);
 				}
 				fp = fopen(pathname, "ab");
 				//rtp = ( struct myRTPStructureType *) data;
@@ -5288,11 +5288,11 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 				{
 					if(pstack->call[0].remoteUserid)
 					{
-						sprintf(pathname, "%s\\%s_send_sip.txt", path,pstack->call[0].remoteUserid);
+						sprintf(pathname, "%s\\%s siplog.txt", path,pstack->call[0].remoteUserid);
 					}
 					else
 					{	
-						sprintf(pathname, "%s\\send_sip.txt",path);
+						sprintf(pathname, "%s\\siplog.txt",path);
 					}
 					pf = fopen(pathname, "at");
 					
@@ -5319,11 +5319,11 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 				{
 					if(pstack->call[0].remoteUserid)
 					{
-						sprintf(pathname, "%s\\%s_send_rtp.txt", path,pstack->call[0].remoteUserid);
+						sprintf(pathname, "%s\\%s_sent_rtplog.txt", path,pstack->call[0].remoteUserid);
 					}
 					else
 					{
-						sprintf(pathname, "%s\\send_rtp.txt",path);
+						sprintf(pathname, "%s\\sent_rtplog.txt",path);
 					}
 					fp = fopen(pathname, "ab");
 					//rtp = ( struct myRTPStructureType *) data;
@@ -5465,7 +5465,7 @@ char *GenarateRscPath(char*orgPathP)//added backslash
 		{
 			*tmp = *orgPathP;
 			tmp++;
-		}
+		}																																																				
 		orgPathP++;
 	}
 	*tmp = 0;
@@ -5496,10 +5496,10 @@ int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	{
 		char *logopenvpnpath;
 		char *newPath;
-		
+		int verbosity = 3;
 		newPath = GenarateRscPath(path/*pathP*/);
 		logopenvpnpath = (char*)malloc(strlen(newPath)+200);
-		sprintf(logopenvpnpath,"log    \"%s\\\\%s\"",newPath,OPENVPNLOGFILENAME);
+		sprintf(logopenvpnpath,"log    \"%s\\\\%s\" \nverb %d",newPath,OPENVPNLOGFILENAME,verbosity);
 		sprintf(opvnData,OPVNFILE,pstackP->sipVpnServer.vpnServer,pstackP->sipVpnServer.vpnPort,rscPath,CACRTDEF,rscPath,CERTDEF,rscPath,KEY,logopenvpnpath);
 		free(logopenvpnpath);
 		free(newPath);
