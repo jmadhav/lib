@@ -66,7 +66,7 @@
 #endif
 #define SIP_DEFAULT_PORT 5060
 #define GOOGLEPAGE "https://spreadsheets.google.com/pub?key=0Ao-_UbC4VxyDdHdyaDNQQjhKTUpsT1Axc2hQVlhMMnc&hl=en&single=true&gid=0&output=txt"
-//#define GOOGLEPAGE "http://www.google.com/notebook/public/08332985133275968837/BDQ8nSgoQobyBnpEj?alt=xml"
+//#define GOOGLEPAGE "https://spreadsheets.google.com/pub?key=0ArslC06_iBCCdFJHZ0NVMGNfU0REWkMxcklnNzVNQ2c&hl=en&single=true&gid=0&output=txt"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -144,7 +144,7 @@ void sip_setCallIdle(struct ltpStack *ps,int llineID);
 int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
 int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath);
 int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP);
-	void setDevPath(unsigned char *pathP);
+void setDevPath(unsigned char *pathP);
 void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status);
 OpenVpnStatusType getVpnStatus(struct ltpStack *pstackP);
 
@@ -162,8 +162,9 @@ int getNewServerForSpokn(struct ltpStack *pstackP);
 int getServerList(char *data,SipVpnServer *sipVpnServerP);
 void setVpnPjsipCallBack();
 int closeLocalsocket();
-char *GenarateRscPath(char*orgPathP);//added backslash
+char *GenarateRscPath(char *orgPathP);//added backslash
 void setOpenvpnLogPath(struct ltpStack *pstackP,int logInt);
+//void setopenvpnIP();
 //THREAD_PROC vpnThreadProc(void *uDataP);
 unsigned int  resolveLocalDNS(char *host);
 #define CACRTDEF "ca.crt"
@@ -171,8 +172,8 @@ unsigned int  resolveLocalDNS(char *host);
 #define KEY     "spokn.key"
 //#define OVPN_SERVER "luke.stage.spokn.com"
 #define OVPN_SERVER "nkops.com"
-//#define OVPN_PORT 1935
-#define OVPN_PORT 5004
+#define OVPN_PORT 443
+
 #define MYXML "<?xml version=\"1.0\"?>" "\r\n"\
 "<server>" "\r\n"\
 "<host type =\"sip\" name=\"%s\" port=\"%d\"\"/>" "\r\n"\
@@ -184,8 +185,8 @@ unsigned int  resolveLocalDNS(char *host);
 #define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
 
 #else
-//#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n %s\r\n"
-#define OPVNFILE "client\r\ndev tun\r\nproto udp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n %s\r\n"
+#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo;\r\n %s\r\n"
+//#define OPVNFILE "client\r\ndev tun\r\nproto udp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n %s\r\n"
 #endif
 
 #ifdef __cplusplus

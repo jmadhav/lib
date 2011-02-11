@@ -5507,9 +5507,7 @@ int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	}
 	else
 	{
-		sprintf(opvnData,OPVNFILE,pstackP->sipVpnServer.vpnServer,pstackP->sipVpnServer.vpnPort,rscPath,CACRTDEF,rscPath,CERTDEF,rscPath,KEY,"");
-	
-	
+		sprintf(opvnData,OPVNFILE,pstackP->sipVpnServer.vpnServer,pstackP->sipVpnServer.vpnPort,rscPath,CACRTDEF,rscPath,CERTDEF,rscPath,KEY,"");		
 	}
 	sendpathP =(char*) malloc(strlen(pathP)+110);
 	strcpy(sendpathP,pathP);
@@ -5558,6 +5556,7 @@ void setDevPath(unsigned char *pathP)
 }
 void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status)
 {
+	
 	if(status==OpenVpnConnected || status==OpenVpnNotConnected)
 	{
 		pstackP->openVpnFailedCount = 0;
@@ -5570,14 +5569,14 @@ void setVpnStatus(struct ltpStack *pstackP,OpenVpnStatusType status)
 		}
 		if(pstackP->openVpnFailedCount>=MAX_VPN_FAILED)
 		{
+			//getNewServerForSpokn(pstack);
 			pstackP->openVpnStatus = OpenVpnConnectionNotPossible;
 			return;
 		}
 	}
 	pstackP->openVpnStatus = status;
-
-
 }
+
 OpenVpnStatusType getVpnStatus(struct ltpStack *pstackP)
 {
 	return pstackP->openVpnStatus;
@@ -5793,13 +5792,25 @@ int getGooglePage(struct ltpStack *pstackP)
 	int done =0;
 	SipVpnServer *sipVpnServerP=0;
 	int vpnConnectB=0,sipConnectedB=0,spoknConnectedB=0;
+	
+	//FILE *ft;
+	//char ch;
+	//char pathname[MAX_PATH];
+	//sprintf(pathname, "%s\\serverlist.txt", pstack->folderPath);
+	//fs = fopen(pathname, "r");
+	//sprintf(pathname, "%s\\iplist.txt", pstack->folderPath);
+	//ft = fopen(pathname, "w");
+
 	data = (char *) malloc(100000);
+	
+	i = getHostIPPage(GOOGLEPAGE, data, 100000);
+	
 	if (!data)
 	{
 		alert(0,GOOGLE_PAGE_NOT_FOUND,0);	
 		return 0;
 	}
-	i = getHostIPPage(GOOGLEPAGE, data, 100000);
+
 	if(i==0)
 	{
 		if(pstackP->sipVpnServer.newUrlPage[0])
@@ -5810,8 +5821,31 @@ int getGooglePage(struct ltpStack *pstackP)
 	if(i!=0)//mean got the page
 	{
 		newm = strstr(data,"<?xml version=\"1.0\"?>");
+		/*if(data!=NULL){
+			fprintf(ft,"%s",data);
+		}*/
+
 		if(newm)
 		{
+			/*while(1)
+				{    
+					if(fs)
+						ch = getc(fs);
+					else
+						break;
+					if(ch==EOF)
+					{  
+						break;      
+					}  
+					else
+					{
+						if(ft)
+							putc(ch,ft);
+						else
+							break;
+					}
+				}*/
+
 			xml = ezxml_parse_str(newm, strlen(newm));
 			if(xml)
 			{
@@ -5844,17 +5878,76 @@ int getGooglePage(struct ltpStack *pstackP)
 							{
 								if(strcmp(type,"vpn")==0)
 								{
-									vpnConnectB = 1;
-									strcpy(sipVpnServerP->vpnServer,hostP);
-									if(port)
+									addr = accessLocalServer(hostP,atoi(port));
+									if(addr != 0)
+									{		
+										vpnConnectB = 1;
+										strcpy(sipVpnServerP->vpnServer,hostP);
+										if(port)
+										{
+											sipVpnServerP->vpnPort = atoi(port);
+										}
+										else
+										{
+											sipVpnServerP->vpnPort = OVPN_PORT;
+										}
+											
+									 }
+									 else
+									 {
+										vpnConnectB = 0;
+									 }
+								 }
+								/*if(strcmp(type,"vpn1")==0)
+								{	
+									addr = accessLocalServer(hostP,atoi(port));
+									if(addr != 0)
 									{
-										sipVpnServerP->vpnPort = atoi(port);
-									}
-									else
-									{
-										sipVpnServerP->vpnPort = OVPN_PORT;
+										if(port)
+										{
+											sipVpnServerP->vpnPort = atoi(port);
+										}
+										else
+										{
+											sipVpnServerP->vpnPort = OVPN_PORT;
+										}
+										if( strcmp( sipVpnServerP->vpnServer,hostP) != 0)
+										{
+											strcpy(sipVpnServerP->vpnServer,hostP);
+											vpnConnectB = 1;
+											break;
+										}
+										else
+										{
+											vpnConnectB = 0;
+										}		
 									}
 								}
+								if(strcmp(type,"vpn2")==0)
+								{	
+								addr = accessLocalServer(hostP,atoi(port));
+									if(addr != 0)
+									{
+										if(port)
+										{
+											sipVpnServerP->vpnPort = atoi(port);
+										}
+										else
+										{
+											sipVpnServerP->vpnPort = OVPN_PORT;
+										}
+										if( strcmp( sipVpnServerP->vpnServer,hostP) != 0)
+										{
+											strcpy(sipVpnServerP->vpnServer,hostP);
+											vpnConnectB = 1;
+											break;
+										}
+										else
+										{
+											vpnConnectB = 0;
+										}		
+									}
+								}*/
 								if(strcmp(type,"sip")==0)
 								{
 									sipConnectedB = 1;
@@ -5904,6 +5997,110 @@ int getGooglePage(struct ltpStack *pstackP)
 	alert(0,GOOGLE_PAGE_NOT_FOUND,sipVpnServerP);
 	free(data);
 }
+
+//void setopenvpnIP()
+//{
+//	int addr = 1;
+//	char *type;
+//	char *hostP;
+//	char *port;
+//	ezxml_t xml,parsexml;
+//	char *newm;
+//	FILE *fs;
+//	char ch;
+//	char	pathname[MAX_PATH];
+//
+//	int sz;
+//	char *data;
+//	data = malloc(4010);
+//	
+//	sprintf(pathname, "%s\\iplist.txt", pstack->folderPath);
+//	fs = fopen(pathname, "r");
+//	if(fs)
+//		sz = fread(data,1,4000,fs);
+//	else
+//		return;
+//
+//	newm = strstr(data,"<?xml version=\"1.0\"?>");
+//
+//	if(newm)
+//	{
+//		xml = ezxml_parse_str(newm, strlen(newm));
+//		if(xml)
+//		{
+//
+//			parsexml = ezxml_child(xml, "host");
+//			
+//			while(parsexml)
+//			{
+//				type =(char*) ezxml_attr(parsexml, "type");
+//				hostP =(char*) ezxml_attr(parsexml, "name");
+//				port =(char*) ezxml_attr(parsexml, "port");
+//				if(hostP)
+//				{
+//										
+//					if(addr)
+//					{
+//						if(type)
+//						{
+//							if(strcmp(type,"vpn")==0)
+//							{			
+//
+//								strcpy(pstack->sipVpnServer.vpnServer,hostP);
+//								if(port)
+//								{
+//									pstack->sipVpnServer.vpnPort = atoi(port);
+//									
+//								}
+//								else
+//								{
+//									pstack->sipVpnServer.vpnPort = OVPN_PORT;
+//								}
+//							}
+//							if(strcmp(type,"vpn1")==0)
+//							{	
+//								addr = accessLocalServer(hostP,atoi(port));
+//								if(addr != 0)
+//								{
+//									strcpy(pstack->sipVpnServer.vpnServer,hostP);
+//									if(port)
+//									{
+//										pstack->sipVpnServer.vpnPort = atoi(port);
+//										
+//									}
+//									else
+//									{
+//										pstack->sipVpnServer.vpnPort = OVPN_PORT;
+//									}
+//								}
+//							}
+//							if(strcmp(type,"vpn2")==0)
+//							{	
+//								strcpy(pstack->sipVpnServer.vpnServer,hostP);
+//								if(port)
+//								{
+//									pstack->sipVpnServer.vpnPort = atoi(port);
+//									
+//								}
+//								else
+//								{
+//									pstack->sipVpnServer.vpnPort = OVPN_PORT;
+//								}
+//							}
+//						}
+//						
+//					}	
+//				}
+//				//printf("\n %s %s %s",type,hostP,port);
+//				parsexml = parsexml->next;
+//				
+//			}
+//			ezxml_free(xml);
+//		}
+//	}
+//}
+
+
 int getServerList(char *data,SipVpnServer *sipVpnServerP)
 {
 	int addr = 1;
@@ -5912,9 +6109,13 @@ int getServerList(char *data,SipVpnServer *sipVpnServerP)
 	char *port;
 	ezxml_t xml,parsexml;
 	char *newm;
+	
+	
 	newm = strstr(data,"<?xml version=\"1.0\"?>");
+	
 	if(newm)
 	{
+
 		xml = ezxml_parse_str(newm, strlen(newm));
 		if(xml)
 		{
@@ -5923,6 +6124,7 @@ int getServerList(char *data,SipVpnServer *sipVpnServerP)
 			sipVpnServerP->vpnPort = OVPN_PORT;
 			strcpy(sipVpnServerP->spoknServer,SPOKN_SERVER);
 			parsexml = ezxml_child(xml, "host");
+			
 			while(parsexml)
 			{
 				type =(char*) ezxml_attr(parsexml, "type");
@@ -5936,12 +6138,12 @@ int getServerList(char *data,SipVpnServer *sipVpnServerP)
 						if(type)
 						{
 							if(strcmp(type,"vpn")==0)
-							{
-								
+							{	
 								strcpy(sipVpnServerP->vpnServer,hostP);
 								if(port)
 								{
 									sipVpnServerP->vpnPort = atoi(port);
+									
 								}
 								else
 								{
@@ -5949,8 +6151,7 @@ int getServerList(char *data,SipVpnServer *sipVpnServerP)
 								}
 							}
 							if(strcmp(type,"sip")==0)
-							{
-								
+							{								
 								strcpy(sipVpnServerP->sipServer,hostP);
 								if(port)
 								{

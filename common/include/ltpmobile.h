@@ -613,6 +613,8 @@ You can keep checking on loginStatus to see your current state */
 typedef struct SipVpnServer 
 {
 	char vpnServer[100];
+	//char vpnServer1[100];
+	//char vpnServer2[100];
 	int  vpnPort;
 	char sipServer[100];
 	int  sipPort;
