@@ -3640,7 +3640,7 @@ int sip_IsPortOpen(struct ltpStack *ps, char *errorstring,int blockB)
 	}
 	if(ps->localAccId<0)
 	{	
-		
+
 		pjsua_acc_add_local(ps->tranportID,PJ_TRUE,&ps->localAccId);
 		
 	}
@@ -4588,6 +4588,7 @@ struct ltpStack  *ltpInitNew(int siponB,int maxslots, int maxbitrate, int frames
 		tmpP->sipOnB = siponB;
 		tmpP->timeOut = MAXTIMEOUT;
 	}
+	setOpenvpnLogPath(tmpP,0);
 	return tmpP;
 }
 
@@ -4954,6 +4955,7 @@ int closeLocalsocket()
 		sockfd = 0;
 	}
 }
+
 unsigned int mywriteDataCallbackL (void *uData,unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,unsigned char *data,int *lenP)
 {
 	
@@ -5092,15 +5094,45 @@ int statusCallbackL(void *udata,int status,int vpnIP)
 	return 0;
 	
 }
+
+char path[100];
+void setFolderpath(char *folderpath)
+{
+	strcpy(path, folderpath);
+}
+
+int isSipPort(unsigned int sourcePort){
+	if( (sourcePort == 5060) || (sourcePort == 8060)|| (sourcePort == 9060)|| (sourcePort == 5062)){
+		return 1;
+	}
+	else{
+		return 0;
+	}
+}
+
 //pjsip call back
 int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP ,unsigned char *data,int *lenP)
 {
+	#ifdef	SIP_AND_RTP_PACKETS
+	FILE	*pf,*fp;
+	char	pathname[MAX_PATH];
+	unsigned int sourcePort;
+	//myRTPStructureType *rtp;
+	int i = 0;
+	//char pszPacket[20] = {0};
+	unsigned char* pPacket ;
+	unsigned short seq = 0;
+	unsigned long timestamp= 0;
+	#endif
+
 	unsigned char *sipP;
 	//char sip[32],dip[32];
 	//struct in_addr x,y;
 	unsigned int lsrchost;
 	unsigned short lsrcport;
 	//printf("\nshankarjaikishan");
+	
+
 	if(srchostP==0)
 	{
 		srchostP = &lsrchost;
@@ -5143,12 +5175,102 @@ int readSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned 
 	
 	//printf("\nsdbarman");
 	//*lenP= -1;
+	if(generate_SipandRtpLog)
+	{
+		#ifdef	SIP_AND_RTP_PACKETS
+			sourcePort = ntohs(*srcportP);
+			if(isSipPort(sourcePort))
+				{
+					if(pstack->call[0].remoteUserid)
+					{
+						sprintf(pathname, "%s\\%s_recv_sip.txt", path,pstack->call[0].remoteUserid);
+					}
+					else
+					{
+						sprintf(pathname, "%s\\recv_sip.txt",path);
+					}
+					pf = fopen(pathname, "ab");
+					if (pf)
+					{
+						if(bypassBlockingOn)
+						{
+							fprintf(pf,"%d \t %s",bypassBlockingOn,data);
+						}
+						else
+						{
+							fprintf(pf,"%d \t %s",bypassBlockingOn,data);
+						}
+						fclose(pf);
+					}
+				}
+			else
+			{
+				if(pstack->call[0].remoteUserid)
+				{
+					sprintf(pathname, "%s\\%s_recv_rtp.txt", path,pstack->call[0].remoteUserid);
+				}
+				else
+				{
+					sprintf(pathname, "%s\\recv_rtp.txt",path);
+				}
+				fp = fopen(pathname, "ab");
+				//rtp = ( struct myRTPStructureType *) data;
+				if(fp)
+				{
+				// Seq no IS AFTER 2 BYTES and TIME STAMP IS AFTER 4 BYTES AND IN BIG ENDIAN FORMAT 
+				//pPacket = (unsigned char *) rtp;
+					seq = ntohs(*((unsigned short* )(data+2)));
+					timestamp =  ntohl(*((unsigned long* )(data+4)));
+					fprintf(fp,"\n %d \t %u",seq,timestamp);
+					fclose(fp);
+				}
+			}
+				/*memcpy(&pszPacket[i], &rtp->flags, sizeof(rtp->flags));
+				i += sizeof rtp->flags;
+				memcpy(&pszPacket[i], &rtp->payload, sizeof(rtp->payload));
+				i += sizeof rtp->payload;
+				memcpy(&pszPacket[i], &rtp->sequence, sizeof(rtp->sequence));
+				i += sizeof rtp->sequence;
+				memcpy(&pszPacket[i], &rtp->timestamp, sizeof(rtp->timestamp));
+				i += sizeof rtp->timestamp;
+				memcpy(&pszPacket[i], &rtp->ssrc, sizeof(rtp->ssrc));
+				i += sizeof rtp->ssrc;
+				memcpy(&pszPacket[i], &rtp->data, sizeof(rtp->data));
+				i += sizeof rtp->data;
+				seq = (pszPacket[2] << 8) | pszPacket[3];
+				timestamp =  *((unsigned int *)(&(pszPacket[4])));
+				
+				fprintf(fp,"\n sequence number: %d",seq);
+				fprintf(fp,"\n timestamp: %u",timestamp);*/
+				//fwrite(&data,*lenP,1,fp);
+
+				// might have issue if there is padding
+		#endif
+	}
 	return *lenP;
 	
 }
+
+
 int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned int*dsthostP,unsigned short *dstportP  ,unsigned char *data,int *lenP)
 {
 	vpnDataStructureType *tmpVpn;
+	#ifdef	SIP_AND_RTP_PACKETS
+	FILE	*pf,*fp;
+	unsigned char *newP;
+	char	pathname[MAX_PATH];
+	long int size;
+	unsigned int destinationPort;
+	//myRTPStructureType *rtp;
+	int i = 0;
+	//unsigned char pszPacket[20] = {0};
+	unsigned char* pPacket ;
+	unsigned short seq = 0;
+	unsigned long timestamp= 0;
+	#endif
+	
+	
+	
 	tmpVpn = malloc(sizeof(vpnDataStructureType));
 	memmove(tmpVpn->data,data,*lenP);
 	tmpVpn->ipAddressSrc = *srchostP;
@@ -5157,6 +5279,104 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 	tmpVpn->portDst = *dstportP;
 	tmpVpn->length = *lenP;
 	tmpVpn->next = 0;
+	
+	if(generate_SipandRtpLog)
+	{
+		#ifdef	SIP_AND_RTP_PACKETS
+				destinationPort = ntohs(*dstportP);
+				if(isSipPort(destinationPort))
+				{
+					if(pstack->call[0].remoteUserid)
+					{
+						sprintf(pathname, "%s\\%s_send_sip.txt", path,pstack->call[0].remoteUserid);
+					}
+					else
+					{	
+						sprintf(pathname, "%s\\send_sip.txt",path);
+					}
+					pf = fopen(pathname, "at");
+					
+					if (pf)
+					{
+						//fseek(pf, 0, SEEK_END); // seek to end of file
+						//size = ftell(pf); // get current file pointer
+						//if(size > 1*1000*1024){
+						//	fclose(pf);
+						//	pf = fopen(pathname, "wt");
+						//}
+						
+						fprintf(pf, "%d \t ",destinationPort);
+						fprintf(pf,"%d \t %s",bypassBlockingOn,data);
+						/*else
+						{
+							fprintf(pf, "%d \t ",destinationPort);
+							fprintf(pf,"%d \t %s",bypassBlockingOn,data);
+						}*/
+						fclose(pf);
+					}
+				}
+				else
+				{
+					if(pstack->call[0].remoteUserid)
+					{
+						sprintf(pathname, "%s\\%s_send_rtp.txt", path,pstack->call[0].remoteUserid);
+					}
+					else
+					{
+						sprintf(pathname, "%s\\send_rtp.txt",path);
+					}
+					fp = fopen(pathname, "ab");
+					//rtp = ( struct myRTPStructureType *) data;
+				
+					if(fp)
+					{
+
+					// Seq no IS AFTER 2 BYTES and TIME STAMP IS AFTER 4 BYTES AND IN BIG ENDIAN FORMAT 
+					//pPacket = (unsigned char *) rtp;
+					
+						seq = ntohs(*((unsigned short* )(data+2)));
+						timestamp =  ntohl(*((unsigned long* )(data+4)));
+						fprintf(fp,"\n %d \t %u",seq,timestamp);
+						fclose(fp);
+					}
+				}			
+			#endif
+	}
+			/*seq = (pPacket[2] << 8) | pPacket[3];
+			timestamp = (pPacket[4] << 8*3) | (pPacket[5]  << 8*2) | (pPacket[6]  << 8*1) | (pPacket[7]  << 8*0);
+			fprintf(fp,"\nSeq No. = %d  \t\t Timestamp = %u",seq,timestamp);
+			printf(fp,"\nSeq No. = %d  \t\t Timestamp = %u",seq,timestamp);*/
+				
+
+			/*memcpy(&pszPacket[i], &rtp->flags, sizeof(rtp->flags));
+			i += sizeof rtp->flags;
+			memcpy(&pszPacket[i], &rtp->payload, sizeof(rtp->payload));
+			i += sizeof rtp->payload;
+			memcpy(&pszPacket[i], &rtp->sequence, sizeof(rtp->sequence));
+			i += sizeof rtp->sequence;
+			memcpy(&pszPacket[i], &rtp->timestamp, sizeof(rtp->timestamp));
+			i += sizeof rtp->timestamp;
+			memcpy(&pszPacket[i], &rtp->ssrc, sizeof(rtp->ssrc));
+			i += sizeof rtp->ssrc;
+			memcpy(&pszPacket[i], &rtp->data, sizeof(rtp->data));
+			i += sizeof rtp->data;*/
+			
+			
+
+			//seq = (pszPacket[2] << 8) | pszPacket[3];
+			
+			// TIME STAMP IS AFTER 4 BYTES AND IN BIG ENDIAN FORMAT 
+			//timestamp =  *((unsigned int *)(pPacket+4));
+			//fprintf(fp,"\n sequence number: %d",seq);
+			//fprintf(fp,"\t timestamp: %u",timestamp);
+
+			
+			
+			//fprintf(fp,"\t\t timestamp: %u",timestamp);
+			//fwrite(&data,tmpVpn->length,1,fp2);
+			//fprintf(fp,"\n\n this is rtp length %s",data);
+			//fclose(fp2);
+		//fwrite(&data,lenP,1,pf);
 	/*if(*lenP<1400)
 	if(strstr(data,"REGISTER"))
 	{
@@ -5203,7 +5423,7 @@ int writeSipDataCallback(unsigned int*srchostP,unsigned short *srcportP,unsigned
 		}	
 		
 	}
-	
+	//Sleep(20);
 	//genrateReadSignalInterface();
 	return 0;
 	
@@ -5226,7 +5446,31 @@ THREAD_PROC vpnThreadProc(void *uDataP)
 	
 	
 }
-
+void setOpenvpnLogPath(struct ltpStack *pstackP,int logInt)
+{
+	pstackP->logOpenVpnInt = logInt;
+	
+}
+char *GenarateRscPath(char*orgPathP)//added backslash
+{
+	char *rscPathP;
+	char *tmp;
+	rscPathP = (char*)malloc(strlen(orgPathP)+200);
+	tmp = rscPathP;
+	while(*orgPathP)
+	{
+		*tmp = *orgPathP;
+		tmp++;
+		if(*orgPathP=='\\')
+		{
+			*tmp = *orgPathP;
+			tmp++;
+		}
+		orgPathP++;
+	}
+	*tmp = 0;
+	return rscPathP;
+}
 int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 {
 	FILE *fp;
@@ -5248,7 +5492,25 @@ int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	setReadWriteCallback(readSipDataCallback,writeSipDataCallback);
 	opvnData = malloc(2000);
 	memset(opvnData,0,2000);
-	sprintf(opvnData,OPVNFILE,pstackP->sipVpnServer.vpnServer,pstackP->sipVpnServer.vpnPort,rscPath,CACRTDEF,rscPath,CERTDEF,rscPath,KEY);
+	if(pstackP->logOpenVpnInt==1)
+	{
+		char *logopenvpnpath;
+		char *newPath;
+		
+		newPath = GenarateRscPath(path/*pathP*/);
+		logopenvpnpath = (char*)malloc(strlen(newPath)+200);
+		sprintf(logopenvpnpath,"log    \"%s\\\\%s\"",newPath,OPENVPNLOGFILENAME);
+		sprintf(opvnData,OPVNFILE,pstackP->sipVpnServer.vpnServer,pstackP->sipVpnServer.vpnPort,rscPath,CACRTDEF,rscPath,CERTDEF,rscPath,KEY,logopenvpnpath);
+		free(logopenvpnpath);
+		free(newPath);
+
+	}
+	else
+	{
+		sprintf(opvnData,OPVNFILE,pstackP->sipVpnServer.vpnServer,pstackP->sipVpnServer.vpnPort,rscPath,CACRTDEF,rscPath,CERTDEF,rscPath,KEY,"");
+	
+	
+	}
 	sendpathP =(char*) malloc(strlen(pathP)+110);
 	strcpy(sendpathP,pathP);
 

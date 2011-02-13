@@ -676,7 +676,7 @@ init_options (struct options *o, const bool init_gc)
   o->ce.connect_timeout = 10;
   o->ce.connect_retry_max = 0;
   o->ce.local_port = o->ce.remote_port = OPENVPN_PORT;
-  o->verbosity = 1;
+  o->verbosity = 3;
   o->status_file_update_freq = 60;
   o->status_file_version = 1;
   o->ce.bind_local = true;

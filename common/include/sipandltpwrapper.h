@@ -16,6 +16,7 @@
  along with Spokn.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #ifndef _SIP_AND_LTP_WRAPPER_H
 	#define _SIP_AND_LTP_WRAPPER_H
 #define _SPEEX_CODEC_
@@ -33,6 +34,7 @@
 #define ATTEMPT_VPN_END_CALL 6024
 #define MAX_VPN_FAILED 3
 #define MAXTIMEOUT 300
+#define OPENVPNLOGFILENAME "openvpnlog.txt"
 #include "ltpmobile.h"
 //#define _UI_LOG_
 #define _OPEN_VPN_
@@ -52,6 +54,7 @@
 #define SIP_DOMAIN	"174.143.168.31"
 #else
 //#define _ENCRIPTION_SUPPORT_IN_MAIN 
+#define SIP_AND_RTP_PACKETS
 
 #define DEFAULT_SIP_PORT  "5060"
 #define SIP_ENCRIPTION_PORT "9065"
@@ -66,7 +69,24 @@
 //#define GOOGLEPAGE "http://www.google.com/notebook/public/08332985133275968837/BDQ8nSgoQobyBnpEj?alt=xml"
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
+
+void setFolderpath(char *folderpath);
+int isSipPort(unsigned int sourcePort);
+extern int bypassBlockingOn;
+extern int generate_SipandRtpLog;
+//typedef struct myRTPStructureType
+//{
+//	unsigned char	flags;
+//	unsigned char	payload;
+//	short			sequence;
+//	unsigned int	timestamp;
+//	unsigned int	ssrc;
+//	unsigned char	data[1];
+//}myRTPStructureType;
+
+
+
 typedef struct vpnDataStructureType
 	{
 		unsigned char data[1500];
@@ -142,6 +162,8 @@ int getNewServerForSpokn(struct ltpStack *pstackP);
 int getServerList(char *data,SipVpnServer *sipVpnServerP);
 void setVpnPjsipCallBack();
 int closeLocalsocket();
+char *GenarateRscPath(char*orgPathP);//added backslash
+void setOpenvpnLogPath(struct ltpStack *pstackP,int logInt);
 //THREAD_PROC vpnThreadProc(void *uDataP);
 unsigned int  resolveLocalDNS(char *host);
 #define CACRTDEF "ca.crt"
@@ -161,7 +183,7 @@ unsigned int  resolveLocalDNS(char *host);
 #define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s/sandbox-ca.crt\"\r\ncert \"%s/sandbox.crt\"\r\nkey \"%s/sandbox.key\""
 
 #else
-#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n"
+#define OPVNFILE "client\r\ndev tun\r\nproto tcp\r\n<connection>\r\nremote %s %d\r\nconnect-retry-max 3\r\n</connection>\r\nns-cert-type server\r\n\r\nnobind\r\npersist-key\r\npersist-tun\r\nca \"%s\\\\%s\"\r\ncert \"%s\\\\%s\"\r\nkey \"%s\\\\%s\"\r\ncomp-lzo\r\n %s\r\n"
 
 #endif
 

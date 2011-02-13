@@ -260,6 +260,8 @@ extern "C" {
 #define ALERT_HOSTNOTFOUND 110
 	
 #define ALERT_THREADTERMINATED 111
+#define ALERT_USERID_TAG_FOUND    112
+#define ALERT_USERID_TAG_NOTFOUND 113
 	//Seperator for href & message, sent by server.
 #define SEPARATOR '|'
 

@@ -2086,7 +2086,7 @@ void profileClear()
 void profileMerge(){
 	FILE	*pf;
 	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref,*palert;
-	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid;
+	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid,userid;
 	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert,xmlstatus;
 	struct AddressBook *pc;
 	int		nContacts = 0, xmllength, newMails,errorCode=0;
@@ -2178,10 +2178,21 @@ void profileMerge(){
 			sprintf(stralert, "%s%c%s", phref ? phref : "", SEPARATOR, palert );
 		}
 	}
-	
+		/*get user id from u tag */
+	userid = ezxml_child(xml,"u");
+	if(userid)
+	{
+		strcpy(pstack->ltpUserid, userid->txt);
+		alert(0,ALERT_USERID_TAG_FOUND,0);
+	}
+	else
+	{
+		alert(0,ALERT_USERID_TAG_NOTFOUND,0);
+	}
+
 	title = ezxml_child(xml, "t");
 	if (title)
-		strcpy(myTitle, title->txt);
+		strcpy(myTitle, title->txt); 
 	
 	did = ezxml_child(xml, "did");
 	if (did)

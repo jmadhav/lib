@@ -655,7 +655,7 @@ struct ltpStack
 	int doDebug;
 	int	forceProxy;
 	int	doPreprocess;
-	char	ltpUserid[40], ltpPassword[40], ltpServerName[100], motd[1000];
+	char	ltpUserid[128], ltpPassword[40], ltpServerName[100], motd[1000];
 	char    ltpNonce[20];
 	char	ltpTitle[1000];
 	char	ltpLabel[128];
@@ -721,6 +721,7 @@ struct ltpStack
 	char *stunvpnserver[100];
 	int pjsipInitialize;
 	int vpnstart;
+	int logOpenVpnInt;
 
 };
 
