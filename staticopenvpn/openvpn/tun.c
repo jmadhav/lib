@@ -210,6 +210,7 @@ int 	getUdptcpPacket(struct tuntap* tt, uint8_t *buf, int len)
 	tt->readCallbackP(tt->uData,&srcip,&srcport,&dstip,&dstport,dataP,&actuallen);
 	if(actuallen==0)
 	{
+		Sleep(10);
 		return;
 	}
 	nactuallen = actuallen + sizeof(struct openvpn_iphdr)+sizeof(struct openvpn_udphdr);

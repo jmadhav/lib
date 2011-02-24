@@ -107,6 +107,7 @@ tunnel_point_to_point (struct context *c)
       P2P_CHECK_SIG();
 
       perf_pop ();
+	 
     }
   normalExit = 1;	
   uninit_management_callback ();
