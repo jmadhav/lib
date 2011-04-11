@@ -1587,8 +1587,8 @@ static void vmsUpload(struct VMail *v)
 			ezxml_free(xml);
 		}
 	}
-	unlink(requestfile);
-	unlink(responsefile);
+	//unlink(requestfile);
+	//unlink(responsefile);
 #ifdef MAX_SIZE_DATA
 
 	if(buffer)

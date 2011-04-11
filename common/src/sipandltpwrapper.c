@@ -5496,7 +5496,7 @@ int setVpnCallback(struct ltpStack *pstackP,char *pathP,char *rscPath)
 	{
 		char *logopenvpnpath;
 		char *newPath;
-		int verbosity = 3;
+		int verbosity = 4;
 		newPath = GenarateRscPath(path/*pathP*/);
 		logopenvpnpath = (char*)malloc(strlen(newPath)+200);
 		sprintf(logopenvpnpath,"log    \"%s\\\\%s\" \nverb %d",newPath,OPENVPNLOGFILENAME,verbosity);
