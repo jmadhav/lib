@@ -172,7 +172,7 @@ unsigned int  resolveLocalDNS(char *host);
 #define KEY     "spokn.key"
 //#define OVPN_SERVER "luke.stage.spokn.com"
 #define OVPN_SERVER "nkops.com"
-#define OVPN_PORT 1935
+#define OVPN_PORT 443
 
 #define MYXML "<?xml version=\"1.0\"?>" "\r\n"\
 "<server>" "\r\n"\
