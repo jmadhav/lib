@@ -271,7 +271,7 @@ extern "C" {
 	
 	void uaInit();
 	extern int redirect, creditBalance, bandwidth, settingType, oldSetting, bkupsettingType;
-	extern char fwdnumber[], oldForward[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[],client_name[],client_ver[],client_os[],client_osver[],client_model[],client_uid[];
+	extern char fwdnumber[], oldForward[], myFolder[], vmFolder[], outFolder[], mailServer[], myTitle[], myDID[],client_name[],client_ver[],client_os[],client_osver[],client_model[],client_uid[],serverName[];
 	void profileResync();
 	void profileClear();
 	void profileSave();

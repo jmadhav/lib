@@ -3828,6 +3828,9 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 				pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
 							 "stun.spokn.com");
+				pj_strdup2_with_null(ps->pjpool, 
+							 &(cfg.stun_srv[cfg.stun_srv_cnt++]), 
+							 "stun2.spokn.com");
 				/*pj_strdup2_with_null(ps->pjpool, 
 							 &(cfg.outbound_proxy[cfg.outbound_proxy_cnt++]), 
 							 "sip:192.168.173.122:5060");*/

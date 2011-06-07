@@ -48,7 +48,7 @@ static int busy = 0;
 int terminateB;
 char	myFolder[MAX_PATH], vmFolder[MAX_PATH], outFolder[MAX_PATH];
 
-char mailServer[100], myTitle[200], fwdnumber[32], oldForward[33], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[100],client_uid[200];
+char mailServer[100], serverName[100],myTitle[200], fwdnumber[32], oldForward[33], myDID[32], client_name[32],client_ver[32],client_os[32],client_osver[32],client_model[100],client_uid[200];
 
 int	redirect = REDIRECT2ONLINE;
 int creditBalance = 0;
@@ -1977,10 +1977,11 @@ void profileLoad()
 	title = ezxml_child(xml, "t");
 	if (title)
 		strcpy(myTitle, title->txt);
+
 	server = ezxml_child(xml,"server");
 	if(server && strlen(server->txt))
 		strcpy(pstack->ltpServerName, server->txt);
-	
+
 	if (lastupdate = ezxml_child(xml, "dt"))
 		lastUpdate = atol(lastupdate->txt);
 	
@@ -2086,7 +2087,7 @@ void profileClear()
 void profileMerge(){
 	FILE	*pf;
 	char	pathname[MAX_PATH], stralert[2*MAX_PATH], *strxml, *phref,*palert;
-	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid,userid;
+	ezxml_t xml, contact, id, title, mobile, home, business, email, did, presence, dated, spoknid,userid,servername;
 	ezxml_t	status, vms, redirector, credit, token, fwd, mailserverip, xmlalert,xmlstatus;
 	struct AddressBook *pc;
 	int		nContacts = 0, xmllength, newMails,errorCode=0;
@@ -2141,6 +2142,7 @@ void profileMerge(){
 	
 	xml = ezxml_parse_str(strxml, xmllength);
 
+	//parse xml for server tag to get domain name
 
 	//bug#26893: check status for any error.
 	///server returns <status>ERR_CODE</status> for error.
@@ -2189,11 +2191,15 @@ void profileMerge(){
 	{
 		alert(0,ALERT_USERID_TAG_NOTFOUND,0);
 	}
-
+	
 	title = ezxml_child(xml, "t");
 	if (title)
 		strcpy(myTitle, title->txt); 
-	
+
+	servername = ezxml_child(xml,"webserver");
+	if(servername)
+		strcpy(serverName, servername->txt);
+
 	did = ezxml_child(xml, "did");
 	if (did)
 		strcpy(myDID, did->txt);
