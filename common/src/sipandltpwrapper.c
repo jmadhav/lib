@@ -375,7 +375,6 @@ struct ltpStack  *LTP_ltpInit(int maxslots, int maxbitrate, int framesPerPacket)
 		x = 8000;  /*set the sampling rate*/
 		speex_encoder_ctl(p->speex_enc,SPEEX_SET_SAMPLING_RATE,&x);	
 		
-		
 		speex_bits_init(&(p->speexBitDec));		
 		p->speex_dec = speex_decoder_init(&speex_nb_mode);
 		
@@ -3889,6 +3888,8 @@ int sip_spokn_pj_config(struct ltpStack *ps, char *userAgentP,char *errorstring)
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "pcma"), 0);
 		
 		pjsua_codec_set_priority(pj_cstr(&tmp1, "G722"), 0);
+
+		pjsua_codec_set_priority(pj_cstr(&tmp1, "gsm"), 0);
 	}
 #endif	
 	
